@@ -62,6 +62,50 @@ def save_image(image_numpy, image_path):
     image_pil.save(image_path)
 
 
+def plot_landmarks( landmarks):
+    # landmarks = np.int32(landmarks)
+    """
+    Creates an RGB image with the landmarks. The generated image will be of the same size as the frame where the face
+    matching the landmarks.
+    The image is created by plotting the coordinates of the landmarks using matplotlib, and then converting the
+    plot to an image.
+    Things to watch out for:
+    * The figure where the landmarks will be plotted must have the same size as the image to create, but matplotlib
+    only accepts the size in inches, so it must be converted to pixels using the DPI of the screen.
+    * A white background is printed on the image (an array of ones) in order to keep the figure from being flipped.
+    * The axis must be turned off and the subplot must be adjusted to remove the space where the axis would normally be.
+    :param frame: Image with a face matching the landmarks.
+    :param landmarks: Landmarks of the provided frame,
+    :return: RGB image with the landmarks as a Pillow Image.
+    """
+    # print (landmarks[0:17].shape)
+    # print(type(landmarks))
+
+    # points = np.array([[1, 4], [5, 6], [7, 8], [4, 4]])
+    # print (points.shape)
+
+
+    blank_image = np.zeros((224,224,3), np.uint8) 
+
+    # cv2.polylines(blank_image, np.int32([points]), True, (0,255,255), 1)
+
+    cv2.polylines(blank_image, np.int32([landmarks[0:17]]) , True, (0,255,255), 2)
+ 
+    cv2.polylines(blank_image,  np.int32([landmarks[17:22]]), True, (255,0,255), 2)
+
+    cv2.polylines(blank_image, np.int32([landmarks[22:27]]) , True, (255,0,255), 2)
+
+    cv2.polylines(blank_image, np.int32([landmarks[27:31]]) , True, (255,255, 0), 2)
+
+    cv2.polylines(blank_image, np.int32([landmarks[31:36]]) , True, (255,255, 0), 2)
+
+    cv2.polylines(blank_image, np.int32([landmarks[36:42]]) , True, (255,0, 0), 2)
+    cv2.polylines(blank_image, np.int32([landmarks[42:48]]) , True, (255,0, 0), 2)
+
+    cv2.polylines(blank_image, np.int32([landmarks[48:60]]) , True, (0, 0, 255), 2)
+
+    return blank_image
+    
 def smooth(kps, ALPHA1=0.2, ALPHA2=0.7):
     
     n = kps.shape[0]
