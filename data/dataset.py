@@ -18,30 +18,11 @@ import torchvision.transforms as transforms
 import mmcv
 from io import BytesIO
 from PIL import Image
+import sys
+sys.path.insert(1, '../utils')
 from utils import util
 
 
-def prepare_data():
-    path ='/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain'
-    trainset = []
-    train_list = sorted(os.listdir(path))
-    batch_length = int(0.04 * len(train_list))
-    train_list = train_list[:batch_length]
-    for i in tqdm(range(batch_length)):
-        p_id = train_list[i]
-        person_path = os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain', p_id)
-        chunk_txt = sorted(os.listdir(person_path))
-        for txt in chunk_txt:
-            if txt[-3:] !=  'npy':
-                continue
-            print (txt)
-            if np.load(txt).shape[0]> 64:
-                trainset.append( [p_id, txt])
-    print (len(trainset))
-    print (trainset[0])
-   
-    with open(os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4', 'pickle','train_lmark2img.pkl'), 'wb') as handle:
-        pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
 
 class LRSLmark2rgbDataset(Dataset):
@@ -95,11 +76,13 @@ class LRSLmark2rgbDataset(Dataset):
 
     def __getitem__(self, index):
         # try:
+            mis_vid = self.data[random.randint(0, self.__len__() - 1)]
+
             v_id = self.data[index]
 
-            print (v_id[0])
-            print (v_id[1])
             video_path = os.path.join(self.root, 'pretrain', v_id[0] , v_id[1][:5] + '_crop.mp4'  )
+            mis_video_path = os.path.join(self.root, 'pretrain', mis_vid[0] , mis_vid[1][:5] + '_crop.mp4'  )
+
             lmark_path = os.path.join(self.root, 'pretrain', v_id[0] , v_id[1]  )
 
             lmark = np.load(lmark_path)[:,:,:-1]
@@ -140,7 +123,7 @@ class LRSLmark2rgbDataset(Dataset):
                     break
             reference_frames = []
             for t in input_indexs:
-                rgb_t =  mmcv.bgr2rgb( cv2.cvtColor(real_video[t],cv2.COLOR_BGR2RGB )) 
+                rgb_t =   cv2.cvtColor(real_video[t],cv2.COLOR_BGR2RGB )
                 lmark_t = lmark[t]
                 lmark_rgb = util.plot_landmarks( lmark_t)
                 # resize  to 256
@@ -151,34 +134,33 @@ class LRSLmark2rgbDataset(Dataset):
                 lmark_rgb = self.transform(lmark_rgb)
                 reference_frames.append(torch.cat([rgb_t, lmark_rgb],0))  # (6, 256, 256)   
             ############################################################################
+            
             target_rgb = real_video[target_id]
             target_lmark = lmark[target_id]
-
+            mis_rgb = mmcv.VideoReader(mis_video_path)[random.randint(0, 64)]
             target_rgb = mmcv.bgr2rgb(target_rgb)
             target_rgb = cv2.resize(target_rgb, self.output_shape)
             target_rgb = self.transform(target_rgb)
+
+            dif_rgb = real_video[random.randint(0, v_length - 1)]
+            dif_rgb = mmcv.bgr2rgb(dif_rgb)
+            dif_rgb = cv2.resize(dif_rgb, self.output_shape)
+            dif_rgb = self.transform(dif_rgb)
+
+            mis_rgb = mmcv.bgr2rgb(mis_rgb)
+            mis_rgb = cv2.resize(mis_rgb, self.output_shape)
+            mis_rgb = self.transform(mis_rgb)
 
         
             target_lmark = util.plot_landmarks(target_lmark)
             target_lmark  = cv2.resize(target_lmark, self.output_shape)
             target_lmark = self.transform(target_lmark)
 
-
+            reference_frames = torch.cat(reference_frames, dim = 0)
             input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames, \
-            'target_rgb': target_rgb,  'target_id': target_id \
-            }
+            'target_rgb': target_rgb,  'target_id': target_id ,  'dif_img': dif_rgb , 'mis_img' :mis_rgb}
             return input_dic
         # except:
         #     return None
 
-# prepare_data()
-# prepare_data()
-# dataset = LRSLmark2rgbDataset(data_root= '/mnt/ssd0/dat/lchen63/grid')
-# sample = dataset[0]
-# def dataset2dataloader(dataset, num_workers=1, shuffle=True):
-#     return DataLoader(dataset,
-#         batch_size = 1, 
-#         shuffle = shuffle,
-#         num_workers = num_workers,
-#         drop_last = True)
 

@@ -1,5 +1,4 @@
 import os
-from moviepy.video.io.ffmpeg_tools import ffmpeg_extract_subclip
 from face_tracker import _crop_video
 from pytube import YouTube
 yt_baseurl = 'https://www.youtube.com/watch?v='
@@ -27,9 +26,11 @@ for i in range(batch_length * (config.batch_id -1), batch_length * (config.batch
     # extract audio from video 
     person_path = os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain', p_id)
     chunk_txt = sorted(os.listdir(person_path))
-    for txt in chunk_txt:
-        if txt[-3:] !=  'txt':
-            os.remove(os.path.join(person_path,txt))
+    if len(chunk_txt) == 0:
+        continue
+    # for txt in chunk_txt:
+    #     if txt[-3:] !=  'txt':
+    #         os.remove(os.path.join(person_path,txt))
 
     f = open(os.path.join(person_path,chunk_txt[0][:-3] +'txt'), "r")
     f.readline()
@@ -50,8 +51,10 @@ for i in range(batch_length * (config.batch_id -1), batch_length * (config.batch
     for txt in chunk_txt:
         if txt[-4:] != '.txt':
             continue
-        print (txt)
         txt_path = os.path.join(person_path, txt)
+        if os.path.exists( txt_path[:-4] + '_crop.mp4'):
+            continue
+        
         try:
             f = open(txt_path, "r")
             start_frame = -1
