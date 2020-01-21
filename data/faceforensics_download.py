@@ -157,11 +157,6 @@ def double_check():
             #     print ('+++++' , filename, vtime1, vtime2)
         # if i == 10:
         #     break
-def faceforensics_face_cropper():
-    new_video_path = '/home/cxu-serve/p1/common/faceforensics/original_sequences/youtube/cropped/videos'
-
-    for i, v_name in enumerate(sorted(os.listdir(new_video_path))):
-        new_filename = os.path.join( new_video_path, v_name )
 
 
 

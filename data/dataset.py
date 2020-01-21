@@ -19,8 +19,11 @@ import mmcv
 from io import BytesIO
 from PIL import Image
 import sys
-sys.path.insert(1, '../utils')
+# sys.path.insert(1, '../utils')
+# from .. import utils
 from utils import util
+from utils import face_utils
+from torch.utils.data import DataLoader
 
 
 
@@ -164,3 +167,78 @@ class LRSLmark2rgbDataset(Dataset):
         #     return None
 
 
+
+class GRID_1D_lstm_landmark(Dataset):
+    def __init__(self,
+                 train='train'):
+        self.train = train
+        self.num_frames = 32
+        self.root_path = '/home/cxu-serve/p1/common/grid'
+        
+        if self.train=='train':
+            _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
+            self.datalist = pkl.load(_file)[:1]
+            _file.close()
+        elif self.train =='test':
+            _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
+            self.datalist = pkl.load(_file)[:1]
+            _file.close()
+        elif self.train =='demo' :
+            _file = open(os.path.join(self.root_path, "img_demo.pkl"), "rb")
+            self.demo_data = pkl.load(_file)
+            _file.close()
+
+    
+    def __getitem__(self, index):
+        # In training phase, it return real_image, wrong_image, text
+            # try:
+                lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_original.npy') 
+                mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
+                lmark = np.load(lmark_path)[:,:,:-1]
+                
+                for i in range(lmark.shape[1]):
+                    x = lmark[: , i,0]
+                    x = face_utils.smooth(x, window_len=5)
+                    lmark[: ,i,0 ] = x[2:-2]
+                    y = lmark[:, i, 1]
+                    y = face_utils.smooth(y, window_len=5)
+                    lmark[: ,i,1  ] = y[2:-2] 
+                lmark = torch.FloatTensor(lmark)
+                mfcc = np.load(mfcc_path)
+                example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
+                # r = random.choice(
+                #     [x for x in range(3,40)])
+                r = 35
+                mfccs = []
+                for ind in range(self.num_frames):
+                    t_mfcc =mfcc[(r + ind - 3)*4: (r + ind + 4)*4, 1:]
+                    t_mfcc = torch.FloatTensor(t_mfcc)
+                    mfccs.append(t_mfcc)
+                mfccs = torch.stack(mfccs, dim = 0)
+                landmark  =lmark[r : r + self.num_frames,:]
+
+                example_landmark = example_landmark.contiguous().view(-1)
+                landmark = landmark.contiguous().view( self.num_frames, -1 )
+
+                return example_landmark, landmark, mfccs
+            # except:
+            #     self.__getitem__(index + 1)
+       
+       
+    def __len__(self):
+        if self.train=='train':
+            return len(self.datalist)
+        elif self.train=='test':
+            return len(self.datalist)
+        else:
+            pass
+
+# dataset = GRID_1D_lstm_landmark( train='train')
+# data_loader = DataLoader(dataset,
+#                             batch_size=2,
+#                             num_workers=1,
+#                             shuffle=False, drop_last=True)
+# for i in range (1000):
+#     for step, (example_landmark, lmark, audio) in enumerate(data_loader):
+
+#         print (example_landmark.shape)
