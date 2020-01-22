@@ -6,10 +6,11 @@ from utils import util
 def prepare_data_lrs():
     path ='/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain'
     trainset = []
+    testset = []
     train_list = sorted(os.listdir(path))
-    batch_length = int(0.4 * len(train_list))
-    train_list = train_list[:batch_length]
-    for i in tqdm(range(batch_length)):
+    batch_length = int(0.1 * len(train_list))
+    # train_list = train_list[ 4 * batch_length:5 * batch_length ]
+    for i in tqdm(range(len(train_list))):
         p_id = train_list[i]
         person_path = os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain', p_id)
         chunk_txt = sorted(os.listdir(person_path))
@@ -18,13 +19,37 @@ def prepare_data_lrs():
                 continue
             print (txt)
             if np.load(os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain', p_id, txt)).shape[0]> 65:
-                trainset.append( [p_id, txt])
+                if i >  4 * batch_length and i < 5 * batch_length :
+                    testset.append( [p_id, txt])
+                else:
+                    trainset.append( [p_id, txt])
+
     print (len(trainset))
-    print (trainset[0])
+    print (len(testset))
    
     with open(os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4', 'pickle','train_lmark2img.pkl'), 'wb') as handle:
         pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+    with open(os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4', 'pickle','test_lmark2img.pkl'), 'wb') as handle:
+        pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
+def unzip_video():
+    path = '/home/cxu-serve/p1/common/grid/zip'
+    # zipfiles = os.listdir(path)
+    # for f in zipfiles:
+    #     if 'mpg_6000' in f:
+    #         command = 'tar -xvf ' + os.path.join(path, f) + ' -C ' + path
+    #         print (command)
+    #         os.system(command)
+            # break
+    for i in range (2, 35):
+        command = 'mv  ' + os.path.join(path , 's' + str(i)) + ' /home/cxu-serve/p1/common/grid/video2'
+        # old_path = os.path.join(path , 's' + str(i) ,'video', 'mpg_6000', '*')
+        # command = 'mv ' + old_path + ' ' + os.path.join(path , 's' + str(i))
+        # print (command)
+        os.system(command)
+        # command = 'rm -rf ' + os.path.join(path , 's' + str(i) ,'video')
+        # print (command)
+    
 
 def prepare_data_grid():
     path ='/home/cxu-serve/p1/common/grid'
@@ -35,9 +60,10 @@ def prepare_data_grid():
     for i in os.listdir(align_path):
         
         for vid in os.listdir( os.path.join(align_path, i ) ):
-            if os.path.exists(os.path.join( align_path ,  i , vid[:-6] + '_original.npy') ) :
+            if os.path.exists(os.path.join( align_path ,  i , vid[:-6] + '_original.npy') ) and os.path.exists(os.path.join( path , 'mfcc' ,  i , vid[:-6] + '_mfcc.npy') ) :
                 print ( os.path.join(align_path, i, vid[:-6] + '_crop.mp4'  ) )
-                lmarks.append( np.load(os.path.join( align_path ,  i , vid[:-6] + '_original.npy')) )
+                lmarks.append( np.load(os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))[:0] )
+                lmarks.append( np.load(os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))[-1:]) 
                 if  i == 's1' or i == 's2' or i == 's20' or i == 's22':
                     testset.append( [i , vid[:-6]] )
                 else:
@@ -61,5 +87,5 @@ def prepare_data_grid():
         pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
     
 
-
-prepare_data_grid()
+prepare_data_lrs()
+# unzip_video()

@@ -32,7 +32,7 @@ def landmark_extractor():
         for vid in videos:
             if vid[-5:] !=  'align':
                 continue
-            original_video_path =  os.path.join('/home/cxu-serve/p1/common/grid/video', p_id , vid[:-5] + 'mpg')
+            original_video_path =  os.path.join('/home/cxu-serve/p1/common/grid/video2', p_id , vid[:-5] + 'mpg')
             print (original_video_path)
             cropped_video_path = os.path.join( person_path, vid[:-6] + '_crop.mp4')
             lmark_path = cropped_video_path[:-9] +'_original.npy'

@@ -45,23 +45,24 @@ class LRSLmark2rgbDataset(Dataset):
         self.opt = opt
         self.root  = opt.dataroot
         if opt.isTrain:
-            if self.root == '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4' or opt.use_ft:
-                _file = open(os.path.join(self.root, 'pickle','train_lmark2img.pkl'), "rb")
-            else:
-                _file = open(os.path.join(self.root, 'pickle',  "train_lmark2img.pkl"), "rb")
+            _file = open(os.path.join(self.root, 'pickle','train_lmark2img.pkl'), "rb")
             self.data = pkl.load(_file)
             _file.close()
-        elif opt.demo:
+        else :
+            _file = open(os.path.join(self.root, 'pickle','test_lmark2img.pkl'), "rb")
+            self.data = pkl.load(_file)
+            _file.close()
+        # elif opt.demo:
 
-            _file = open(os.path.join(self.root, 'txt', "demo.pkl"), "rb")
+        #     _file = open(os.path.join(self.root, 'txt', "demo.pkl"), "rb")
             
-            self.data = pkl.load(_file)
-            _file.close()
+        #     self.data = pkl.load(_file)
+        #     _file.close()
 
-        else:
-            _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
-            self.data = pkl.load(_file)
-            _file.close()
+        # else:
+        #     _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
+        #     self.data = pkl.load(_file)
+        #     _file.close()
         print (len(self.data))
         
         self.transform = transforms.Compose([
@@ -160,7 +161,8 @@ class LRSLmark2rgbDataset(Dataset):
             target_lmark = self.transform(target_lmark)
 
             reference_frames = torch.cat(reference_frames, dim = 0)
-            input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames, \
+            target_img_path  = os.path.join(self.root, 'pretrain', v_id[0] , v_id[1][:5] , '%05d.png'%target_id  )
+            input_dic = {'v_id' : target_img_path, 'target_lmark': target_lmark, 'reference_frames': reference_frames, \
             'target_rgb': target_rgb,  'target_id': target_id ,  'dif_img': dif_rgb , 'mis_img' :mis_rgb}
             return input_dic
         # except:
@@ -177,11 +179,11 @@ class GRID_1D_lstm_landmark(Dataset):
         
         if self.train=='train':
             _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
-            self.datalist = pkl.load(_file)[:1]
+            self.datalist = pkl.load(_file)
             _file.close()
         elif self.train =='test':
             _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
-            self.datalist = pkl.load(_file)[:1]
+            self.datalist = pkl.load(_file)
             _file.close()
         elif self.train =='demo' :
             _file = open(os.path.join(self.root_path, "img_demo.pkl"), "rb")
