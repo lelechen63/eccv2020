@@ -87,8 +87,9 @@ def define_G(input_nc, output_nc, ngf, netG , n_downsample_global=3, n_blocks_gl
     return netG
 
 def define_D(input_nc, ndf, n_layers_D, norm='instance', use_sigmoid=False, num_D=1, getIntermFeat=False, gpu_ids=[]):        
-    norm_layer = get_norm_layer(norm_type=norm)   
+    norm_layer = get_norm_layer(norm_type=norm) 
     netD = MultiscaleDiscriminator(input_nc, ndf, n_layers_D, norm_layer, use_sigmoid, num_D, getIntermFeat)   
+    
     print(netD)
     if len(gpu_ids) > 0:
         assert(torch.cuda.is_available())
@@ -281,15 +282,16 @@ class GlobalGenerator1(nn.Module):
 
 
 class MultiscaleDiscriminator(nn.Module):
-    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d, 
+    def __init__(self, input_nc, ndf=64,   n_layers=3, norm_layer=nn.BatchNorm2d, 
                  use_sigmoid=False, num_D=3, getIntermFeat=False):
         super(MultiscaleDiscriminator, self).__init__()
         self.num_D = num_D
         self.n_layers = n_layers
         self.getIntermFeat = getIntermFeat
-     
+
         for i in range(num_D):
             netD = NLayerDiscriminator(input_nc, ndf, n_layers, norm_layer, use_sigmoid, getIntermFeat)
+            
             if getIntermFeat:                                
                 for j in range(n_layers+2):
                     setattr(self, 'scale'+str(i)+'_layer'+str(j), getattr(netD, 'model'+str(j)))                                   
@@ -319,10 +321,10 @@ class MultiscaleDiscriminator(nn.Module):
             result.append(self.singleD_forward(model, input_downsampled))
             if i != (num_D-1):
                 input_downsampled = self.downsample(input_downsampled)
-        for gg in result:
-            print ('====')
-            for g in gg:
-                print (g.shape)
+        # for gg in result:
+        #     print ('====')
+        #     for g in gg:
+        #         print (g.shape)
         return result
         
 # Defines the PatchGAN discriminator with the specified arguments.
@@ -379,6 +381,61 @@ class NLayerDiscriminator(nn.Module):
         else:
             return self.model(input)      
 
+class MisDiscriminator(nn.Module):
+    def __init__(self, input_nc, ndf=64, n_layers=3, norm_layer=nn.BatchNorm2d, use_sigmoid=False, getIntermFeat=False):
+        super(MisDiscriminator, self).__init__()
+        self.getIntermFeat = getIntermFeat
+        self.n_layers = n_layers
+        kw = 4
+        padw = 1  # int(np.ceil((kw-1.0)/2))
+
+        sequence = [[nn.Conv2d(input_nc, ndf, kernel_size=kw, stride=2, padding=padw), nn.LeakyReLU(0.2, True)]]    #64, 128
+
+        nf = ndf
+        for n in range(1, n_layers):
+            nf_prev = nf
+            if n % 2 ==0 :
+                nf = min(nf * 2, 512)
+            sequence += [[
+                nn.Conv2d(nf_prev, nf, kernel_size=kw, stride=2, padding=padw),
+                         nn.LeakyReLU(0.2, True)
+            ]]
+
+        nf_prev = nf
+        nf = min(nf * 2, 512)
+        sequence += [[
+            nn.Conv2d(nf_prev, nf, kernel_size=kw, stride=1, padding=padw),
+            nn.LeakyReLU(0.2, True)
+        ]]
+
+        sequence += [[nn.Conv2d(nf, 1, kernel_size=kw, stride=1, padding=padw)]]
+
+        if use_sigmoid:
+            sequence += [[nn.Sigmoid()]]
+
+        if getIntermFeat:
+            for n in range(len(sequence)):
+                setattr(self, 'model'+str(n), nn.Sequential(*sequence[n]))
+        else:
+            sequence_stream = []
+            for n in range(len(sequence)):
+                sequence_stream += sequence[n]
+            self.model = nn.Sequential(*sequence_stream)
+
+
+    def forward(self, input):
+        reference = input[:,:-6] 
+        lmark = input[:,-6: -3 ]
+        img = input[:, -3:] 
+        if self.getIntermFeat:
+            res = [input]
+            for n in range(self.n_layers+2):
+                model = getattr(self, 'model'+str(n))
+                res.append(model(res[-1]))
+            return res[1:]
+        else:
+            return self.model(input)      
+
 from torchvision import models
 class Vgg19(torch.nn.Module):
     def __init__(self, requires_grad=False):
@@ -411,3 +468,57 @@ class Vgg19(torch.nn.Module):
         h_relu5 = self.slice5(h_relu4)                
         out = [h_relu1, h_relu2, h_relu3, h_relu4, h_relu5]
         return out
+
+
+class AT_net(nn.Module):
+    def __init__(self):
+        super(AT_net, self).__init__()
+        norm_layer = nn.BatchNorm2d
+        activation=nn.ReLU(True)
+        ngf = 64
+        model = []
+        model += [nn.Conv2d(1 , ngf  , kernel_size=3, stride=1, padding=1),   # 64, 28, 12 
+                      norm_layer(ngf ), activation]
+
+        model += [nn.Conv2d( ngf, ngf * 2  , kernel_size=3, stride=2, padding=1),   # 128, 14, 6 
+                      norm_layer(ngf * 2), activation]
+        
+        model += [nn.Conv2d( ngf * 2, ngf * 2  , kernel_size=3, stride=1, padding=1),   # 128, 14, 6 
+                      norm_layer(ngf * 2), activation]
+        
+        model += [nn.Conv2d( ngf * 2, ngf * 4  , kernel_size=3, stride=1, padding=1),   # 256 7, 3
+                      norm_layer(ngf * 4), activation]
+
+        model += [nn.Conv2d( ngf * 4, ngf * 4  , kernel_size=3, stride=2, padding=1),   # 256 7, 3
+                      norm_layer(ngf * 4), activation]
+        self.audio_eocder = nn.Sequential( * model  )
+        self.audio_eocder_fc = nn.Sequential(
+            nn.Linear(256 *  7 * 3,2048),
+            nn.ReLU(True),
+            nn.Linear(2048,512),
+            nn.ReLU(True),
+       
+            )
+        self.lstm = nn.LSTM(512,256,3,batch_first = True)
+        self.lstm_fc = nn.Sequential(
+            nn.Linear(256, 68 * 2)
+            )
+
+    def forward(self, example_landmark, audio):
+        hidden = ( torch.autograd.Variable(torch.zeros(3, audio.size(0), 256).cuda()),
+                      torch.autograd.Variable(torch.zeros(3, audio.size(0), 256).cuda()))
+        lstm_input = []
+        for step_t in range(audio.size(1)):
+            current_audio = audio[ : ,step_t , :, :].unsqueeze(1)
+            current_feature = self.audio_eocder(current_audio)
+            current_feature = current_feature.view(current_feature.size(0), -1)
+            current_feature = self.audio_eocder_fc(current_feature)
+            # features = torch.cat([example_landmark_f,  current_feature], 1)
+            lstm_input.append(current_feature)
+        lstm_input = torch.stack(lstm_input, dim = 1)
+        lstm_out, hidden = self.lstm(lstm_input, hidden)
+        fc_out   = []
+        for step_t in range(audio.size(1)):
+            fc_in = lstm_out[:,step_t,:]
+            fc_out.append(self.lstm_fc(fc_in) + example_landmark)
+        return torch.stack(fc_out, dim = 1)
