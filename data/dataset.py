@@ -271,7 +271,7 @@ class FaceForensicsLmark2rgbDataset(Dataset):
                 lmark_rgb = self.transform(lmark_rgb)
                 reference_frames.append(torch.cat([rgb_t, lmark_rgb],0))  # (6, 256, 256)   
             ############################################################################
-            print (len(real_video) , len(lmark))
+            # print (len(real_video) , len(lmark))
             target_rgb = real_video[target_id]
             target_lmark = lmark[target_id]
             # mis_rgb = mmcv.VideoReader(mis_video_path)[random.randint(0, 64)]
