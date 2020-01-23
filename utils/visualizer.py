@@ -126,7 +126,6 @@ class Visualizer():
         links = []
 
         for label, image_numpy in visuals.items():
-            print (label, name)
             image_name = '%s_%s.jpg' % (name, label)
             save_path = os.path.join(image_dir, image_name)
             util.save_image(image_numpy, save_path)

@@ -25,8 +25,8 @@ class TrainOptions(BaseOptions):
 
         # for discriminators  
         self.parser.add_argument('--multi_dis', type=bool, default=False, help='use single discriminator or multiple discriminator')      
-        self.parser.add_argument('--num_D', type=int, default=2, help='number of discriminators to use')
-        self.parser.add_argument('--n_layers_D', type=int, default=3, help='only used if which_model_netD==n_layers')
+        self.parser.add_argument('--num_D', type=int, default=1, help='number of discriminators to use')
+        self.parser.add_argument('--n_layers_D', type=int, default=5, help='only used if which_model_netD==n_layers')
         self.parser.add_argument('--ndf', type=int, default=64, help='# of discrim filters in first conv layer')    
         self.parser.add_argument('--lambda_feat', type=float, default=10.0, help='weight for feature matching loss')                
         self.parser.add_argument('--no_ganFeat_loss', action='store_true', help='if specified, do *not* use discriminator feature matching loss')

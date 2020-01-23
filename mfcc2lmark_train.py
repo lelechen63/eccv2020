@@ -132,7 +132,7 @@ class Trainer():
                                   step+1, num_steps_per_epoch, loss,  t1-t0,  time.time() - t1))
                 # if (step) % (int(num_steps_per_epoch  / 2 )) == 0 and step != 0:
                 t0 = time.time()         
-            if epoch % 500 == 0:
+            if epoch + 1 % 10000 == 0:
                 lmark = lmark.view(config.batch_size, config.lstm_len, 68 * 2)
                 lmark = lmark.data.cpu().numpy()
                 fake_lmark = fake_lmark.view(config.batch_size, config.lstm_len, 68 * 2)
@@ -159,7 +159,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--lr",
                         type=float,
-                        default=0.00001)
+                        default=0.0002)
                         
     parser.add_argument("--beta1",
                         type=float,
@@ -178,7 +178,7 @@ def parse_args():
                         default=16)
     parser.add_argument("--max_epochs",
                         type=int,
-                        default=10000)
+                        default=1000000)
     parser.add_argument("--cuda",
                         default=True)
     parser.add_argument("--dataset_dir",
