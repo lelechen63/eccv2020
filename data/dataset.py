@@ -245,7 +245,7 @@ class FaceForensicsLmark2rgbDataset(Dataset):
             else:
                 input_indexs  = set(random.sample(range(0,64), self.num_frames))
                 # we randomly choose a target frame 
-                target_id =  random.randint( 64, v_length - 1)
+                target_id =  random.randint( 64, v_length - 2)
                    
             if type(target_id) == list:
                 target_id = target_id[0]
