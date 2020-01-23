@@ -302,6 +302,119 @@ class FaceForensicsLmark2rgbDataset(Dataset):
         #     return None
 
 
+
+
+class GridLmark2rgbDataset(Dataset):
+    """ Dataset object used to access the pre-processed VoxCelebDataset """
+    def __init__(self,opt):
+        """
+        Instantiates the Dataset.
+        :param root: Path to the folder where the pre-processed dataset is stored.
+        :param extension: File extension of the pre-processed video files.
+        :param shuffle: If True, the video files will be shuffled.
+        :param transform: Transformations to be done to all frames of the video files.
+        :param shuffle_frames: If True, each time a video is accessed, its frames will be shuffled.
+        """
+        self.output_shape   = tuple([opt.loadSize, opt.loadSize])
+        self.num_frames = opt.num_frames
+        self.opt = opt
+        self.root  = opt.dataroot
+        if opt.isTrain:
+            _file = open(os.path.join(self.root, 'pickle','train_audio2lmark_grid.pkl'), "rb")
+            self.data = pkl.load(_file)
+            _file.close()
+        else :
+            _file = open(os.path.join(self.root, 'pickle','test_audio2lmark_grid.pkl'), "rb")
+            self.data = pkl.load(_file)
+            _file.close()
+       
+        print (len(self.data))
+        
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+        ])
+
+
+    def __len__(self):
+        return len(self.data) 
+
+    
+    def name(self):
+        return 'GridLmark2rgbDataset'
+
+    def __getitem__(self, index):
+            lmark_path = os.path.join(self.root ,  'align' , self.data[index][0] , self.data[index][1] + '_original.npy') 
+            video_path = os.path.join(self.root ,  'align' , self.data[index][0] , self.data[index][1] + '_crop.mp4') 
+            lmark = np.load(lmark_path)[:,:,:2]
+            v_length = lmark.shape[0]
+            # real_video  = mmcv.VideoReader(video_path)
+
+            # sample frames for embedding network
+            if self.opt.use_ft:
+                if self.num_frames  ==1 :
+                    input_indexs = [0]
+                    target_id = 0
+                elif self.num_frames == 8:
+                    input_indexs = [0,7,15,23,31,39,47,55]
+                    target_id =  random.sample(input_indexs, 1)
+                    input_indexs = set(input_indexs ) - set(target_id)
+                    input_indexs =list(input_indexs) 
+
+                elif self.num_frames == 32:
+                    input_indexs = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63]
+                    target_id =  random.sample(input_indexs, 1)
+                    input_indexs = set(input_indexs ) - set(target_id)
+                    input_indexs =list(input_indexs)                    
+            else:
+                input_indexs  = set(random.sample(range(0,64), self.num_frames))
+                # we randomly choose a target frame 
+                target_id =  random.randint( 64, v_length - 2)
+                   
+            if type(target_id) == list:
+                target_id = target_id[0]
+            cap = cv2.VideoCapture(video_path)
+            real_video = []
+            while(cap.isOpened()):
+                ret, frame = cap.read()
+                if ret == True:
+                    real_video.append(frame)
+                    
+                else:
+                    break
+            reference_frames = []
+            for t in input_indexs:
+                rgb_t =   cv2.cvtColor(real_video[t],cv2.COLOR_BGR2RGB )
+                lmark_t = lmark[t]
+                lmark_rgb = util.plot_landmarks( lmark_t)
+                # resize  to 256
+                rgb_t  = cv2.resize(rgb_t, self.output_shape)
+                lmark_rgb  = cv2.resize(lmark_rgb, self.output_shape)
+                # to tensor
+                rgb_t = self.transform(rgb_t)
+                lmark_rgb = self.transform(lmark_rgb)
+                reference_frames.append(torch.cat([rgb_t, lmark_rgb],0))  # (6, 256, 256)   
+            ############################################################################
+            target_rgb = real_video[target_id]
+            target_lmark = lmark[target_id]
+            target_rgb = mmcv.bgr2rgb(target_rgb)
+            target_rgb = cv2.resize(target_rgb, self.output_shape)
+            target_rgb = self.transform(target_rgb)
+
+        
+            target_lmark = util.plot_landmarks(target_lmark)
+            target_lmark  = cv2.resize(target_lmark, self.output_shape)
+            target_lmark = self.transform(target_lmark)
+
+            reference_frames = torch.cat(reference_frames, dim = 0)
+            target_img_path  = os.path.join(video_path[:-4] , '%05d.png'%target_id  )
+            input_dic = {'v_id' : target_img_path, 'target_lmark': target_lmark, 'reference_frames': reference_frames, \
+            'target_rgb': target_rgb,  'target_id': target_id}# ,  'dif_img': dif_rgb , 'mis_img' :mis_rgb}
+            return input_dic
+        # except:
+        #     return None
+
+
 class GRID_1D_lstm_landmark(Dataset):
     def __init__(self,
                  train='train'):
@@ -310,7 +423,7 @@ class GRID_1D_lstm_landmark(Dataset):
         self.root_path = '/home/cxu-serve/p1/common/grid'
         
         if self.train=='train':
-            _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
+            _file = open(os.path.join(self.root_path,  'pickle','train_audio2lmark_grid.pkl'), "rb")
             self.datalist = pkl.load(_file)
             _file.close()
         elif self.train =='test':

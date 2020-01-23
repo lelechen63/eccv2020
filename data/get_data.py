@@ -105,16 +105,19 @@ def unzip_video():
     
 
 def prepare_data_grid():
-    path ='/home/cxu-serve/p1/common/grid'
+    # path ='/home/cxu-serve/p1/common/grid'
+    path = "/data/lchen63/grid/zip"
     trainset = []
     testset  =[]
     lmarks = []
     align_path = os.path.join( path , 'align')
-    for i in os.listdir(align_path):
-        
+
+    gg = os.listdir(align_path)
+    for j in tqdm(range( len(gg))):
+        i = gg[j]
         for vid in os.listdir( os.path.join(align_path, i ) ):
             if os.path.exists(os.path.join( align_path ,  i , vid[:-6] + '_original.npy') ) and os.path.exists(os.path.join( path , 'mfcc' ,  i , vid[:-6] + '_mfcc.npy') ) :
-                print ( os.path.join(align_path, i, vid[:-6] + '_crop.mp4'  ) )
+                # print ( os.path.join(align_path, i, vid[:-6] + '_crop.mp4'  ) )
                 lmarks.append( np.load(os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))[:0] )
                 lmarks.append( np.load(os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))[-1:]) 
                 if  i == 's1' or i == 's2' or i == 's20' or i == 's22':
@@ -138,7 +141,7 @@ def prepare_data_grid():
         pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
     with open(os.path.join(path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
         pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
-    
-prepare_data_faceforencs_oppo()
+prepare_data_grid() 
+# prepare_data_faceforencs_oppo()
 # prepare_data_lrs()
 # unzip_video()

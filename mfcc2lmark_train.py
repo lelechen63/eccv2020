@@ -113,10 +113,10 @@ class Trainer():
                     example_landmark = Variable(example_landmark.float())
 
                 fake_lmark= self.generator( example_landmark, audio)
-                print ('================================')
-                print (example_landmark[0,100:130])
-                print (fake_lmark[0,0,100:130])
-                print (lmark[0,0,100:130])
+                # print ('================================')
+                # print (example_landmark[0,100:130])
+                # print (fake_lmark[0,0,100:130])
+                # print (lmark[0,0,100:130])
                 loss =  self.mse_loss_fn(fake_lmark , lmark) 
                 loss.backward() 
                 self.opt_g.step()
@@ -132,14 +132,13 @@ class Trainer():
                                   step+1, num_steps_per_epoch, loss,  t1-t0,  time.time() - t1))
                 # if (step) % (int(num_steps_per_epoch  / 2 )) == 0 and step != 0:
                 t0 = time.time()         
-            if epoch + 1 % 10000 == 0:
+            if epoch + 1 % 100 == 0:
                 lmark = lmark.view(config.batch_size, config.lstm_len, 68 * 2)
                 lmark = lmark.data.cpu().numpy()
                 fake_lmark = fake_lmark.view(config.batch_size, config.lstm_len, 68 * 2)
                 fake_lmark = fake_lmark.data.cpu().numpy()
                 for indx in range(1):
                     for jj in range(min(config.lstm_len,32)):
-
                         name = "{}real_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)
                         util.plot_flmarks(lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
                         name = "{}fake_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)

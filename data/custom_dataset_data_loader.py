@@ -13,6 +13,9 @@ def CreateDataset(opt):
         # opt.dataroot = os.path.join(opt.dataroot , 'lrs3/lrs3_v0.4')
         dataset = FaceForensicsLmark2rgbDataset(opt)
     
+    elif opt.dataname == 'grid':
+        from data.dataset import GridLmark2rgbDataset
+        dataset = GridLmark2rgbDataset(opt)
 
     print("dataset [%s] was created" % (dataset.name()))
     # dataset.__init__(opt)
