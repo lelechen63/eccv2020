@@ -1,10 +1,10 @@
 # train on foceforensic dataset using base model
 
-CUDA_VISIBLE_DEVICES=3 python base_train.py --name base_facefor --dataname=facefor --debug --dataroot /mnt/Data/lchen63/faceforensics/original_sequences
+CUDA_VISIBLE_DEVICES=7,6,4   python base_train.py --gpu_ids=0,1,2  --name base_facefor --dataname=facefor --batchSize 128 --niter 10000  --dataroot  /mnt/Data/lchen63/faceforensics/original_sequences
 
 # train on lrs dataset using base model
 
 
-CUDA_VISIBLE_DEVICES=3 python base_train.py --name base_lrs
+#CUDA_VISIBLE_DEVICES=3 python base_train.py --name base_lrs
 
 
