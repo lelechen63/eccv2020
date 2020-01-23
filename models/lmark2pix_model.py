@@ -153,7 +153,7 @@ class Lmark2PixHDModel(BaseModel):
 
     def inference(self, references, target_lmark,  real_image):
         # Encode Inputs        
-        image = Variable(image) if image is not None else None
+        real_image = Variable(real_image) if real_image is not None else None
         references, target_lmark, real_image = self.encode_input(references, target_lmark, real_image, infer=True) 
         # Fake Generation
            

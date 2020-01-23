@@ -6,9 +6,9 @@ from utils.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
 
-class Lmark2PixHDModel(BaseModel):
+class Lmark2PixHD_MIS_Model(BaseModel):
     def name(self):
-        return 'Lmark2PixHDModel'
+        return 'Lmark2PixHD_MIS_Model'
     
     def init_loss_filter(self, use_gan_feat_loss, use_vgg_loss):
         flags = (True, use_gan_feat_loss, use_vgg_loss, True, True)
@@ -189,7 +189,7 @@ class Lmark2PixHDModel(BaseModel):
             print('update learning rate: %f -> %f' % (self.old_lr, lr))
         self.old_lr = lr
 
-class InferenceModel(Lmark2PixHDModel):
+class InferenceModel(Lmark2PixHD_MIS_Model):
     def forward(self, inp):
         references, target_lmark, image = inp
         return self.inference(references, target_lmark, image)
