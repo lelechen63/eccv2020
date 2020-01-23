@@ -106,7 +106,7 @@ def unzip_video():
 
 def prepare_data_grid():
     # path ='/home/cxu-serve/p1/common/grid'
-    path = "/data/lchen63/grid/zip"
+    path = "/mnt/Data/lchen63/grid"
     trainset = []
     testset  =[]
     lmarks = []
@@ -124,6 +124,8 @@ def prepare_data_grid():
                     testset.append( [i , vid[:-6]] )
                 else:
                     trainset.append( [i , vid[:-6]] )
+            else:
+                print (os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))
         # break
     print (len(trainset))
     print (len(testset))
