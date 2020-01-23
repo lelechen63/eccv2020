@@ -4,4 +4,4 @@ data/gg*
 basics/
 checkpoints/*
 sample/*
-
+results/*
