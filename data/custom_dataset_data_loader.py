@@ -1,15 +1,17 @@
 import torch.utils.data
 from data.base_data_loader import BaseDataLoader
-
+import os
 
 def CreateDataset(opt):
     dataset = None
-    if opt.use_lstm:
+    if opt.dataname == 'lrs':
         from data.dataset import LRSLmark2rgbDataset
+        # opt.dataroot = os.path.join(opt.dataroot , 'lrs3/lrs3_v0.4')
         dataset = LRSLmark2rgbDataset(opt)
-    else:
-        from data.dataset import LRSLmark2rgbDataset
-        dataset = LRSLmark2rgbDataset(opt)
+    elif opt.dataname == 'facefor':
+        from data.dataset import FaceForensicsLmark2rgbDataset
+        # opt.dataroot = os.path.join(opt.dataroot , 'lrs3/lrs3_v0.4')
+        dataset = FaceForensicsLmark2rgbDataset(opt)
     
 
     print("dataset [%s] was created" % (dataset.name()))

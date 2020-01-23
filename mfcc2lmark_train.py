@@ -149,9 +149,7 @@ class Trainer():
                             .format(config.model_dir,cc))
                         
                 cc += 1
-                
-        
- 
+                 
     def _reset_gradients(self):
         self.generator.zero_grad()
 

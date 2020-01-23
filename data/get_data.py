@@ -32,6 +32,32 @@ def prepare_data_lrs():
     with open(os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4', 'pickle','test_lmark2img.pkl'), 'wb') as handle:
         pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
+def prepare_data_faceforencs():
+    path = '/home/cxu-serve/p1/common/faceforensics/original_sequences/youtube/cropped'
+
+    # landmark_path = os.path.join(path, 'landmarks_seq')
+
+    # video_path = os.path.join(path, 'videos')
+    train_list = []
+    test_list = []
+    for i in range(1000):
+        lmark_path = os.path.join(path, 'landmarks_seq', '%03d.npy'%i)
+
+        video_path = os.path.join(path, 'videos', '%03d.mp4'%i)
+
+        print (lmark_path)
+        print (video_path)
+        if os.path.exists(lmark_path) and os.path.exists(video_path) :
+            if i < 800:
+                train_list.append([lmark_path, video_path])
+            else:
+                test_list.append([lmark_path, video_path])
+    
+    with open(os.path.join('/home/cxu-serve/p1/common/faceforensics/original_sequences/youtube', 'pickle','train_lmark2img.pkl'), 'wb') as handle:
+        pkl.dump(train_list, handle, protocol=pkl.HIGHEST_PROTOCOL)
+    with open(os.path.join('/home/cxu-serve/p1/common/faceforensics/original_sequences/youtube', 'pickle','test_lmark2img.pkl'), 'wb') as handle:
+        pkl.dump(test_list, handle, protocol=pkl.HIGHEST_PROTOCOL)
+
 def unzip_video():
     path = '/home/cxu-serve/p1/common/grid/zip'
     # zipfiles = os.listdir(path)
@@ -86,6 +112,6 @@ def prepare_data_grid():
     with open(os.path.join(path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
         pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
     
-
-prepare_data_lrs()
+prepare_data_faceforencs()
+# prepare_data_lrs()
 # unzip_video()
