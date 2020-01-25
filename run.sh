@@ -1,7 +1,6 @@
 # train on grid dataset using base model
 
-CUDA_VISIBLE_DEVICES=2   python base_train.py --gpu_ids=0  --name base_grid --dataname=grid --dataroot /home/cxu-serve/p1/common/grid --debug  # --batchSize 128 --niter 10000  
-
+CUDA_VISIBLE_DEVICES=5,3   python base_train.py --gpu_ids=0,1  --name base_grid --dataname=grid --dataroot /mnt/Data/lchen63/grid  --batchSize 128 --niter 10000  --nThreads 8 --n_layers_D=3  --num_D=2
 
 # train on foceforensic dataset using base model
 
