@@ -76,7 +76,7 @@ class Trainer():
         
         self.train_dataset = GRID_1D_lstm_landmark( train=config.is_train)
 
-        self.test_dataset = GRID_1D_lstm_landmark( train=False)
+        self.test_dataset = GRID_1D_lstm_landmark( train= False)
         
 
         self.data_loader = DataLoader(self.dataset,
@@ -84,12 +84,11 @@ class Trainer():
                                       num_workers=config.num_thread,
                                       shuffle=True, drop_last=True)
         
-        self.test_loader = DataLoader(self.dataset,
-                                      batch_size=config.batch_size,
+        self.test_loader = DataLoader(self.test_dataset,
+                                      batch_size=4,
                                       num_workers=config.num_thread,
                                       shuffle=True, drop_last=True)
         
-
     def fit(self):
         config = self.config
     
