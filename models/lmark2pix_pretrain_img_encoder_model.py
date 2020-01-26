@@ -43,7 +43,7 @@ class Lmark2PixHDModel(BaseModel):
         new_state_dict = OrderedDict()
         state_dict = torch.load('/home/cxu-serve/p1/common/weights/zkou2/face_bone.pt')
         for k, v in state_dict.items():
-            name = 'img_encoder.' + k # remove `module.`
+            name =  k[12:] # remove `module.`
             new_state_dict[name] = v
         
         gg = self.netG.img_encoder.state_dict()
