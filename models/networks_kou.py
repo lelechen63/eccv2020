@@ -328,7 +328,7 @@ class GlobalGenerator1_kou(nn.Module):
 
         self.img_encoder = nn.Sequential(*model)
         if pretrain:
-        	self.img_encoder.load('/home/cxu-serve/p1/common/weights/zkou2/face_bone.pt')
+        	self.img_encoder.load_state_dict(torch.load('/home/cxu-serve/p1/common/weights/zkou2/face_bone.pt'))
 
         model = []
         model = [nn.ReflectionPad2d(3), nn.Conv2d(
