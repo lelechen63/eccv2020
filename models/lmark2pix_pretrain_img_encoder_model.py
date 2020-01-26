@@ -5,6 +5,7 @@ from torch.autograd import Variable
 from utils.image_pool import ImagePool
 from .base_model import BaseModel
 from . import networks
+from collections import OrderedDict
 
 class Lmark2PixHDModel(BaseModel):
     def name(self):
@@ -39,6 +40,17 @@ class Lmark2PixHDModel(BaseModel):
 
        
         # load networks
+        new_state_dict = OrderedDict()
+        state_dict = torch.load('/home/cxu-serve/p1/common/weights/zkou2/face_bone.pt')
+        for k, v in state_dict.items():
+            name = 'img_encoder.' + k # remove `module.`
+            new_state_dict[name] = v
+        
+        gg = self.netG.img_encoder.state_dict()
+        print (gg.keys())
+        print ('=================================')
+        print (new_state_dict.keys())
+        self.netG.img_encoder.load_state_dict(new_state_dict)
         if not self.isTrain or opt.continue_train or opt.load_pretrain:
             pretrained_path = '' if not self.isTrain else opt.load_pretrain
             self.load_network(self.netG, 'G', opt.which_epoch, pretrained_path)            
@@ -67,8 +79,8 @@ class Lmark2PixHDModel(BaseModel):
 
             # initialize optimizers
             # optimizer G
-            
-            params = list(self.netG.parameters())
+           
+            params = list(self.netG.lmark_encoder.parameters()) + list(self.netG.fusion.parameters()) + list(self.netG.decoder.parameters())
                  
             self.optimizer_G = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))                            
 

@@ -281,6 +281,8 @@ class GlobalGenerator1(nn.Module):
         return self.decoder(feature)
 
 
+
+
 class MultiscaleDiscriminator(nn.Module):
     def __init__(self, input_nc, ndf=64,   n_layers=3, norm_layer=nn.BatchNorm2d, 
                  use_sigmoid=False, num_D=3, getIntermFeat=False):
