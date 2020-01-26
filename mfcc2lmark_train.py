@@ -55,10 +55,8 @@ def initialize_weights( net, init_type='normal', gain=0.02):
 
 class Trainer():
     def __init__(self, config):
-        if config.lstm == True:
-            self.generator = AT_net()
-        else:
-            self.generator = AT_single()
+        self.generator = AT_net()
+        
         self.l1_loss_fn =  nn.L1Loss()
         self.mse_loss_fn = nn.MSELoss()
         self.config = config
@@ -75,14 +73,18 @@ class Trainer():
        
         self.opt_g = torch.optim.Adam( self.generator.parameters(),
             lr=config.lr, betas=(config.beta1, config.beta2))
-        if config.dataset == 'lrw':
-            pass
-            # self.dataset = LRW_1D_lstm_landmark(config.dataset_dir, train=config.is_train)
-        else:
-            self.dataset = GRID_1D_lstm_landmark( train=config.is_train)
+        
+        self.train_dataset = GRID_1D_lstm_landmark( train=config.is_train)
+
+        self.test_dataset = GRID_1D_lstm_landmark( train=False)
         
 
         self.data_loader = DataLoader(self.dataset,
+                                      batch_size=config.batch_size,
+                                      num_workers=config.num_thread,
+                                      shuffle=True, drop_last=True)
+        
+        self.test_loader = DataLoader(self.dataset,
                                       batch_size=config.batch_size,
                                       num_workers=config.num_thread,
                                       shuffle=True, drop_last=True)
@@ -100,6 +102,7 @@ class Trainer():
         yLab = 'y'
         
         for epoch in range(self.start_epoch, config.max_epochs):
+            self.generator.train()
             for step, (example_landmark, lmark, audio) in enumerate(self.data_loader):
                 t1 = time.time()
 
@@ -132,7 +135,7 @@ class Trainer():
                                   step+1, num_steps_per_epoch, loss,  t1-t0,  time.time() - t1))
                 # if (step) % (int(num_steps_per_epoch  / 2 )) == 0 and step != 0:
                 t0 = time.time()         
-            if epoch + 1 % 100 == 0:
+            if epoch  % 100 == 0:
                 lmark = lmark.view(config.batch_size, config.lstm_len, 68 * 2)
                 lmark = lmark.data.cpu().numpy()
                 fake_lmark = fake_lmark.view(config.batch_size, config.lstm_len, 68 * 2)
@@ -148,6 +151,13 @@ class Trainer():
                             .format(config.model_dir,cc))
                         
                 cc += 1
+                self.generator.eval()
+                with torch.no_grad():
+                for step,  (example_landmark, lmark, audio, lmark_path) in enumerate(data_loader):
+                     answer = model(dev_batch)
+                     n_dev_correct += (torch.max(answer, 1)[1].view(dev_batch.label.size()) == dev_batch.label).sum().item()
+                     dev_loss = criterion(answer, dev_batch.label)
+
                  
     def _reset_gradients(self):
         self.generator.zero_grad()
