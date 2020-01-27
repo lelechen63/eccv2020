@@ -168,12 +168,13 @@ class Trainer():
                         lmark = lmark.data.cpu().numpy()
                         fake_lmark = fake_lmark.view(4, 75 , 68 * 2)
                         fake_lmark = fake_lmark.data.cpu().numpy()
-                        for indx in range(1):
-                            for jj in range(max(config.lstm_len,75)):
-                                name = "{}test_real_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)
-                                util.plot_flmarks(lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
-                                name = "{}test_fake_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)
-                                util.plot_flmarks(fake_lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
+                        if epoch % 100 ==0:
+                            for indx in range(1):
+                                for jj in range(max(config.lstm_len,75)):
+                                    name = "{}test_real_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)
+                                    util.plot_flmarks(lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
+                                    name = "{}test_fake_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)
+                                    util.plot_flmarks(fake_lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
                         if step == 3:
                             break
     def _reset_gradients(self):
