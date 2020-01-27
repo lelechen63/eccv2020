@@ -162,9 +162,9 @@ class Trainer():
                         loss =  self.mse_loss_fn(fake_lmark , lmark) 
                         print ('===========================')
                         print("[{}/{}][{}/{}]   loss1: {:.8f}".format(epoch+1, config.max_epochs, step+1, num_steps_per_epoch, loss))
-                        mark = lmark.view(config.batch_size, config.lstm_len, 68 * 2)
+                        mark = lmark.view(config.batch_size, 75 , 68 * 2)
                         lmark = lmark.data.cpu().numpy()
-                        fake_lmark = fake_lmark.view(config.batch_size, config.lstm_len, 68 * 2)
+                        fake_lmark = fake_lmark.view(config.batch_size, 75 , 68 * 2)
                         fake_lmark = fake_lmark.data.cpu().numpy()
                         for indx in range(1):
                             for jj in range(max(config.lstm_len,75)):
