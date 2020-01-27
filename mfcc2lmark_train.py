@@ -101,7 +101,7 @@ class Trainer():
         
         for epoch in range(self.start_epoch, config.max_epochs):
             self.generator.train()
-            for step, (example_landmark, lmark, audio, lmark_path) in enumerate(self.data_loader):
+            for step, (example_landmark, lmark, audio) in enumerate(self.data_loader):
                 t1 = time.time()
 
                 if config.cuda:
