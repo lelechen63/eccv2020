@@ -439,7 +439,6 @@ class GRID_1D_lstm_landmark(Dataset):
         # In training phase, it return real_image, wrong_image, text
             # try:
         if self.train == 'train':
-            print ('+++++', index)
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_original.npy') 
             mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
             lmark = np.load(lmark_path)[:,:,:-1]
@@ -469,7 +468,6 @@ class GRID_1D_lstm_landmark(Dataset):
 
             return example_landmark, landmark, mfccs
         else:
-            print ('------', index)
 
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_original.npy') 
             mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
