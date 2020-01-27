@@ -79,7 +79,7 @@ class Trainer():
         self.test_dataset = GRID_1D_lstm_landmark( train= False)
         
 
-        self.data_loader = DataLoader(self.dataset,
+        self.data_loader = DataLoader(self.train_dataset,
                                       batch_size=config.batch_size,
                                       num_workers=config.num_thread,
                                       shuffle=True, drop_last=True)
