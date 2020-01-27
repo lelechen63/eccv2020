@@ -439,6 +439,7 @@ class GRID_1D_lstm_landmark(Dataset):
         # In training phase, it return real_image, wrong_image, text
             # try:
         if self.train == 'train':
+            print ('+++++', index)
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_original.npy') 
             mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
             lmark = np.load(lmark_path)[:,:,:-1]
@@ -454,7 +455,7 @@ class GRID_1D_lstm_landmark(Dataset):
             mfcc = np.load(mfcc_path)
             example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
             r = random.choice(
-                [x for x in range(3,40)])
+                [x for x in range(3,39)])
             mfccs = []
             for ind in range(self.num_frames):
                 t_mfcc =mfcc[(r + ind - 3)*4: (r + ind + 4)*4, 1:]
@@ -468,6 +469,8 @@ class GRID_1D_lstm_landmark(Dataset):
 
             return example_landmark, landmark, mfccs
         else:
+            print ('------', index)
+
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_original.npy') 
             mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
             lmark = np.load(lmark_path)[:,:,:-1]
@@ -504,14 +507,13 @@ class GRID_1D_lstm_landmark(Dataset):
             return example_landmark, lmark, mfccs, lmark_path
 
        
-       
     def __len__(self):
         if self.train=='train':
             return len(self.datalist)
         elif self.train=='test':
             return len(self.datalist)
         else:
-            pass
+            print ('8888888888888')
 
 # dataset = GRID_1D_lstm_landmark( train='train')
 # data_loader = DataLoader(dataset,
