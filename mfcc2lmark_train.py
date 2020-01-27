@@ -102,7 +102,7 @@ class Trainer():
         
         for epoch in range(self.start_epoch, config.max_epochs):
             self.generator.train()
-            for step, (example_landmark, lmark, audio) in enumerate(self.data_loader):
+            for step, (example_landmark, lmark, audio, lmark_path) in enumerate(self.data_loader):
                 t1 = time.time()
 
                 if config.cuda:
@@ -134,6 +134,8 @@ class Trainer():
                                   step+1, num_steps_per_epoch, loss,  t1-t0,  time.time() - t1))
                 # if (step) % (int(num_steps_per_epoch  / 2 )) == 0 and step != 0:
                 t0 = time.time()         
+            
+            
             if epoch  % 100 == 0:
                 lmark = lmark.view(config.batch_size, config.lstm_len, 68 * 2)
                 lmark = lmark.data.cpu().numpy()
@@ -150,14 +152,25 @@ class Trainer():
                             .format(config.model_dir,cc))
                         
                 cc += 1
+            if epoch % 10==0:
                 self.generator.eval()
                 with torch.no_grad():
-                for step,  (example_landmark, lmark, audio, lmark_path) in enumerate(data_loader):
-                     answer = model(dev_batch)
-                     n_dev_correct += (torch.max(answer, 1)[1].view(dev_batch.label.size()) == dev_batch.label).sum().item()
-                     dev_loss = criterion(answer, dev_batch.label)
-
-                 
+                    for step,  (example_landmark, lmark, audio, lmark_path) in enumerate(self.test_loader):
+                        lmark    = Variable(lmark.float()).cuda()
+                        audio = Variable(audio.float()).cuda()
+                        example_landmark = Variable(example_landmark.float()).cuda()
+                        fake_lmark= self.generator( example_landmark, audio)
+                        loss =  self.mse_loss_fn(fake_lmark , lmark) 
+                        print ('===========================')
+                        print("[{}/{}][{}/{}]   loss1: {:.8f}".format(epoch+1, config.max_epochs, step+1, num_steps_per_epoch, loss))
+                        for indx in range(1):
+                            for jj in range(max(config.lstm_len,75)):
+                                name = "{}test_real_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)
+                                util.plot_flmarks(lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
+                                name = "{}test_fake_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)
+                                util.plot_flmarks(fake_lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
+                        if step == 3:
+                            break
     def _reset_gradients(self):
         self.generator.zero_grad()
 

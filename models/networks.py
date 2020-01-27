@@ -495,11 +495,12 @@ class AT_net(nn.Module):
         self.audio_eocder_fc = nn.Sequential(
             nn.Linear(256 *  7 * 3,2048),
             nn.ReLU(True),
+            nn.Dropout(0.5),
             nn.Linear(2048,512),
             nn.ReLU(True),
-       
+            nn.Dropout(0.5),
             )
-        self.lstm = nn.LSTM(512,256,3,batch_first = True)
+        self.lstm = nn.LSTM(512,256,3,batch_first = True, dropout=0.5)
         self.lstm_fc = nn.Sequential(
             nn.Linear(256, 68 * 2)
             )
