@@ -449,7 +449,7 @@ def plot_flmarks(pts, lab, xLim, yLim, xLab, yLab, figsize=(10, 10)):
     plt.xlim(xLim)
     plt.ylim(yLim)
     plt.gca().invert_yaxis()
-    plt.savefig(lab, dpi = 300, bbox_inches='tight')
+    plt.savefig(lab, dpi = 100, bbox_inches='tight')
     plt.clf()
     plt.close()
 

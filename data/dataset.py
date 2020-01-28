@@ -391,7 +391,7 @@ class GridLmark2rgbDataset(Dataset):
                 lmark_rgb  = cv2.resize(lmark_rgb, self.output_shape)
                 # to tensor
                 rgb_t = self.transform(rgb_t)
-                lmark_rgb = self.transform(lpwdmark_rgb)
+                lmark_rgb = self.transform(lmark_rgb)
                 reference_frames.append(torch.cat([rgb_t, lmark_rgb],0))  # (6, 256, 256)   
             ############################################################################
             target_rgb = real_video[target_id]
@@ -452,12 +452,16 @@ class GRID_1D_lstm_landmark(Dataset):
                 lmark[: ,i,1  ] = y[2:-2] 
             lmark = torch.FloatTensor(lmark)
             mfcc = np.load(mfcc_path)
+            left_append = mfcc[:12]
+            right_append = mfcc[-16:]
+            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
+            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
             example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
-            r = random.choice(
-                [x for x in range(3,39)])
+            r =random.choice(
+                [x for x in range(0,42)])
             mfccs = []
             for ind in range(self.num_frames):
-                t_mfcc =mfcc[(r + ind - 3)*4: (r + ind + 4)*4, 1:]
+                t_mfcc =mfcc[(r + ind )*4: (r + ind + 7)*4, 1:]
                 t_mfcc = torch.FloatTensor(t_mfcc)
                 mfccs.append(t_mfcc)
             mfccs = torch.stack(mfccs, dim = 0)
@@ -484,23 +488,22 @@ class GRID_1D_lstm_landmark(Dataset):
             mfcc = np.load(mfcc_path)
             example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
            
-            mfccs = []
-            r = 3
-            left_append = mfcc[:13]
-            right_append = mfcc[-14:]
+            left_append = mfcc[:12]
+            right_append = mfcc[-16:]
             mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
             mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            # print (mfcc.shape)
-
-            for ind in range( 75):
-                t_mfcc =mfcc[(r + ind - 3)*4: (r + ind + 4)*4, 1:]
+            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
+            r =random.choice(
+                [x for x in range(0,42)])
+            mfccs = []
+            for ind in range(self.num_frames):
+                t_mfcc =mfcc[(r + ind )*4: (r + ind + 7)*4, 1:]
                 t_mfcc = torch.FloatTensor(t_mfcc)
-                # print (ind, t_mfcc.shape)
                 mfccs.append(t_mfcc)
             mfccs = torch.stack(mfccs, dim = 0)
-
+            lmark  =lmark[r : r + self.num_frames,:]
             example_landmark = example_landmark.contiguous().view(-1)
-            lmark = lmark.contiguous().view(75, -1 )
+            lmark = lmark.contiguous().view(self.num_frames, -1 )
 
             return example_landmark, lmark, mfccs, lmark_path
 

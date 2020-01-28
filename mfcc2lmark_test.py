@@ -66,13 +66,13 @@ def parse_args():
                         default=1)
     parser.add_argument("--lstm_len",
                         type=int,
-                        default=75)
+                        default=32)
     parser.add_argument("--cuda",
                         default=True)
     
     parser.add_argument("--model_name",
                         type=str,
-                        default="./checkpoints/atnet/atnet_lstm_14.pth")
+                        default="./checkpoints/atnet/atnet_lstm_2.pth")
                         # default="/mnt/disk1/dat/lchen63/lrw/model/model_gan_r2/r_generator_38.pth")
                         # default='/media/lele/DATA/lrw/data2/model')
     parser.add_argument("--sample_dir",

@@ -105,8 +105,8 @@ def unzip_video():
     
 
 def prepare_data_grid():
-    # path ='/home/cxu-serve/p1/common/grid'
-    path = "/mnt/Data/lchen63/grid"
+    path ='/home/cxu-serve/p1/common/grid'
+    # path = "/mnt/Data/lchen63/grid"
     trainset = []
     testset  =[]
     lmarks = []

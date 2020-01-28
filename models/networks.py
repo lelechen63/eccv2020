@@ -74,8 +74,13 @@ def define_G(input_nc, output_nc, ngf, netG , n_downsample_global=3, n_blocks_gl
              n_blocks_local=3, norm='instance', gpu_ids=[]):    
     norm_layer = get_norm_layer(norm_type=norm) 
 
-    if netG == 'global':
+    if netG == 'base1':
         netG = GlobalGenerator1( input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, norm_layer) 
+    elif netG == 'base2':
+        netG = GlobalGenerator2( input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, norm_layer) 
+    
+    elif netG == 'base3':
+        netG = GlobalGenerator3( input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, norm_layer) 
 
     else:
         raise('generator not implemented!')
@@ -281,8 +286,260 @@ class GlobalGenerator1(nn.Module):
         return self.decoder(feature)
 
 
+class GlobalGenerator2(nn.Module):
+     # the most simple network with attention machenism, the input is I_0 + L_0 + L_i, the output is I_i. We concate all inputs in channel and encode, decode it.
+    def __init__(self,input_nc, output_nc, ngf = 64, n_downsampling=3, n_blocks=9, norm_layer=nn.BatchNorm2d,  pad_type='reflect'):
+        super(GlobalGenerator2, self).__init__()        
+        activation = nn.ReLU(True)    
+        self.input_nc = input_nc 
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation ]
+        ### downsample
+        model += [nn.Conv2d(ngf , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 128, 128 
+                      norm_layer(ngf  * 2), activation]
+        
+        model += [nn.Conv2d(ngf * 2 , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 64 
+                      norm_layer(ngf  * 2), activation]
+
+        model += [nn.Conv2d(ngf * 2 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 32 
+                      norm_layer(ngf  * 4), activation]
+
+        model += [nn.Conv2d(ngf * 4 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 16 
+                      norm_layer(ngf  * 4), activation]
+
+        model += [nn.Conv2d(ngf * 4 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 8
+                      norm_layer(ngf  * 8), activation]
+
+        model += [nn.Conv2d(ngf * 8 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 4
+                      norm_layer(ngf  * 8), activation]
+     
+
+        self.img_encoder = nn.Sequential(*model)
+
+        model = []
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(3, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation ]
+        ### downsample
+        model += [nn.Conv2d(ngf , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 128, 128 
+                      norm_layer(ngf  * 2), activation]
+        
+        model += [nn.Conv2d(ngf * 2 , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 64 
+                      norm_layer(ngf  * 2), activation]
+
+        model += [nn.Conv2d(ngf * 2 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 32 
+                      norm_layer(ngf  * 4), activation]
+
+        model += [nn.Conv2d(ngf * 4 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 16 
+                      norm_layer(ngf  * 4), activation]
+
+        model += [nn.Conv2d(ngf * 4 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 8
+                      norm_layer(ngf  * 8), activation]
+
+        model += [nn.Conv2d(ngf * 8 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 4
+                      norm_layer(ngf  * 8), activation]
+     
+        self.lmark_encoder = nn.Sequential(*model)
+
+        model = [nn.Conv2d(ngf * 16 , ngf  * 8, kernel_size=3, stride=1, padding=1),   # 512 4
+                      norm_layer(ngf  * 8), activation]
+        self.fusion = nn.Sequential(*model)
+
+        model = []
+        ###  adain resnet blocks
+        for i in range(n_blocks):
+            model += [ResnetBlock(ngf  * 8, padding_type=pad_type, activation=activation, norm_layer=norm_layer)]
+
+        ### upsample  
+        model += [nn.ConvTranspose2d(ngf * 8, ngf * 8, kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf * 8), activation] # 512, 8 , 8 
+
+        
+        
+        model += [nn.ConvTranspose2d(ngf * 8, ngf * 4, kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf * 4), activation] # 256, 16
+        
+        model += [nn.ConvTranspose2d(ngf * 4, ngf * 4, kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf * 4), activation] # 256, 32
+
+        model += [nn.ConvTranspose2d(ngf * 4, ngf * 2, kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf * 2), activation] # 128, 64
+
+        model += [nn.ConvTranspose2d(ngf * 2, ngf , kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf ), activation] #  64, 128
+        
+        model += [nn.ConvTranspose2d(ngf , ngf , kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf ), activation] #  64, 256
+
+        self.decoder = nn.Sequential(*model)
+
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0), nn.Tanh()]   
+
+        self.color = nn.Sequential(*model)
+
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0), nn.Sigmoid()]   
+
+        self.attention = nn.Sequential(*model)
+    
+    
+
+    def forward(self, reference, lmark ):
+        rgb_imgs = []
+        num_frames = int(self.input_nc /  6)
+        for i in range(num_frames):
+            rgb_imgs.append(reference[:,i * 6 :i * 6 + 3,:,: ])
+        average_rgb =sum(rgb_imgs) /num_frames
+        
+
+        ref_feature = self.img_encoder( reference)
+
+        lmark_feature = self.lmark_encoder( lmark)
+
+        current = torch.cat([ref_feature, lmark_feature], dim = 1)
+        feature = self.fusion(current)
+
+        decoded = self.decoder(feature)
+        color = self.color(decoded)
+
+        attention = self.attention(decoded)
+
+        output = attention * color + (1 - attention ) * average_rgb
+        
+        return output
 
 
+class GlobalGenerator3(nn.Module):
+     # the most simple network with skip connection, the input is I_0 + L_0 + L_i, the output is I_i. We concate all inputs in channel and encode, decode it.
+    def __init__(self,input_nc, output_nc, ngf = 64, n_downsampling=3, n_blocks=9, norm_layer=nn.BatchNorm2d,  pad_type='reflect'):
+        super(GlobalGenerator3, self).__init__()        
+        activation = nn.ReLU(True)    
+        self.input_nc = input_nc 
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation ]
+        ### downsample
+        model += [nn.Conv2d(ngf , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 128, 128 
+                      norm_layer(ngf  * 2), activation]
+        
+        model += [nn.Conv2d(ngf * 2 , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 64 
+                      norm_layer(ngf  * 2), activation]
+
+        self.img_encoder1 = nn.Sequential(*model)
+
+        model = [nn.Conv2d(ngf * 2 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 32 
+                      norm_layer(ngf  * 4), activation]
+
+        # self.img_encoder2 = nn.Sequential(*model)
+
+        model += [nn.Conv2d(ngf * 4 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 16 
+                      norm_layer(ngf  * 4), activation]
+
+        self.img_encoder3 = nn.Sequential(*model)
+        model = [nn.Conv2d(ngf * 4 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 8
+                      norm_layer(ngf  * 8), activation]
+        
+        # self.img_encoder4 = nn.Sequential(*model)
+        model += [nn.Conv2d(ngf * 8 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 4
+                      norm_layer(ngf  * 8), activation]
+     
+        self.img_encoder5 = nn.Sequential(*model)
+
+        model = []
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(3, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation ]
+        ### downsample
+        model += [nn.Conv2d(ngf , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 128, 128 
+                      norm_layer(ngf  * 2), activation]
+        
+        model += [nn.Conv2d(ngf * 2 , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 64 
+                      norm_layer(ngf  * 2), activation]
+
+        model += [nn.Conv2d(ngf * 2 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 32 
+                      norm_layer(ngf  * 4), activation]
+
+        model += [nn.Conv2d(ngf * 4 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 16 
+                      norm_layer(ngf  * 4), activation]
+
+        model += [nn.Conv2d(ngf * 4 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 8
+                      norm_layer(ngf  * 8), activation]
+
+        model += [nn.Conv2d(ngf * 8 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 4
+                      norm_layer(ngf  * 8), activation]
+     
+        self.lmark_encoder = nn.Sequential(*model)
+
+        model = [nn.Conv2d(ngf * 16 , ngf  * 8, kernel_size=3, stride=1, padding=1),   # 512 4
+                      norm_layer(ngf  * 8), activation]
+        self.fusion = nn.Sequential(*model)
+
+        model = []
+        ###  adain resnet blocks
+        for i in range(n_blocks):
+            model += [ResnetBlock(ngf  * 8, padding_type=pad_type, activation=activation, norm_layer=norm_layer)]
+
+        ### upsample  
+        model += [nn.ConvTranspose2d(ngf * 8, ngf * 8, kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf * 8), activation] # 512, 8 , 8 
+
+        # self.decoder4 = nn.Sequential(*model) 
+
+        
+        model += [nn.ConvTranspose2d(ngf * 8 , ngf * 4, kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf * 4), activation] # 256, 16
+        
+        self.decoder3 = nn.Sequential(*model)
+
+        model = [nn.ConvTranspose2d(ngf * 4 * 2, ngf * 4, kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf * 4), activation] # 256, 32
+
+        # self.decoder2 = nn.Sequential(*model)
+
+        model += [nn.ConvTranspose2d(ngf * 4 , ngf * 2, kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf * 2), activation] # 128, 64
+
+        self.decoder1 = nn.Sequential(*model)
+        model = [nn.ConvTranspose2d(ngf * 2 * 2, ngf , kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf ), activation] #  64, 128
+        
+        model += [nn.ConvTranspose2d(ngf , ngf , kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf ), activation] #  64, 256
+
+        model += [nn.ReflectionPad2d(3), nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0), nn.Tanh()]   
+
+        self.decoder = nn.Sequential(*model)
+    
+    
+
+    def forward(self, reference, lmark ):
+
+        ref_feature1 = self.img_encoder1( reference)  # 128 , 64
+
+        # ref_feature2 = self.img_encoder2( ref_feature1)  # 256, 32
+
+        ref_feature3 = self.img_encoder3( ref_feature1)  # 256, 16
+
+        # ref_feature4 = self.img_encoder4( ref_feature3)  # 512, 8
+        ref_feature5 = self.img_encoder5( ref_feature3)  # 512, 4
+
+        lmark_feature = self.lmark_encoder( lmark)
+
+        current = torch.cat([ref_feature5, lmark_feature], dim = 1)
+        feature = self.fusion(current)
+
+        # decode_feature4 = self.decoder4(feature) # 512, 8
+
+        # fused_decode_feature4 = torch.cat([decode_feature4, ref_feature4], dim = 1)
+
+        decode_feature3 = self.decoder3(feature) # 256, 16
+
+        fused_decode_feature3 = torch.cat([decode_feature3, ref_feature3], dim = 1)
+
+        # decode_feature2 = self.decoder2(fused_decode_feature3) # 256, 32
+
+        # fused_decode_feature2 = torch.cat([decode_feature2, ref_feature2], dim = 1)
+
+        decode_feature1 = self.decoder1(fused_decode_feature3) # 128, 64
+
+        fused_decode_feature1 = torch.cat([decode_feature1, ref_feature1], dim = 1)
+
+        output = self.decoder(fused_decode_feature1)
+
+        
+        return output
 class MultiscaleDiscriminator(nn.Module):
     def __init__(self, input_nc, ndf=64,   n_layers=3, norm_layer=nn.BatchNorm2d, 
                  use_sigmoid=False, num_D=3, getIntermFeat=False):

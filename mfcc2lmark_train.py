@@ -160,7 +160,7 @@ class Trainer():
                         example_landmark = Variable(example_landmark.float()).cuda()
                         fake_lmark= self.generator( example_landmark, audio)
                         loss =  self.mse_loss_fn(fake_lmark , lmark) 
-                        print ('===========================')
+                        print ('===========================', lmark_path)
                         print("[{}/{}][{}/{}]   loss1: {:.8f}".format(epoch+1, config.max_epochs, step+1, num_steps_per_epoch, loss))
                         # print (lmark.shape)
                         # print (fake_lmark.shape)
