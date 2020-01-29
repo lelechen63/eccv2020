@@ -158,62 +158,62 @@ def download_trainval(config, yt_baseurl):
             if os.path.exists( txt_path[:-4] + '_crop.mp4'):
                 continue
             print (txt_path)   
-            # try:
-            f = open(txt_path, "r")
-            start_frame = -1
-            previous = ''
-            counter = 0
-            line = f.readline()
-            
-            while line:
-                print (line)
-                print ('++', len(line))
-                if len(line) == 1:
-                    if start_frame == -1:
-                        line = f.readline()
-                        tmp  = f.readline()
-                        frame_id = tmp.split(' ')[0]
-                        start_frame = float(frame_id)
-                        print (start_frame, '+++++')
-                else:
-                    pass
-                        
-                previous = line
+            try:
+                f = open(txt_path, "r")
+                start_frame = -1
+                previous = ''
+                counter = 0
                 line = f.readline()
-                counter += 1
-            frame_id = previous.split(' ')[0]
-            end_frame = float(frame_id)
-            print (start_frame, end_frame)
-            start_time =  start_frame / 25.0
-            last_time = end_frame / 25.0 - start_time
-            print (start_time, last_time)
+                
+                while line:
+                    print (line)
+                    print ('++', len(line))
+                    if len(line) == 1:
+                        if start_frame == -1:
+                            line = f.readline()
+                            tmp  = f.readline()
+                            frame_id = tmp.split(' ')[0]
+                            start_frame = float(frame_id)
+                            print (start_frame, '+++++')
+                    else:
+                        pass
+                            
+                    previous = line
+                    line = f.readline()
+                    counter += 1
+                frame_id = previous.split(' ')[0]
+                end_frame = float(frame_id)
+                print (start_frame, end_frame)
+                start_time =  start_frame / 25.0
+                last_time = end_frame / 25.0 - start_time
+                print (start_time, last_time)
 
-            #cut video by start time and end time
-            command = 'ffmpeg -i ./tmp%05d/'%config.batch_id + 'tmp.' + tilename   + ' -ss {0:.2f}'.format(start_time) +' -strict -2 -t {0:.2f} -filter:v fps=fps=25 -y '.format(last_time)+ txt_path[:-3] + 'mp4'
-            print (command)
-            os.system(command)
-            print ('================== video extracted')
+                #cut video by start time and end time
+                command = 'ffmpeg -i ./tmp%05d/'%config.batch_id + 'tmp.' + tilename   + ' -ss {0:.2f}'.format(start_time) +' -strict -2 -t {0:.2f} -filter:v fps=fps=25 -y '.format(last_time)+ txt_path[:-3] + 'mp4'
+                print (command)
+                os.system(command)
+                print ('================== video extracted')
 
-            # #change video fps to 25 fps
-            # command = 'ffmpeg -i ' +  txt_path[:-3] + 'mp4' +  ' -strict -2 -t {0:.2f} -y '.format(last_time)+ txt_path[:-3] + 'mp4'
-            # print (command)
-            # os.system(command)
-            # print ('================== video extracted')
+                # #change video fps to 25 fps
+                # command = 'ffmpeg -i ' +  txt_path[:-3] + 'mp4' +  ' -strict -2 -t {0:.2f} -y '.format(last_time)+ txt_path[:-3] + 'mp4'
+                # print (command)
+                # os.system(command)
+                # print ('================== video extracted')
 
-            # extract audio
-            command = 'ffmpeg -i ' + txt_path[:-3] + 'mp4' + ' -ar 44100 -ac 2 -y  ' + txt_path[:-3] + 'wav'
-            print (command)
-            os.system(command)
+                # extract audio
+                command = 'ffmpeg -i ' + txt_path[:-3] + 'mp4' + ' -ar 44100 -ac 2 -y  ' + txt_path[:-3] + 'wav'
+                print (command)
+                os.system(command)
 
-            print ('================== audio extracted')
+                print ('================== audio extracted')
 
-            _crop_video(txt_path[:-3] + 'mp4', config.batch_id)
+                _crop_video(txt_path[:-3] + 'mp4', config.batch_id)
 
-            command = 'ffmpeg -framerate 25  -i ./temp%05d'%config.batch_id + '/%05d.png  -vcodec libx264  -vf format=yuv420p -y ' + txt_path[:-4] + '_crop.mp4'
-            os.system(command)
-            # except:
-            #     print ('************************')
-            #     continue
+                command = 'ffmpeg -framerate 25  -i ./temp%05d'%config.batch_id + '/%05d.png  -vcodec libx264  -vf format=yuv420p -y ' + txt_path[:-4] + '_crop.mp4'
+                os.system(command)
+            except:
+                print ('************************')
+                continue
             # break
         # break
 download_trainval(config, yt_baseurl)
