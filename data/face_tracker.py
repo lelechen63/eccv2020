@@ -19,7 +19,6 @@ import time
 from pathlib import Path
 from scipy.spatial.transform import Rotation as R
 res = 224
-import soft_renderer as sr
 import  utils.visualizer as Visualizer
 detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor('../basics/shape_predictor_68_face_landmarks.dat')
