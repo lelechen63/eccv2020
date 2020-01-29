@@ -135,5 +135,5 @@ def RT_compute():
         # break
     
 
-RT_compute()
+# RT_compute()
 # landmark_extractor()

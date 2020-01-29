@@ -21,7 +21,6 @@ def prepare_data_lrs():
         for txt in chunk_txt:
             if txt[-3:] !=  'npy':
                 continue
-            print (txt)
             if np.load(os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain', p_id, txt)).shape[0]> 65:
                 if i >  4 * batch_length and i < 5 * batch_length :
                     testset.append( [p_id, txt])
@@ -193,5 +192,5 @@ def prepare_standard2():
 
 # prepare_data_grid() 
 # prepare_data_faceforencs_oppo()
-# prepare_data_lrs()
+prepare_data_lrs()
 # unzip_video()
