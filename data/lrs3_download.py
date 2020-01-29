@@ -39,14 +39,14 @@ for i in range(batch_length * (config.batch_id -1), batch_length * (config.batch
     line = f.readline()
     url_tile = line.split(' ')[-1]
     yt_url = yt_baseurl + url_tile
-    # try:
-    yt = YouTube(yt_url)
-    yt.streams.first().download(output_path = './tmp%05d'%config.batch_id,filename = 'tmp')
-    tilename = os.listdir('./tmp%05d'%config.batch_id)[0].split('.')[-1]
-    # except:
-    print ('***********************')
-    print (train_list[i], yt_url)
-    continue
+    try:
+        yt = YouTube(yt_url)
+        yt.streams.first().download(output_path = './tmp%05d'%config.batch_id,filename = 'tmp')
+        tilename = os.listdir('./tmp%05d'%config.batch_id)[0].split('.')[-1]
+    except:
+        print ('***********************')
+        print (train_list[i], yt_url)
+        continue
 
     for txt in chunk_txt:
         if txt[-4:] != '.txt':
