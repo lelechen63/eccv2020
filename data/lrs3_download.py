@@ -71,6 +71,7 @@ for i in range(batch_length * (config.batch_id -1), batch_length * (config.batch
                     tmp  = f.readline()
                     frame_id = tmp.split(' ')[0]
                     start_frame = float(frame_id)
+                    print (start_frame. '+++++')
                 else:
                     frame_id = previous.split(' ')[0]
                     end_frame = float(frame_id)
