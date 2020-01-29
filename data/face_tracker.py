@@ -1,14 +1,10 @@
 from collections import OrderedDict
-from torch.autograd import Variable
-import torch
 import tempfile
 import shutil
 import numpy as np 
 import mmcv
 import scipy.ndimage.morphology
 import cv2 
-import torchvision.transforms as transforms
-import torchvision
 import dlib
 import face_alignment
 from scipy.spatial.transform import Rotation 
