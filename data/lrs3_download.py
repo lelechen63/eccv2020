@@ -14,7 +14,7 @@ def parse_args():
     return parser.parse_args()
 config = parse_args()
 root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4'
-train_list = sorted(os.listdir(   os.path.joint(root, 'pretrain') ))
+train_list = sorted(os.listdir(   os.path.joint(root, 'trainval') ))
 print (len(train_list))
 batch_length = int(0.1 * len(train_list))
 for i in range(batch_length * (config.batch_id -1), batch_length * (config.batch_id)):
@@ -24,7 +24,7 @@ for i in range(batch_length * (config.batch_id -1), batch_length * (config.batch
     p_id = train_list[i]
     # p_id = '1G8dQQrlbbA'
     # extract audio from video 
-    person_path = os.path.join(root, 'pretrain', p_id)
+    person_path = os.path.join(root, 'trainval', p_id)
     chunk_txt = sorted(os.listdir(person_path))
     if len(chunk_txt) == 0:
         continue
