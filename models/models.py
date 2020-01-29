@@ -14,7 +14,7 @@ def create_model(opt):
             model = Lmark2PixHDModel()
         else:
            model = InferenceModel()
-    elif opt.model == 'base1_pretrain':
+    elif opt.model == 'base4_pretrain':
         from .lmark2pix_pretrain_img_encoder_model import Lmark2PixHDModel, InferenceModel
         if opt.isTrain:
             model = Lmark2PixHDModel()

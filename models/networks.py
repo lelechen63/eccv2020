@@ -109,6 +109,8 @@ def define_G(input_nc, output_nc, ngf, netG , n_downsample_global=3, n_blocks_gl
     
     elif netG == 'base3':
         netG = GlobalGenerator3( input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, norm_layer) 
+    elif netG == 'base4':
+        netG = GlobalGenerator4( input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, norm_layer) 
 
     else:
         raise('generator not implemented!')
@@ -313,6 +315,108 @@ class GlobalGenerator1(nn.Module):
         
         return self.decoder(feature)
 
+
+
+
+class GlobalGenerator4(nn.Module):
+     # the most simple network, the input is I_0 + L_0 + L_i, the output is I_i. We concate all inputs in channel and encode, decode it.
+    def __init__(self,input_nc, output_nc, ngf = 64, n_downsampling=3, n_blocks=9, norm_layer=nn.BatchNorm2d,  pad_type='reflect'):
+        super(GlobalGenerator4, self).__init__()        
+        activation = nn.ReLU(True)     
+        norm_layer = nn.BatchNorm2d
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation ]
+        ### downsample
+        model += [nn.Conv2d(ngf , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 128, 128 
+                      norm_layer(ngf  * 2), activation]
+        
+        model += [nn.Conv2d(ngf * 2 , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 64 
+                      norm_layer(ngf  * 2), activation]
+
+        model += [nn.Conv2d(ngf * 2 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 32 
+                      norm_layer(ngf  * 4), activation]
+
+        model += [nn.Conv2d(ngf * 4 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 16 
+                      norm_layer(ngf  * 4), activation]
+
+        model += [nn.Conv2d(ngf * 4 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 8
+                      norm_layer(ngf  * 8), activation]
+
+        model += [nn.Conv2d(ngf * 8 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 4
+                      norm_layer(ngf  * 8), activation]
+     
+
+        self.img_encoder = nn.Sequential(*model)
+        norm_layer = nn.InstanceNorm2d
+        model = []
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(3, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation ]
+        ### downsample
+        model += [nn.Conv2d(ngf , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 128, 128 
+                      norm_layer(ngf  * 2), activation]
+        
+        model += [nn.Conv2d(ngf * 2 , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 64 
+                      norm_layer(ngf  * 2), activation]
+
+        model += [nn.Conv2d(ngf * 2 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 32 
+                      norm_layer(ngf  * 4), activation]
+
+        model += [nn.Conv2d(ngf * 4 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 16 
+                      norm_layer(ngf  * 4), activation]
+
+        model += [nn.Conv2d(ngf * 4 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 8
+                      norm_layer(ngf  * 8), activation]
+
+        model += [nn.Conv2d(ngf * 8 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 4
+                      norm_layer(ngf  * 8), activation]
+     
+        self.lmark_encoder = nn.Sequential(*model)
+
+        model = [nn.Conv2d(ngf * 16 , ngf  * 8, kernel_size=3, stride=1, padding=1),   # 512 4
+                      norm_layer(ngf  * 8), activation]
+        self.fusion = nn.Sequential(*model)
+
+        model = []
+        ###  adain resnet blocks
+        for i in range(n_blocks):
+            model += [ResnetBlock(ngf  * 8, padding_type=pad_type, activation=activation, norm_layer=norm_layer)]
+
+        ### upsample  
+        model += [nn.ConvTranspose2d(ngf * 8, ngf * 8, kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf * 8), activation] # 512, 8 , 8 
+
+        
+        
+        model += [nn.ConvTranspose2d(ngf * 8, ngf * 4, kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf * 4), activation] # 256, 16
+        
+        model += [nn.ConvTranspose2d(ngf * 4, ngf * 4, kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf * 4), activation] # 256, 32
+
+        model += [nn.ConvTranspose2d(ngf * 4, ngf * 2, kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf * 2), activation] # 128, 64
+
+        model += [nn.ConvTranspose2d(ngf * 2, ngf , kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf ), activation] #  64, 128
+        
+        model += [nn.ConvTranspose2d(ngf , ngf , kernel_size=3, stride=2, padding=1, output_padding=1),
+                            norm_layer(ngf ), activation] #  64, 256
+
+
+        model += [nn.ReflectionPad2d(3), nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0), nn.Tanh()]   
+
+        self.decoder = nn.Sequential(*model)
+    
+    
+
+    def forward(self, reference, lmark ):
+       
+        ref_feature = self.img_encoder( reference)
+
+        lmark_feature = self.lmark_encoder( lmark)
+
+        current = torch.cat([ref_feature, lmark_feature], dim = 1)
+        feature = self.fusion(current)
+        
+        return self.decoder(feature)
 
 class GlobalGenerator2(nn.Module):
      # the most simple network with attention machenism, the input is I_0 + L_0 + L_i, the output is I_i. We concate all inputs in channel and encode, decode it.
@@ -572,7 +676,8 @@ class GlobalGenerator4(nn.Module):
      # the most simple network with few shot learning , the input is I_0 + L_0 + L_i, the output is I_i. We concate all inputs in channel and encode, decode it.
     def __init__(self,input_nc, output_nc, ngf = 64, n_downsampling=3, n_blocks=9, norm_layer=nn.BatchNorm2d,  pad_type='reflect'):
         super(GlobalGenerator4, self).__init__()        
-        activation = nn.ReLU(True)     
+        activation = nn.ReLU(True)   
+        norm_layer=nn.BatchNorm2d 
         model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation ]
         ### downsample
         model += [nn.Conv2d(ngf , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 128, 128 
@@ -594,7 +699,7 @@ class GlobalGenerator4(nn.Module):
                       norm_layer(ngf  * 8), activation]
      
         self.img_encoder = nn.Sequential(*model)
-
+        norm_layer=nn.InstanceNorm2d
         model = []
         model = [nn.ReflectionPad2d(3), nn.Conv2d(3, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation ]
         ### downsample

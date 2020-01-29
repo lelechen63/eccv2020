@@ -14,7 +14,7 @@ def parse_args():
     return parser.parse_args()
 config = parse_args()
 root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4'
-train_list = sorted(os.listdir(   os.path.joint(root, 'trainval') ))
+train_list = sorted(os.listdir(   os.path.join(root, 'trainval') ))
 print (len(train_list))
 batch_length = int(0.1 * len(train_list))
 for i in range(batch_length * (config.batch_id -1), batch_length * (config.batch_id)):
