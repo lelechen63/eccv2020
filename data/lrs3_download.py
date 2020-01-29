@@ -64,6 +64,7 @@ for i in range(batch_length * (config.batch_id -1), batch_length * (config.batch
         
         while line:
             print (line)
+            print ('++', len(line))
             if len(line) == 1:
                 if start_frame == -1:
                     line = f.readline()
