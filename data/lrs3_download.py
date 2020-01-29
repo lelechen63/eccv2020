@@ -54,7 +54,7 @@ for i in range(batch_length * (config.batch_id -1), batch_length * (config.batch
         txt_path = os.path.join(person_path, txt)
         if os.path.exists( txt_path[:-4] + '_crop.mp4'):
             continue
-            
+        print (txt_path)   
         # try:
         f = open(txt_path, "r")
         start_frame = -1
@@ -63,6 +63,7 @@ for i in range(batch_length * (config.batch_id -1), batch_length * (config.batch
         line = f.readline()
         
         while line:
+            print (line)
             if len(line) == 1:
                 if start_frame == -1:
                     line = f.readline()
