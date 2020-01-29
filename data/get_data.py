@@ -3,6 +3,10 @@ import pickle as pkl
 import numpy as np
 from tqdm import tqdm
 from utils import util
+import face_tracker
+import cv2
+import face_alignment
+
 def prepare_data_lrs():
     path ='/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain'
     trainset = []
@@ -143,7 +147,51 @@ def prepare_data_grid():
         pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
     with open(os.path.join(path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
         pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
-prepare_data_grid() 
+
+def prepare_standard1():  # get cropped image by input the reference image
+    img_path = '/home/cxu-serve/p1/lchen63/voxceleb/unzip/tmp/tmp/00001_00030.png'
+    frame = cv2.imread(img_path)
+    x_list =  np.array([])
+    y_list = np.array([])
+    dis_list = np.array([])
+    videos = []
+    x_list, y_list, dis_list, videos, _ = face_tracker.crop_image(frame, count = 0)
+
+    dis = np.mean(dis_list)
+    print (dis)
+    top_left_x = x_list - (80 * dis / 90)
+    top_left_y = y_list - (100* dis / 90)
+    side_length = int((205 * dis / 90))
+
+    for i in tqdm(range(x_list.shape[0])):
+        if top_left_x[i] < 0 or top_left_y[i] < 0:
+            img_size = videos[i].shape
+            tempolate = np.ones((img_size[0] * 2, img_size[1]* 2 , 3), np.uint8) * 255
+            tempolate_middle  = [int(tempolate.shape[0]/2), int(tempolate.shape[1]/2)]
+            middle = [int(img_size[0]/2), int(img_size[1]/2)]
+            tempolate[tempolate_middle[0]  -middle[0]:tempolate_middle[0]+middle[0], tempolate_middle[1]-middle[1]:tempolate_middle[1]+middle[1], :] = videos[i]
+            top_left_x[i] = top_left_x[i] + tempolate_middle[0]  -middle[0]
+            top_left_y[i] = top_left_y[i] + tempolate_middle[1]  -middle[1]
+            roi = tempolate[int(top_left_x[i]):int(top_left_x[i]) + side_length ,int(top_left_y[i]):int(top_left_y[i]) + side_length]
+            roi =cv2.resize(roi,(256,256))
+            cv2.imwrite('./gg/%05d.png'%( i), roi)
+        else:
+            roi = videos[i][int(top_left_x[i]):int(top_left_x[i]) + side_length ,int(top_left_y[i]):int(top_left_y[i]) + side_length]
+            roi =cv2.resize(roi,(256,256))
+            cv2.imwrite('./gg/%05d.png'%( i), roi)
+
+def prepare_standard2():
+    standard_img = cv2.imread('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/00000.png')
+    fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda:0')
+    frame = cv2.cvtColor(standard_img,cv2.COLOR_BGR2RGB )
+
+    preds = fa.get_landmarks(frame)[0]
+    lmark_path = '/u/lchen63/Project/face_tracking_detection/eccv2020/basics/standard.npy'    
+    np.save(lmark_path, preds)
+    
+# prepare_standard2()
+
+# prepare_data_grid() 
 # prepare_data_faceforencs_oppo()
 # prepare_data_lrs()
 # unzip_video()

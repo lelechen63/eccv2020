@@ -5,8 +5,6 @@ from mpl_toolkits import mplot3d
 import argparse, os, fnmatch, shutil
 from collections import OrderedDict
 from scipy.spatial import procrustes
-from torch.autograd import Variable
-import torch
 from skimage import io
 import matplotlib.animation as manimation
 import matplotlib.lines as mlines
@@ -15,12 +13,10 @@ import cv2
 import math
 import copy
 import librosa
-import dlib
 import subprocess
 # from keras import backend as K
 from tqdm import tqdm
 from skimage import transform as tf
-import torchvision.transforms as transforms
 from PIL import Image
 
 from scipy.spatial.transform import Rotation as R
@@ -330,105 +326,6 @@ def openrate_metrix(lmark1, lmark2):
     return mse_metrix(open_rate1, open_rate2)  
         
     #input shape (68,3)
-    
-
-def write_video_wpts_wsound_unnorm(frames, sound, fs, path, fname, xLim, yLim):
-    try:
-        os.remove(os.path.join(path, fname+'.mp4'))
-        os.remove(os.path.join(path, fname+'.wav'))
-        os.remove(os.path.join(path, fname+'_ws.mp4'))
-    except:
-        print ('Exp')
-
-    if len(frames.shape) < 3:
-        frames = np.reshape(frames, (frames.shape[0], frames.shape[1]/2, 2))
-    print (frames.shape)
-
-    FFMpegWriter = manimation.writers['ffmpeg']
-    metadata = dict(title='Movie Test', artist='Matplotlib',
-                    comment='Movie support!')
-    writer = FFMpegWriter(fps=25, metadata=metadata)
-
-    fig = plt.figure(figsize=(10, 10))
-    l, = plt.plot([], [], 'ko', ms=4)
-
-
-    plt.xlim(xLim)
-    plt.ylim(yLim)
-
-    librosa.output.write_wav(os.path.join(path, fname+'.wav'), sound, fs)
-
-    lines = [plt.plot([], [], 'k')[0] for _ in range(3*len(dt))]
-
-    with writer.saving(fig, os.path.join(path, fname+'.mp4'), 150):
-        plt.gca().invert_yaxis()
-        for i in tqdm(range(frames.shape[0])):
-            l.set_data(frames[i,:,0], frames[i,:,1])
-            cnt = 0
-            for refpts in faceLmarkLookup:
-                lines[cnt].set_data([frames[i,refpts[1], 0], frames[i,refpts[0], 0]], [frames[i, refpts[1], 1], frames[i,refpts[0], 1]])
-                cnt+=1
-            writer.grab_frame()
-
-    cmd = 'ffmpeg -i '+os.path.join(path, fname)+'.mp4 -i '+os.path.join(path, fname)+'.wav -c:v copy -c:a aac -strict experimental '+os.path.join(path, fname)+'_ws.mp4'
-    subprocess.call(cmd, shell=True) 
-    print('Muxing Done')
-
-    os.remove(os.path.join(path, fname+'.mp4'))
-    os.remove(os.path.join(path, fname+'.wav'))
-
-def write_video_wpts_wsound(frames, sound, fs, path, fname, xLim, yLim):
-    try:
-        os.remove(os.path.join(path, fname+'.mp4'))
-        os.remove(os.path.join(path, fname+'.wav'))
-        os.remove(os.path.join(path, fname+'_ws.mp4'))
-    except:
-        print ('Exp')
-
-    if len(frames.shape) < 3:
-        frames = np.reshape(frames, (frames.shape[0], frames.shape[1]/2, 2))
-    print (frames.shape)
-
-    FFMpegWriter = manimation.writers['ffmpeg']
-    metadata = dict(title='Movie Test', artist='Matplotlib',
-                    comment='Movie support!')
-    writer = FFMpegWriter(fps=25, metadata=metadata)
-
-    fig = plt.figure(figsize=(10, 10))
-    l, = plt.plot([], [], 'ko', ms=4)
-
-
-    plt.xlim(xLim)
-    plt.ylim(yLim)
-
-    librosa.output.write_wav(os.path.join(path, fname+'.wav'), sound, fs)
-
-    rect = (0, 0, 600, 600)
-    
-    if frames.shape[1] == 20:
-        lookup = [[x[0] - 48, x[1] - 48] for x in Mouth]
-        print (lookup)
-    else:
-        lookup = faceLmarkLookup
-
-    lines = [plt.plot([], [], 'k')[0] for _ in range(3*len(lookup))]
-
-    with writer.saving(fig, os.path.join(path, fname+'.mp4'), 150):
-        plt.gca().invert_yaxis()
-        for i in tqdm(range(frames.shape[0])):
-            l.set_data(frames[i,:,0], frames[i,:,1])
-            cnt = 0
-            for refpts in lookup:
-                lines[cnt].set_data([frames[i,refpts[1], 0], frames[i,refpts[0], 0]], [frames[i, refpts[1], 1], frames[i,refpts[0], 1]])
-                cnt+=1
-            writer.grab_frame()
-
-    cmd = 'ffmpeg -y -i '+os.path.join(path, fname)+'.mp4 -i '+os.path.join(path, fname)+'.wav -c:v copy -c:a aac -strict experimental '+os.path.join(path, fname)+'_ws.mp4'
-    subprocess.call(cmd, shell=True) 
-    print('Muxing Done')
-
-    os.remove(os.path.join(path, fname+'.mp4'))
-    os.remove(os.path.join(path, fname+'.wav'))
 
 
 def shape_to_np(shape, dtype="int"):
@@ -532,7 +429,7 @@ def compare_vis(img,lmark1,lmark2):
 
 def plot_flmarks(pts, lab, xLim, yLim, xLab, yLab, figsize=(10, 10)):
     if len(pts.shape) != 2:
-        pts = np.reshape(pts, (pts.shape[0]/2, 2))
+        pts = pts.reshape( 68, 2)
 
     if pts.shape[0] == 20:
         lookup = [[x[0] - 48, x[1] - 48] for x in Mouth]
@@ -552,7 +449,7 @@ def plot_flmarks(pts, lab, xLim, yLim, xLab, yLab, figsize=(10, 10)):
     plt.xlim(xLim)
     plt.ylim(yLim)
     plt.gca().invert_yaxis()
-    plt.savefig(lab, dpi = 300, bbox_inches='tight')
+    plt.savefig(lab, dpi = 100, bbox_inches='tight')
     plt.clf()
     plt.close()
 
@@ -697,64 +594,7 @@ def labelcolormap(N):
             cmap[i, 2] = b
     return cmap
 
-class Colorize(object):
-    def __init__(self, n=35):
-        self.cmap = labelcolormap(n)
-        self.cmap = torch.from_numpy(self.cmap[:n])
 
-    def __call__(self, gray_image):
-        size = gray_image.size()
-        color_image = torch.ByteTensor(3, size[1], size[2]).fill_(0)
-
-        for label in range(0, len(self.cmap)):
-            mask = (label == gray_image[0]).cpu()
-            color_image[0][mask] = self.cmap[label][0]
-            color_image[1][mask] = self.cmap[label][1]
-            color_image[2][mask] = self.cmap[label][2]
-
-        return color_image
-
-def create_example(config, img_path = None):
-    detector = dlib.get_frontal_face_detector()
-    shape = os.path.join(config.data_path,'shape_predictor_68_face_landmarks.dat')
-    predictor = dlib.shape_predictor(shape)
-    roi,landmark = crop_image(img_path, detector, shape, predictor)
-    if np.sum(landmark[37:39,1] - landmark[40:42,1]) < -9 :
-        template = np.load(os.path.join(config.data_path,'base_68.npy'))
-    else:
-        template = np.load(os.path.join(config.data_path,'base_68_close.npy'))
-    pts2 = np.float32(template[27:45,:])
-    pts1 = np.float32(landmark[27:45,:])
-    tform = tf.SimilarityTransform()
-    tform.estimate(pts2,pts1)
-    dst = tf.warp(roi,tform,output_shape = (163,163))
-    dst = np.array(dst * 255 , dtype = np.uint8)
-    dst = dst[1:129,1:129,:]
-    cv2.imwrite(img_path.replace('.jpg','_region.jpg'), dst)
-    gray = cv2.cvtColor(dst, cv2.COLOR_BGR2GRAY)
-    rects = detector(gray, 1)
-    for (i, rect) in enumerate(rects):
-        shape = predictor(gray, rect)
-        shape = shape_to_np(shape)
-        
-        # for j in range(len(shape)):
-        #     x=int(shape[j][1])
-        #     y =int(shape[j][0])
-        #     cv2.circle(dst, (y, x), 1, (0, 0, 255), -1)
-        # cv2.imwrite(img_path.replace('.jpg','_lm.jpg'),dst)
-        np.save(img_path.replace('.jpg','.npy'),shape)
-    example_img = cv2.imread(img_path.replace('.jpg','_region.jpg'))
-    
-    transform = transforms.Compose([
-            transforms.ToTensor(),
-            transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
-        ])        
-    example_img = cv2.cvtColor(example_img, cv2.COLOR_BGR2RGB)
-    example_img = transform(example_img)
-
-    return example_img, shape
-        
-        
 
 def crop_image(image_path, detector, shape, predictor):
     
@@ -790,7 +630,7 @@ def crop_image(image_path, detector, shape, predictor):
       
 def image_to_video(sample_dir = None, video_name = None):
     
-    command = 'ffmpeg -framerate 25  -i ' + sample_dir +  '/%05d.png -c:v libx264 -y -vf format=yuv420p ' + video_name 
+    command = 'ffmpeg -framerate 25  -i ' + sample_dir +  '/%05d.png -c:v libx264 -y -vf "pad=ceil(iw/2)*2:ceil(ih/2)*2"  ' + video_name 
     #ffmpeg -framerate 25 -i real_%d.png -c:v libx264 -y -vf format=yuv420p real.mp4
     print (command)
     os.system(command)
@@ -874,62 +714,6 @@ def save_class_activation_on_image(org_img, activation_map, file_name):
     path_to_file = os.path.join('./results', file_name+'_Cam_On_Image.jpg')
     cv2.imwrite(path_to_file, np.uint8(255 * img_with_heatmap))
 
-
-def preprocess_image(cv2im, resize_im=True):
-    """
-        Processes image for CNNs
-    Args:
-        PIL_img (PIL_img): Image to process
-        resize_im (bool): Resize to 224 or not
-    returns:
-        im_as_var (Pytorch variable): Variable that contains processed float tensor
-    """
-    # mean and std list for channels (Imagenet)
-    mean = [0.5, 0.5, 0.5]
-    std = [0.5, 0.5, 0.5]
-    # Resize image
-    if resize_im:
-        cv2im = cv2.resize(cv2im, (128, 128))
-    im_as_arr = np.float32(cv2im)
-    im_as_arr = np.ascontiguousarray(im_as_arr[..., ::-1])
-    im_as_arr = im_as_arr.transpose(2, 0, 1)  # Convert array to D,W,H
-    # Normalize the channels
-    for channel, _ in enumerate(im_as_arr):
-        im_as_arr[channel] /= 255
-        im_as_arr[channel] -= mean[channel]
-        im_as_arr[channel] /= std[channel]
-    # Convert to float tensor
-    im_as_ten = torch.from_numpy(im_as_arr).float()
-    # Add one more channel to the beginning. Tensor shape = 1,3,224,224
-    im_as_ten.unsqueeze_(0)
-    im_as_ten = torch.FloatTensor(im_as_ten)
-    # Convert to Pytorch variable
-    im_as_var = Variable(im_as_ten, requires_grad=True)
-    return im_as_var
-
-
-def recreate_image(im_as_var):
-    """
-        Recreates images from a torch variable, sort of reverse preprocessing
-    Args:
-        im_as_var (torch variable): Image to recreate
-    returns:
-        recreated_im (numpy arr): Recreated image in array
-    """
-    reverse_mean = [-0.5, -0.5, -0.5]
-    reverse_std = [1/0.5, 1/0.5, 1/0.5]
-    recreated_im = copy.copy(im_as_var.data.numpy()[0])
-    for c in range(3):
-        recreated_im[c] /= reverse_std[c]
-        recreated_im[c] -= reverse_mean[c]
-    recreated_im[recreated_im > 1] = 1
-    recreated_im[recreated_im < 0] = 0
-    recreated_im = np.round(recreated_im * 255)
-
-    recreated_im = np.uint8(recreated_im).transpose(1, 2, 0)
-    # Convert RBG to GBR
-    recreated_im = recreated_im[..., ::-1]
-    return recreated_im
 
 
 def get_positive_negative_saliency(gradient):

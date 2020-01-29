@@ -458,7 +458,7 @@ class GRID_1D_lstm_landmark(Dataset):
             mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
             example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
             r =random.choice(
-                [x for x in range(0,42)])
+                [x for x in range(0,41)])
             mfccs = []
             for ind in range(self.num_frames):
                 t_mfcc =mfcc[(r + ind )*4: (r + ind + 7)*4, 1:]
@@ -473,7 +473,7 @@ class GRID_1D_lstm_landmark(Dataset):
             return example_landmark, landmark, mfccs
         else:
 
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_original.npy') 
+            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
             mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
             lmark = np.load(lmark_path)[:,:,:-1]
             
@@ -494,7 +494,7 @@ class GRID_1D_lstm_landmark(Dataset):
             mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
             example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
             r =random.choice(
-                [x for x in range(0,42)])
+                [x for x in range(0,41)])
             mfccs = []
             for ind in range(self.num_frames):
                 t_mfcc =mfcc[(r + ind )*4: (r + ind + 7)*4, 1:]

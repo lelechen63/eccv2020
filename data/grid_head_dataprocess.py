@@ -7,7 +7,8 @@ import face_alignment
 import numpy as np
 import cv2
 from face_tracker import _crop_video
-
+from utils import face_utils
+from scipy.spatial.transform import Rotation 
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -68,5 +69,71 @@ def landmark_extractor():
                 continue
         #     break
         # break
+
+
+def RT_compute():
+    consider_key = [1,2,3,4,5,11,12,13,14,15,27,28,29,30,31,32,33,34,35,39,42,36,45,17,21,22,26]
+    train_list = sorted(os.listdir('/home/cxu-serve/p1/common/grid/align'))
+    batch_length = int( len(train_list))
+    source = np.zeros((len(consider_key),3))
+    ff = np.load('../basics/standard.npy')
+    for m in range(len(consider_key)):
+        source[m] = ff[consider_key[m]]  
+    source = np.mat(source)
+    for i in tqdm(range(batch_length)):
+        p_id = train_list[i]
+        person_path = os.path.join('/home/cxu-serve/p1/common/grid/align', p_id)
+        videos = sorted(os.listdir(person_path))
+        for vid in videos:
+            if vid[-12:] !=  'original.npy':
+                continue
+            lmark_path = os.path.join( person_path,vid)
+            rt_path = os.path.join( person_path,vid[:-12] +'rt.npy')
+            front_path = os.path.join( person_path,vid[:-12] +'front.npy')
+            # normed_path  = os.path.join( person_path,vid[:-12] +'normed.npy')
+            # if os.path.exists(front_path):
+            #     continue
+            lmark = np.load(lmark_path)
+            ############################################## smooth the landmark
             
-landmark_extractor()
+            # for i in range(lmark.shape[1]):
+            #     x = lmark[: , i,0]
+            #     x = face_utils.smooth(x, window_len=5)
+            #     lmark[: ,i,0 ] = x[2:-2]
+            #     y = lmark[:, i, 1]
+            #     y = face_utils.smooth(y, window_len=5)
+            #     lmark[: ,i,1  ] = y[2:-2]
+            #     z = lmark[:, i, 2]
+            #     z = face_utils.smooth(z, window_len=5)
+            #     lmark[: ,i, 2  ] = z[2:-2]
+            # np.save(normed_path, lmark)
+            length = lmark.shape[0] 
+            lmark_part = np.zeros((length,len(consider_key),3))
+            RTs =  np.zeros((length,6))
+            frontlized =  np.zeros((length,68,3))
+            for j in range(length ):
+                for m in range(len(consider_key)):
+                    lmark_part[:,m] = lmark[:,consider_key[m]] 
+
+                target = np.mat(lmark_part[j])
+                ret_R, ret_t = face_utils.rigid_transform_3D( target, source)
+
+                source_lmark  = np.mat(lmark[j])
+
+                A2 = ret_R*source_lmark.T
+                A2+= np.tile(ret_t, (1, 68))
+                A2 = A2.T
+                frontlized[j] = A2
+                r = Rotation.from_dcm(ret_R)
+                vec = r.as_rotvec()             
+                RTs[j,:3] = vec
+                RTs[j,3:] =  np.squeeze(np.asarray(ret_t))            
+            np.save(rt_path, RTs)
+            np.save(front_path, frontlized)
+        print (front_path)
+            # break
+        # break
+    
+
+RT_compute()
+# landmark_extractor()

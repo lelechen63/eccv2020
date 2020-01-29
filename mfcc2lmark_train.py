@@ -85,9 +85,9 @@ class Trainer():
                                       shuffle=True, drop_last=True)
         
         self.test_loader = DataLoader(self.test_dataset,
-                                      batch_size=4,
+                                      batch_size=128,
                                       num_workers= 1,
-                                      shuffle=False, drop_last=True)
+                                      shuffle=True, drop_last=True)
     def fit(self):
         config = self.config
     
@@ -100,6 +100,33 @@ class Trainer():
         yLab = 'y'
         
         for epoch in range(self.start_epoch, config.max_epochs):
+            if epoch % 10==0:
+                self.generator.eval()
+                with torch.no_grad():
+                    for step,  (example_landmark, lmark, audio, lmark_path) in enumerate(self.test_loader):
+                        lmark    = Variable(lmark.float()).cuda()
+                        print (lmark.shape)
+                        audio = Variable(audio.float()).cuda()
+                        example_landmark = Variable(example_landmark.float()).cuda()
+                        fake_lmark= self.generator( example_landmark, audio)
+                        loss =  self.mse_loss_fn(fake_lmark , lmark) 
+                        print ('===========================', lmark_path)
+                        print("[{}/{}][{}/{}]   loss1: {:.8f}".format(epoch+1, config.max_epochs, step+1, num_steps_per_epoch, loss))
+                        # print (lmark.shape)
+                        # print (fake_lmark.shape)
+                        lmark = lmark.view(128, config.lstm_len , 68 * 2)
+                        lmark = lmark.data.cpu().numpy()
+                        fake_lmark = fake_lmark.view(128, config.lstm_len , 68 * 2)
+                        fake_lmark = fake_lmark.data.cpu().numpy()
+                        if (epoch+1) % 100 ==0:
+                            for indx in range(3):
+                                for jj in range(max(config.lstm_len,config.lstm_len)):
+                                    name = "{}test_real_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)
+                                    util.plot_flmarks(lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
+                                    name = "{}test_fake_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)
+                                    util.plot_flmarks(fake_lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
+                        if step == 3:
+                            break
             self.generator.train()
             for step, (example_landmark, lmark, audio) in enumerate(self.data_loader):
                 t1 = time.time()
@@ -151,32 +178,7 @@ class Trainer():
                             .format(config.model_dir,cc))
                         
                 cc += 1
-            if epoch % 10==0:
-                self.generator.eval()
-                with torch.no_grad():
-                    for step,  (example_landmark, lmark, audio, lmark_path) in enumerate(self.test_loader):
-                        lmark    = Variable(lmark.float()).cuda()
-                        audio = Variable(audio.float()).cuda()
-                        example_landmark = Variable(example_landmark.float()).cuda()
-                        fake_lmark= self.generator( example_landmark, audio)
-                        loss =  self.mse_loss_fn(fake_lmark , lmark) 
-                        print ('===========================', lmark_path)
-                        print("[{}/{}][{}/{}]   loss1: {:.8f}".format(epoch+1, config.max_epochs, step+1, num_steps_per_epoch, loss))
-                        # print (lmark.shape)
-                        # print (fake_lmark.shape)
-                        lmark = lmark.view(4, 75 , 68 * 2)
-                        lmark = lmark.data.cpu().numpy()
-                        fake_lmark = fake_lmark.view(4, 75 , 68 * 2)
-                        fake_lmark = fake_lmark.data.cpu().numpy()
-                        if epoch % 100 ==0:
-                            for indx in range(1):
-                                for jj in range(max(config.lstm_len,75)):
-                                    name = "{}test_real_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)
-                                    util.plot_flmarks(lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
-                                    name = "{}test_fake_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)
-                                    util.plot_flmarks(fake_lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
-                        if step == 3:
-                            break
+            
     def _reset_gradients(self):
         self.generator.zero_grad()
 
