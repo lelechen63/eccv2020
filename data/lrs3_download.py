@@ -16,7 +16,7 @@ config = parse_args()
 def download_pretrain(config, yt_baseurl):
     # root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4'
     root = '/mnt/Data02/lchen63/lrs/'
-    train_list = sorted(os.listdir(   os.path.join(root, 'trainval') ))
+    train_list = sorted(os.listdir(   os.path.join(root, 'pretrain') ))
     print (len(train_list))
     batch_length = int(0.1 * len(train_list))
     for i in range(batch_length * (config.batch_id -1), batch_length * (config.batch_id)):
@@ -26,7 +26,7 @@ def download_pretrain(config, yt_baseurl):
         p_id = train_list[i]
         # p_id = '1G8dQQrlbbA'
         # extract audio from video 
-        person_path = os.path.join(root, 'trainval', p_id)
+        person_path = os.path.join(root, 'pretrain', p_id)
         chunk_txt = sorted(os.listdir(person_path))
         if len(chunk_txt) == 0:
             continue
@@ -64,15 +64,12 @@ def download_pretrain(config, yt_baseurl):
             line = f.readline()
             
             while line:
-                print (line)
-                print ('++', len(line))
                 if len(line) == 1:
                     if start_frame == -1:
                         line = f.readline()
                         tmp  = f.readline()
                         frame_id = tmp.split(' ')[0]
                         start_frame = float(frame_id)
-                        print (start_frame, '+++++')
                     else:
                         frame_id = previous.split(' ')[0]
                         end_frame = float(frame_id)
@@ -157,7 +154,6 @@ def download_trainval(config, yt_baseurl):
             txt_path = os.path.join(person_path, txt)
             if os.path.exists( txt_path[:-4] + '_crop.mp4'):
                 continue
-            print (txt_path)   
             try:
                 f = open(txt_path, "r")
                 start_frame = -1
@@ -166,8 +162,6 @@ def download_trainval(config, yt_baseurl):
                 line = f.readline()
                 
                 while line:
-                    print (line)
-                    print ('++', len(line))
                     if len(line) == 1:
                         if start_frame == -1:
                             line = f.readline()
