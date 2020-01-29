@@ -46,8 +46,8 @@ class Lmark2PixHDModel(BaseModel):
             name =  k[12:] # remove `module.`
             new_state_dict[name] = v
         
-        gg = self.netG.img_encoder.state_dict()
-        print (gg.keys())
+        gg = self.netG.img_encoder#.state_dict()
+        print (gg)
         print ('=================================')
         print (new_state_dict.keys())
         self.netG.img_encoder.load_state_dict(new_state_dict)
