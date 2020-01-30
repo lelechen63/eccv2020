@@ -133,7 +133,70 @@ def RT_compute():
         print (front_path)
             # break
         # break
-    
+import torch
+import random
+from sklearn.decomposition import PCA
+from utils import face_utils
 
+def pca_lmark_grid():
+    train_list = sorted(os.listdir('/home/cxu-serve/p1/common/grid/align'))
+    batch_length = int( len(train_list))
+    landmarks = []
+    k = 20
+    for i in tqdm(range(batch_length)):
+        p_id = train_list[i]
+        person_path = os.path.join('/home/cxu-serve/p1/common/grid/align', p_id)
+        videos = sorted(os.listdir(person_path))
+        for vid in videos:
+            
+            if vid[-9:] !=  'front.npy':
+                continue
+            lmark_path = os.path.join( person_path,vid)
+            lmark = np.load(lmark_path)[:,:,:-1]
+            if lmark.shape[0]< 70:
+                continue
+            for i in range(lmark.shape[1]):
+                x = lmark[: , i,0]
+                x = face_utils.smooth(x, window_len=5)
+                lmark[: ,i,0 ] = x[2:-2]
+                y = lmark[:, i, 1]
+                y = face_utils.smooth(y, window_len=5)
+                lmark[: ,i,1  ] = y[2:-2] 
+            indexs = random.sample(range(0,70), 20)
+            for i in indexs:
+                landmarks.append(torch.from_numpy(lmark[i]))
+        #     if len(landmarks) ==100:
+        #         break
+        # break
+    landmarks = np.stack(landmarks)
+    print (landmarks.shape)
+    # landmarks = landmarks[:,:,:2]
+    # print (landmarks.shape)
+    landmarks = landmarks.reshape(landmarks.shape[0], 136)
+    # mean = np.mean(landmarks,0)
+    # print (mean)
+    pca = PCA(n_components=20)
+    pca.fit(landmarks)
+    
+    np.save('../basics/mean_grid_front.npy', pca.mean_)
+    # landmarks = landmarks - mean.expand_as(landmarks)
+
+    # U,S,V  = torch.svd(torch.t(landmarks))
+    np.save('../basics/U_grid_front.npy',  pca.components_)
+    # data_reduced = np.dot(landmarks - pca.mean_, pca.components_.T)
+    # data_original = np.dot(data_reduced, pca.components_) + pca.mean_
+
+pca_lmark_grid()
+
+# data = np.load('/home/cxu-serve/p1/common/grid/align/s1/lwae8n_front.npy')[:,:,:2]
+# data = data.reshape(data.shape[0], 136)
+# print (data.shape)
+# mean = np.load('../basics/mean_grid_front.npy')
+# component = np.load('../basics/U_grid_front.npy')
+# data_reduced = np.dot(data - mean, component.T)
+
+# data_original = np.dot(data_reduced,component) + mean
+# np.save( 'gg.npy', data_original )
+# print (data - data_original)
 # RT_compute()
 # landmark_extractor()

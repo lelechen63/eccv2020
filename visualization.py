@@ -11,10 +11,14 @@ import sys
 def vis():
     # v_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/00j9bKdiOjk/00001_crop.mp4'
     # lmark_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/00j9bKdiOjk/00001_original.npy'
-    # lmark_path = '/home/cxu-serve/p1/common/grid/align/s10/swwz9a_front.npy'
-    lmark_path ='/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/0MMSpsvqiG8/00004_original.npy'
-    # v_path = '/home/cxu-serve/p1/common/grid/align/s10/swwz9a_crop.mp4'
-    v_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/0MMSpsvqiG8/00004_crop.mp4'
+    lmark_path = '/home/cxu-serve/p1/common/grid/align/s1/lwae8n_front.npy'
+    gg_path = './basics/mean_grid_front.npy'
+
+    lmark2 = np.load(gg_path)
+    lmark2 = lmark2.reshape( 68 , 2)
+    # lmark_path ='/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/0MMSpsvqiG8/00004_original.npy'
+    v_path = '/home/cxu-serve/p1/common/grid/align/s1/lwae8n_crop.mp4'
+    # v_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/0MMSpsvqiG8/00004_crop.mp4'
     cap  =  cv2.VideoCapture(v_path)
     lmark = np.load(lmark_path)
     count = 0
@@ -42,6 +46,20 @@ def vis():
 
             ax = fig.add_subplot(1, 3, 2)
             ax.imshow(frame)
+
+            ax = fig.add_subplot(1, 3, 3)
+            ax.imshow(frame)
+            preds = lmark2
+            ax.plot(preds[0:17,0],preds[0:17,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+            ax.plot(preds[17:22,0],preds[17:22,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+            ax.plot(preds[22:27,0],preds[22:27,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+            ax.plot(preds[27:31,0],preds[27:31,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+            ax.plot(preds[31:36,0],preds[31:36,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+            ax.plot(preds[36:42,0],preds[36:42,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+            ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+            ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+            ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='w',lw=1) 
+            ax.axis('off')
             # lmark_rgb = util.plot_landmarks( preds)
             # ax = fig.add_subplot(1, 3, 2)
             # ax.imshow(lmark_rgb)

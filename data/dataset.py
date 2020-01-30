@@ -515,6 +515,117 @@ class GRID_1D_lstm_landmark(Dataset):
             return len(self.datalist)
         else:
             print ('8888888888888')
+class GRID_1D_lstm_pca_landmark(Dataset):
+    def __init__(self,
+                 train='train'):
+        self.train = train
+        self.num_frames = 32
+        self.root_path = '/home/cxu-serve/p1/common/grid'
+        
+        if self.train=='train':
+            _file = open(os.path.join(self.root_path,  'pickle','train_audio2lmark_grid.pkl'), "rb")
+            self.datalist = pkl.load(_file)
+            _file.close()
+        elif self.train =='test':
+            _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
+            self.datalist = pkl.load(_file)
+            _file.close()
+        elif self.train =='demo' :
+            _file = open(os.path.join(self.root_path, "img_demo.pkl"), "rb")
+            self.demo_data = pkl.load(_file)
+            _file.close()
+
+        self.mean =  np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/mean_grid_front.npy')
+        self.component = np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/U_grid_front.npy')
+
+# data_original = np.dot(data_reduced,component) + mean
+    def __getitem__(self, index):
+        # In training phase, it return real_image, wrong_image, text
+            # try:
+        if self.train == 'train':
+            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_original.npy') 
+            mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
+            lmark = np.load(lmark_path)[:,:,:2]
+            
+            for i in range(lmark.shape[1]):
+                x = lmark[: , i,0]
+                x = face_utils.smooth(x, window_len=5)
+                lmark[: ,i,0 ] = x[2:-2]
+                y = lmark[:, i, 1]
+                y = face_utils.smooth(y, window_len=5)
+                lmark[: ,i,1  ] = y[2:-2] 
+            lmark = lmark.reshape(lmark.shape[0], 136)
+            lmark = np.dot(lmark - self.mean, self.component.T)
+
+            lmark = torch.FloatTensor(lmark)
+            mfcc = np.load(mfcc_path)
+            left_append = mfcc[:12]
+            right_append = mfcc[-16:]
+            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
+            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
+            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
+            r =random.choice(
+                [x for x in range(0,41)])
+            mfccs = []
+            for ind in range(self.num_frames):
+                t_mfcc =mfcc[(r + ind )*4: (r + ind + 7)*4, 1:]
+                t_mfcc = torch.FloatTensor(t_mfcc)
+                mfccs.append(t_mfcc)
+            mfccs = torch.stack(mfccs, dim = 0)
+            landmark  =lmark[r : r + self.num_frames,:]
+
+            # example_landmark = example_landmark.contiguous().view(-1)
+            # landmark = landmark.contiguous().view( self.num_frames, -1 )
+
+            return example_landmark, landmark, mfccs
+        else:
+
+            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
+            mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
+            lmark = np.load(lmark_path)[:,:,:-1]
+            
+            for i in range(lmark.shape[1]):
+                x = lmark[: , i,0]
+                x = face_utils.smooth(x, window_len=5)
+                lmark[: ,i,0 ] = x[2:-2]
+                y = lmark[:, i, 1]
+                y = face_utils.smooth(y, window_len=5)
+                lmark[: ,i,1  ] = y[2:-2] 
+            lmark = lmark.reshape(lmark.shape[0], 136)
+            # print (lmark.shape, self.mean.shape, self.component.T.shape)
+            lmark = np.dot(lmark - self.mean, self.component.T)
+            lmark = torch.FloatTensor(lmark)
+            
+            mfcc = np.load(mfcc_path)
+            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
+           
+            left_append = mfcc[:12]
+            right_append = mfcc[-16:]
+            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
+            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
+            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
+            r =random.choice(
+                [x for x in range(0,41)])
+            mfccs = []
+            for ind in range(self.num_frames):
+                t_mfcc =mfcc[(r + ind )*4: (r + ind + 7)*4, 1:]
+                t_mfcc = torch.FloatTensor(t_mfcc)
+                mfccs.append(t_mfcc)
+            mfccs = torch.stack(mfccs, dim = 0)
+            lmark  =lmark[r : r + self.num_frames,:]
+            # example_landmark = example_landmark.contiguous().view(-1)
+            # lmark = lmark.contiguous().view(self.num_frames, -1 )
+
+            return example_landmark, lmark, mfccs, lmark_path
+
+       
+    def __len__(self):
+        if self.train=='train':
+            return len(self.datalist)
+        elif self.train=='test':
+            return len(self.datalist)
+        else:
+            print ('8888888888888')
 
 # dataset = GRID_1D_lstm_landmark( train='train')
 # data_loader = DataLoader(dataset,

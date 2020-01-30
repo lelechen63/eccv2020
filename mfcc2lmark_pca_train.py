@@ -9,12 +9,13 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 from torch.nn.modules.module import _addindent
 import numpy as np
+# np.set_printoptions(suppress=True)
 from collections import OrderedDict
 import argparse
 
-from data.dataset import  GRID_1D_lstm_landmark
+from data.dataset import  GRID_1D_lstm_pca_landmark
 
-from models.networks import  AT_net
+from models.networks import  AT_PCA_net
 
 from torch.nn import init
 from utils import util
@@ -55,7 +56,7 @@ def initialize_weights( net, init_type='normal', gain=0.02):
 
 class Trainer():
     def __init__(self, config):
-        self.generator = AT_net()
+        self.generator = AT_PCA_net()
         
         self.l1_loss_fn =  nn.L1Loss()
         self.mse_loss_fn = nn.MSELoss()
@@ -74,9 +75,9 @@ class Trainer():
         self.opt_g = torch.optim.Adam( self.generator.parameters(),
             lr=config.lr, betas=(config.beta1, config.beta2))
         
-        self.train_dataset = GRID_1D_lstm_landmark( train=config.is_train)
+        self.train_dataset = GRID_1D_lstm_pca_landmark( train=config.is_train)
 
-        self.test_dataset = GRID_1D_lstm_landmark( train= 'test')
+        self.test_dataset = GRID_1D_lstm_pca_landmark( train= 'test')
         
 
         self.data_loader = DataLoader(self.train_dataset,
@@ -85,8 +86,8 @@ class Trainer():
                                       shuffle=True, drop_last=True)
         
         self.test_loader = DataLoader(self.test_dataset,
-                                      batch_size=128,
-                                      num_workers= 1,
+                                      batch_size=config.batch_size,
+                                      num_workers= config.num_thread,
                                       shuffle=True, drop_last=True)
     def fit(self):
         config = self.config
@@ -98,27 +99,31 @@ class Trainer():
         yLim=(0.0, 256.0)
         xLab = 'x'
         yLab = 'y'
-        
+        mean =  np.load('./basics/mean_grid_front.npy')
+        component = np.load('./basics/U_grid_front.npy')
         for epoch in range(self.start_epoch, config.max_epochs):
             if epoch % 10==0:
                 self.generator.eval()
                 with torch.no_grad():
-                    for step,  (example_landmark, lmark, audio, lmark_path) in enumerate(self.test_loader):
+                    for step,  (example_landmark, lmark, audio, _) in enumerate(self.test_loader):
                         lmark    = Variable(lmark.float()).cuda()
-                        print (lmark.shape)
                         audio = Variable(audio.float()).cuda()
                         example_landmark = Variable(example_landmark.float()).cuda()
                         fake_lmark= self.generator( example_landmark, audio)
                         loss =  self.mse_loss_fn(fake_lmark , lmark) 
-                        print ('===========================', lmark_path)
+                        print ('===========================')
+                        print (fake_lmark[0,2:6])
+                        print ('----------------------')
+                        print (lmark[0,2:6])
                         print("[{}/{}][{}/{}]   loss1: {:.8f}".format(epoch+1, config.max_epochs, step+1, num_steps_per_epoch, loss))
-                        # print (lmark.shape)
-                        # print (fake_lmark.shape)
-                        lmark = lmark.view(128, config.lstm_len , 68 * 2)
-                        lmark = lmark.data.cpu().numpy()
-                        fake_lmark = fake_lmark.view(128, config.lstm_len , 68 * 2)
-                        fake_lmark = fake_lmark.data.cpu().numpy()
+                        
                         if (epoch+1) % 50 ==0:
+                            lmark = lmark.data.cpu().numpy()
+                            fake_lmark = fake_lmark.data.cpu().numpy()
+                            lmark = np.dot(lmark,component) + mean
+                            fake_lmark = np.dot(fake_lmark,component) + mean
+                            lmark = lmark.reshape(config.batch_size, config.lstm_len , 68 * 2)
+                            fake_lmark = fake_lmark.reshape(config.batch_size, config.lstm_len , 68 * 2)
                             for indx in range(3):
                                 for jj in range(max(config.lstm_len,config.lstm_len)):
                                     name = "{}test_real_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)
@@ -141,10 +146,7 @@ class Trainer():
                     example_landmark = Variable(example_landmark.float())
 
                 fake_lmark= self.generator( example_landmark, audio)
-                # print ('================================')
-                # print (example_landmark[0,100:130])
-                # print (fake_lmark[0,0,100:130])
-                # print (lmark[0,0,100:130])
+               
                 loss =  self.mse_loss_fn(fake_lmark , lmark) 
                 loss.backward() 
                 self.opt_g.step()
@@ -152,6 +154,8 @@ class Trainer():
 
 
                 if (step+1) % 10 == 0 or (step+1) == num_steps_per_epoch:
+                    steps_remain = num_steps_per_epoch-step+1 + \
+                        (config.max_epochs-epoch+1)*num_steps_per_epoch
 
                     print("[{}/{}][{}/{}]   loss1: {:.8f},data time: {:.4f},  model time: {} second"
                           .format(epoch+1, config.max_epochs,
@@ -160,11 +164,14 @@ class Trainer():
                 t0 = time.time()         
             
             
-            if epoch  % 10 == 0:
-                lmark = lmark.view(config.batch_size, config.lstm_len, 68 * 2)
+            if epoch  % 50 == 0:
+
                 lmark = lmark.data.cpu().numpy()
-                fake_lmark = fake_lmark.view(config.batch_size, config.lstm_len, 68 * 2)
                 fake_lmark = fake_lmark.data.cpu().numpy()
+                lmark = np.dot(lmark,component) + mean
+                fake_lmark = np.dot(fake_lmark,component) + mean
+                lmark = lmark.reshape(config.batch_size, config.lstm_len , 68 * 2)
+                fake_lmark = fake_lmark.reshape(config.batch_size, config.lstm_len , 68 * 2)
                 for indx in range(1):
                     for jj in range(min(config.lstm_len,32)):
                         name = "{}real_{}_{}_{}.png".format(config.sample_dir,cc, indx,jj)
@@ -200,7 +207,7 @@ def parse_args():
                         default=32)
     parser.add_argument("--batch_size",
                         type=int,
-                        default=16)
+                        default=512)
     parser.add_argument("--max_epochs",
                         type=int,
                         default=1000000)
@@ -213,12 +220,12 @@ def parse_args():
                         # default = '/media/lele/DATA/lrw/data2/pickle')
     parser.add_argument("--model_dir",
                         type=str,
-                        default="./checkpoints/atnet/")
+                        default="./checkpoints/atnet_pca/")
                         # default="/mnt/disk1/dat/lchen63/grid/model/model_gan_r")
                         # default='/media/lele/DATA/lrw/data2/model')
     parser.add_argument("--sample_dir",
                         type=str,
-                        default="./sample/atnet/")
+                        default="./sample/atnet_pca/")
                         # default="/mnt/disk1/dat/lchen63/grid/sample/model_gan_r/")
                         # default='/media/lele/DATA/lrw/data2/sample/lstm_gan')
     parser.add_argument('--device_ids', type=str, default='0')
@@ -243,7 +250,7 @@ if __name__ == "__main__":
 
     config = parse_args()
     config.is_train = 'train'
-    import mfcc2lmark_train as trainer
+    import mfcc2lmark_pca_train as trainer
     if not os.path.exists(config.model_dir):
         os.mkdir(config.model_dir)
     if not os.path.exists(config.sample_dir):

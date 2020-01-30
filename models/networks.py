@@ -316,108 +316,6 @@ class GlobalGenerator1(nn.Module):
         return self.decoder(feature)
 
 
-
-
-class GlobalGenerator4(nn.Module):
-     # the most simple network, the input is I_0 + L_0 + L_i, the output is I_i. We concate all inputs in channel and encode, decode it.
-    def __init__(self,input_nc, output_nc, ngf = 64, n_downsampling=3, n_blocks=9, norm_layer=nn.BatchNorm2d,  pad_type='reflect'):
-        super(GlobalGenerator4, self).__init__()        
-        activation = nn.ReLU(True)     
-        norm_layer = nn.BatchNorm2d
-        model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation ]
-        ### downsample
-        model += [nn.Conv2d(ngf , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 128, 128 
-                      norm_layer(ngf  * 2), activation]
-        
-        model += [nn.Conv2d(ngf * 2 , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 64 
-                      norm_layer(ngf  * 2), activation]
-
-        model += [nn.Conv2d(ngf * 2 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 32 
-                      norm_layer(ngf  * 4), activation]
-
-        model += [nn.Conv2d(ngf * 4 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 16 
-                      norm_layer(ngf  * 4), activation]
-
-        model += [nn.Conv2d(ngf * 4 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 8
-                      norm_layer(ngf  * 8), activation]
-
-        model += [nn.Conv2d(ngf * 8 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 4
-                      norm_layer(ngf  * 8), activation]
-     
-
-        self.img_encoder = nn.Sequential(*model)
-        norm_layer = nn.InstanceNorm2d
-        model = []
-        model = [nn.ReflectionPad2d(3), nn.Conv2d(3, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation ]
-        ### downsample
-        model += [nn.Conv2d(ngf , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 128, 128 
-                      norm_layer(ngf  * 2), activation]
-        
-        model += [nn.Conv2d(ngf * 2 , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 64 
-                      norm_layer(ngf  * 2), activation]
-
-        model += [nn.Conv2d(ngf * 2 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 32 
-                      norm_layer(ngf  * 4), activation]
-
-        model += [nn.Conv2d(ngf * 4 , ngf  * 4, kernel_size=3, stride=2, padding=1),   # 256 16 
-                      norm_layer(ngf  * 4), activation]
-
-        model += [nn.Conv2d(ngf * 4 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 8
-                      norm_layer(ngf  * 8), activation]
-
-        model += [nn.Conv2d(ngf * 8 , ngf  * 8, kernel_size=3, stride=2, padding=1),   # 512 4
-                      norm_layer(ngf  * 8), activation]
-     
-        self.lmark_encoder = nn.Sequential(*model)
-
-        model = [nn.Conv2d(ngf * 16 , ngf  * 8, kernel_size=3, stride=1, padding=1),   # 512 4
-                      norm_layer(ngf  * 8), activation]
-        self.fusion = nn.Sequential(*model)
-
-        model = []
-        ###  adain resnet blocks
-        for i in range(n_blocks):
-            model += [ResnetBlock(ngf  * 8, padding_type=pad_type, activation=activation, norm_layer=norm_layer)]
-
-        ### upsample  
-        model += [nn.ConvTranspose2d(ngf * 8, ngf * 8, kernel_size=3, stride=2, padding=1, output_padding=1),
-                            norm_layer(ngf * 8), activation] # 512, 8 , 8 
-
-        
-        
-        model += [nn.ConvTranspose2d(ngf * 8, ngf * 4, kernel_size=3, stride=2, padding=1, output_padding=1),
-                            norm_layer(ngf * 4), activation] # 256, 16
-        
-        model += [nn.ConvTranspose2d(ngf * 4, ngf * 4, kernel_size=3, stride=2, padding=1, output_padding=1),
-                            norm_layer(ngf * 4), activation] # 256, 32
-
-        model += [nn.ConvTranspose2d(ngf * 4, ngf * 2, kernel_size=3, stride=2, padding=1, output_padding=1),
-                            norm_layer(ngf * 2), activation] # 128, 64
-
-        model += [nn.ConvTranspose2d(ngf * 2, ngf , kernel_size=3, stride=2, padding=1, output_padding=1),
-                            norm_layer(ngf ), activation] #  64, 128
-        
-        model += [nn.ConvTranspose2d(ngf , ngf , kernel_size=3, stride=2, padding=1, output_padding=1),
-                            norm_layer(ngf ), activation] #  64, 256
-
-
-        model += [nn.ReflectionPad2d(3), nn.Conv2d(ngf, output_nc, kernel_size=7, padding=0), nn.Tanh()]   
-
-        self.decoder = nn.Sequential(*model)
-    
-    
-
-    def forward(self, reference, lmark ):
-       
-        ref_feature = self.img_encoder( reference)
-
-        lmark_feature = self.lmark_encoder( lmark)
-
-        current = torch.cat([ref_feature, lmark_feature], dim = 1)
-        feature = self.fusion(current)
-        
-        return self.decoder(feature)
-
 class GlobalGenerator2(nn.Module):
      # the most simple network with attention machenism, the input is I_0 + L_0 + L_i, the output is I_i. We concate all inputs in channel and encode, decode it.
     def __init__(self,input_nc, output_nc, ngf = 64, n_downsampling=3, n_blocks=9, norm_layer=nn.BatchNorm2d,  pad_type='reflect'):
@@ -771,6 +669,11 @@ class GlobalGenerator4(nn.Module):
         
         return self.decoder(feature)
 
+
+
+
+
+
 class MultiscaleDiscriminator(nn.Module):
     def __init__(self, input_nc, ndf=64,   n_layers=3, norm_layer=nn.BatchNorm2d, 
                  use_sigmoid=False, num_D=3, getIntermFeat=False):
@@ -988,15 +891,21 @@ class AT_net(nn.Module):
             nn.ReLU(True),
             nn.Dropout(0.5),
             )
-        self.lstm = nn.LSTM(512,256,3,batch_first = True, dropout=0.5)
+        # self.lmark_encoder = nn.Sequential(
+        #     nn.Linear(136,256),
+        #     nn.ReLU(True),
+        #     nn.Dropout(0.5),
+        #     )
+        self.lstm = nn.LSTM(512,256,1,batch_first = True, dropout=0.5)
         self.lstm_fc = nn.Sequential(
             nn.Linear(256, 68 * 2)
             )
 
     def forward(self, example_landmark, audio):
-        hidden = ( torch.autograd.Variable(torch.zeros(3, audio.size(0), 256).cuda()),
-                      torch.autograd.Variable(torch.zeros(3, audio.size(0), 256).cuda()))
+        hidden = ( torch.autograd.Variable(torch.zeros(1, audio.size(0), 256).cuda()),
+                      torch.autograd.Variable(torch.zeros(1, audio.size(0), 256).cuda()))
         lstm_input = []
+        # example_landmark_f = self.lmark_encoder(example_landmark)
         for step_t in range(audio.size(1)):
             current_audio = audio[ : ,step_t , :, :].unsqueeze(1)
             current_feature = self.audio_eocder(current_audio)
@@ -1009,5 +918,71 @@ class AT_net(nn.Module):
         fc_out   = []
         for step_t in range(audio.size(1)):
             fc_in = lstm_out[:,step_t,:]
-            fc_out.append(self.lstm_fc(fc_in) + example_landmark)
+            fc_out.append(self.lstm_fc(fc_in) )
+        return torch.stack(fc_out, dim = 1)
+
+
+
+class AT_PCA_net(nn.Module):
+    def __init__(self):
+        super(AT_PCA_net, self).__init__()
+        norm_layer = nn.BatchNorm2d
+        activation=nn.ReLU(True)
+        ngf = 64
+        model = []
+        model += [nn.Conv2d(1 , ngf  , kernel_size=3, stride=1, padding=1),   # 64, 28, 12 
+                      norm_layer(ngf ), activation]
+
+        model += [nn.Conv2d( ngf, ngf * 2  , kernel_size=3, stride=2, padding=1),   # 128, 14, 6 
+                      norm_layer(ngf * 2), activation]
+        
+        model += [nn.Conv2d( ngf * 2, ngf * 2  , kernel_size=3, stride=1, padding=1),   # 128, 14, 6 
+                      norm_layer(ngf * 2), activation]
+        
+        model += [nn.Conv2d( ngf * 2, ngf * 4  , kernel_size=3, stride=1, padding=1),   # 256 7, 3
+                      norm_layer(ngf * 4), activation]
+
+        model += [nn.Conv2d( ngf * 4, ngf * 4  , kernel_size=3, stride=2, padding=1),   # 256 7, 3
+                      norm_layer(ngf * 4), activation]
+        self.audio_eocder = nn.Sequential( * model  )
+        
+        # self.lmark_encoder = nn.Sequential(
+        #     nn.Linear(20,64),
+        #     nn.ReLU(True),
+        #     nn.Dropout(0.5),
+        #     nn.Linear(64,256),
+        #     nn.ReLU(True),
+        #     nn.Dropout(0.5),
+        #     )
+        self.audio_eocder_fc = nn.Sequential(
+            nn.Linear(256 *  7 * 3,2048),
+            nn.ReLU(True),
+            nn.Dropout(0.5),
+            nn.Linear(2048,512),
+            nn.ReLU(True),
+            nn.Dropout(0.5),
+            )
+        self.lstm = nn.LSTM(512,256,1,batch_first = True, dropout=0.5)
+        self.lstm_fc = nn.Sequential(
+            nn.Linear(256,20)
+            )
+
+    def forward(self, example_landmark, audio):
+        hidden = ( torch.autograd.Variable(torch.zeros(1, audio.size(0), 256).cuda()),
+                      torch.autograd.Variable(torch.zeros(1, audio.size(0), 256).cuda()))
+        lstm_input = []
+        # example_landmark_f = self.lmark_encoder(example_landmark)
+        for step_t in range(audio.size(1)):
+            current_audio = audio[ : ,step_t , :, :].unsqueeze(1)
+            current_feature = self.audio_eocder(current_audio)
+            current_feature = current_feature.view(current_feature.size(0), -1)
+            current_feature = self.audio_eocder_fc(current_feature)
+            # features = torch.cat([example_landmark_f,  current_feature], 1)
+            lstm_input.append(current_feature)
+        lstm_input = torch.stack(lstm_input, dim = 1)
+        lstm_out, hidden = self.lstm(lstm_input, hidden)
+        fc_out   = []
+        for step_t in range(audio.size(1)):
+            fc_in = lstm_out[:,step_t,:]
+            fc_out.append(self.lstm_fc(fc_in) )
         return torch.stack(fc_out, dim = 1)
