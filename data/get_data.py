@@ -8,7 +8,9 @@ import cv2
 import face_alignment
 
 def prepare_data_lrs():
-    path ='/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain'
+    root = '/mnt/Data02/lchen63/lrs/'
+    # root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4'
+    path = os.path.join( root , 'pretrain')
     trainset = []
     testset = []
     train_list = sorted(os.listdir(path))
@@ -16,12 +18,12 @@ def prepare_data_lrs():
     # train_list = train_list[ 4 * batch_length:5 * batch_length ]
     for i in tqdm(range(len(train_list))):
         p_id = train_list[i]
-        person_path = os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain', p_id)
+        person_path = os.path.join(path, p_id)
         chunk_txt = sorted(os.listdir(person_path))
         for txt in chunk_txt:
             if txt[-3:] !=  'npy':
                 continue
-            if np.load(os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain', p_id, txt)).shape[0]> 65:
+            if np.load(os.path.join(path, p_id, txt)).shape[0]> 65:
                 if i >  4 * batch_length and i < 5 * batch_length :
                     testset.append( [p_id, txt])
                 else:
@@ -30,9 +32,9 @@ def prepare_data_lrs():
     print (len(trainset))
     print (len(testset))
    
-    with open(os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4', 'pickle','train_lmark2img.pkl'), 'wb') as handle:
+    with open(os.path.join(root, 'pickle','train_lmark2img.pkl'), 'wb') as handle:
         pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
-    with open(os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4', 'pickle','test_lmark2img.pkl'), 'wb') as handle:
+    with open(os.path.join(root, 'pickle','test_lmark2img.pkl'), 'wb') as handle:
         pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
 def prepare_data_faceforencs_xu():
@@ -190,7 +192,7 @@ def prepare_standard2():
     
 # prepare_standard2()
 
-prepare_data_grid() 
+# prepare_data_grid() 
 # prepare_data_faceforencs_oppo()
-# prepare_data_lrs()
+prepare_data_lrs()
 # unzip_video()
