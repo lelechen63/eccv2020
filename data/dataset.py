@@ -91,7 +91,6 @@ class LRSLmark2rgbDataset(Dataset):
             lmark_path = os.path.join(self.root, 'pretrain', v_id[0] , v_id[1]  )
             
             lmark = np.load(lmark_path)
-            print (lmark.shape)
             lmark = lmark[:,:,:-1]
             v_length = lmark.shape[0]
             # real_video  = mmcv.VideoReader(video_path)
@@ -690,7 +689,6 @@ class GRID_raw_lstm_pca_landmark(Dataset):
                 mfccs.append(t_mfcc)
             mfccs = torch.stack(mfccs, dim = 0)
             landmark  =lmark[r : r + self.num_frames,:]
-            print (mfccs.shape)
             # example_landmark = example_landmark.contiguous().view(-1)
             # landmark = landmark.contiguous().view( self.num_frames, -1 )
 
