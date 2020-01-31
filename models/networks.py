@@ -1032,16 +1032,10 @@ class SPCH2FLM2(nn.Module):
        
         self.fc2 = nn.Linear(512, 20) 
 
-        self.lmark_encoder = nn.Sequential(
-            nn.Linear(20,64),
-            nn.leaky_relu(0.3),
-            nn.Dropout(0.2),
-            nn.Linear(64,256),
-            nn.leaky_relu(0.3),
-            nn.Dropout(0.2),
-            )
+        self.lmark_fc1 = nn.Linear(20,256)
+           
     def forward(self, lmark, x):
-        example = self.lmark_encoder(lmark)
+        example =F.dropout(F.leaky_relu(self.lmark_fc1(lmark), 0.3), 0.2)
         h = F.dropout(F.leaky_relu(self.conv1(x), 0.3), 0.2)
         h = F.dropout(F.leaky_relu(self.conv2(h), 0.3), 0.2)
         h = F.dropout(F.leaky_relu(self.conv3(h), 0.3), 0.2)
@@ -1052,6 +1046,6 @@ class SPCH2FLM2(nn.Module):
         features = h = h.view(h.size(0), -1)
         #print (features.shape)
         h = F.leaky_relu(self.fc1(h), 0.3)
-        new = torch.cat([h, exmaple ], axis = 1)
-        h = F.leaky_relu(self.fc2(h), 0.3)
+        new = torch.cat([h, example ],  1)
+        h = F.leaky_relu(self.fc2(new), 0.3)
         return h, features
