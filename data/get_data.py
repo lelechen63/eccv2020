@@ -119,7 +119,7 @@ def prepare_data_grid():
     for j in tqdm(range( len(gg))):
         i = gg[j]
         for vid in os.listdir( os.path.join(align_path, i ) ):
-            if os.path.exists(os.path.join( align_path ,  i , vid[:-6] + '_original.npy') ) and os.path.exists(os.path.join( path , 'mfcc' ,  i , vid[:-6] + '_mfcc.npy') ) :
+            if os.path.exists(os.path.join( align_path ,  i , vid[:-6] + '_original.npy') ) and os.path.exists(os.path.join( path , 'mfcc' ,  i , vid[:-6] + '_mfcc.npy') ) and os.path.exists(os.path.join(path , 'audio' ,  i , vid[:-6]  +'.wav' )) :
                 # print ( os.path.join(align_path, i, vid[:-6] + '_crop.mp4'  ) )
                 lmarks.append( np.load(os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))[:0] )
                 lmarks.append( np.load(os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))[-1:]) 
@@ -130,17 +130,17 @@ def prepare_data_grid():
             else:
                 print (os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))
         # break
-    print (len(trainset))
-    print (len(testset))
-    lmarks = np.asarray(lmarks)
-    mean_lmarks = np.mean(lmarks, axis=0)
-    mean_lmarks = np.mean(mean_lmarks, axis=0)
-    xLim=(0.0, 256.0)
-    yLim=(0.0, 256.0)
-    xLab = 'x'
-    yLab = 'y'
-    util.plot_flmarks(mean_lmarks, './gg.png', xLim, yLim, xLab, yLab, figsize=(10, 10) )
-    np.save('../basics/grid_mean.npy' , mean_lmarks)
+    # print (len(trainset))
+    # print (len(testset))
+    # lmarks = np.asarray(lmarks)
+    # mean_lmarks = np.mean(lmarks, axis=0)
+    # mean_lmarks = np.mean(mean_lmarks, axis=0)
+    # xLim=(0.0, 256.0)
+    # yLim=(0.0, 256.0)
+    # xLab = 'x'
+    # yLab = 'y'
+    # util.plot_flmarks(mean_lmarks, './gg.png', xLim, yLim, xLab, yLab, figsize=(10, 10) )
+    # np.save('../basics/grid_mean.npy' , mean_lmarks)
 
     with open(os.path.join(path, 'pickle','train_audio2lmark_grid.pkl'), 'wb') as handle:
         pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
@@ -190,7 +190,7 @@ def prepare_standard2():
     
 # prepare_standard2()
 
-# prepare_data_grid() 
+prepare_data_grid() 
 # prepare_data_faceforencs_oppo()
-prepare_data_lrs()
+# prepare_data_lrs()
 # unzip_video()

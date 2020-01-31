@@ -427,7 +427,7 @@ def compare_vis(img,lmark1,lmark2):
 
 
 
-def plot_flmarks(pts, lab, xLim, yLim, xLab, yLab, figsize=(10, 10)):
+def plot_flmarks(pts, lab, xLim, yLim, xLab, yLab, figsize=(10, 10), sentence = None):
     if len(pts.shape) != 2:
         pts = pts.reshape( 68, 2)
 
@@ -442,13 +442,26 @@ def plot_flmarks(pts, lab, xLim, yLim, xLab, yLab, figsize=(10, 10)):
     for refpts in lookup:
         plt.plot([pts[refpts[1], 0], pts[refpts[0], 0]], [pts[refpts[1], 1], pts[refpts[0], 1]], 'k', ms=4)
 
+
+    pts = np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/mean_grid_front.npy')
+    if len(pts.shape) != 2:
+        pts = pts.reshape( 68, 2)
+    lookup = faceLmarkLookup
+    plt.plot(pts[:,0], pts[:,1], 'go', ms=4)
+    for refpts in lookup:
+        plt.plot([pts[refpts[1], 0], pts[refpts[0], 0]], [pts[refpts[1], 1], pts[refpts[0], 1]], 'g', ms=4)
+
+
     plt.xlabel(xLab, fontsize = font['size'] + 4, fontweight='bold')
     plt.gca().xaxis.tick_top()
     plt.gca().xaxis.set_label_position('top') 
     plt.ylabel(yLab, fontsize = font['size'] + 4, fontweight='bold')
     plt.xlim(xLim)
     plt.ylim(yLim)
+    
     plt.gca().invert_yaxis()
+    if sentence is not None:
+        plt.xlabel(sentence)
     plt.savefig(lab, dpi = 100, bbox_inches='tight')
     plt.clf()
     plt.close()
