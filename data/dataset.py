@@ -89,8 +89,10 @@ class LRSLmark2rgbDataset(Dataset):
             # mis_video_path = os.path.join(self.root, 'pretrain', mis_vid[0] , mis_vid[1][:5] + '_crop.mp4'  )
 
             lmark_path = os.path.join(self.root, 'pretrain', v_id[0] , v_id[1]  )
-
-            lmark = np.load(lmark_path)[:,:,:-1]
+            
+            lmark = np.load(lmark_path)
+            print (lmark.shape)
+            lmark = lmark[:,:,:-1]
             v_length = lmark.shape[0]
             # real_video  = mmcv.VideoReader(video_path)
 
