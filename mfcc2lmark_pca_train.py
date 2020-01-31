@@ -154,8 +154,6 @@ class Trainer():
 
 
                 if (step+1) % 10 == 0 or (step+1) == num_steps_per_epoch:
-                    steps_remain = num_steps_per_epoch-step+1 + \
-                        (config.max_epochs-epoch+1)*num_steps_per_epoch
 
                     print("[{}/{}][{}/{}]   loss1: {:.8f},data time: {:.4f},  model time: {} second"
                           .format(epoch+1, config.max_epochs,

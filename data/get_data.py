@@ -21,7 +21,7 @@ def prepare_data_lrs():
         person_path = os.path.join(path, p_id)
         chunk_txt = sorted(os.listdir(person_path))
         for txt in chunk_txt:
-            if txt[-3:] !=  'npy':
+            if txt[-9:] !=  'front.npy':
                 continue
             if np.load(os.path.join(path, p_id, txt)).shape[0]> 65:
                 if i >  4 * batch_length and i < 5 * batch_length :
