@@ -204,17 +204,18 @@ def grid_check():
         lmark_path = os.path.join(root_path ,  'align' , datalist[index][0] , datalist[index][1] + '_front.npy') 
         lmark = np.load( lmark_path )
         start_openrate = openrate(lmark[0])
-        if start_openrate < 1.5:
+        if start_openrate < 1.1:
             datalist[index].append(True)
         else:
             datalist[index].append(False)
         end_openrate = openrate(lmark[-1])
 
-        if end_openrate < 1.5:
+        if end_openrate < 1.1:
             datalist[index].append(True)
         else:
             datalist[index].append(False)
-
+    with open(os.path.join(path, 'pickle','train_audio2lmark_grid.pkl'), 'wb') as handle:
+        pkl.dump(datalist, handle, protocol=pkl.HIGHEST_PROTOCOL)    
 
 
 def prepare_standard1():  # get cropped image by input the reference image
@@ -259,8 +260,8 @@ def prepare_standard2():
     np.save(lmark_path, preds)
     
 # prepare_standard2()
-
-prepare_data_grid() 
+grid_check()
+# prepare_data_grid() 
 # prepare_data_faceforencs_oppo()
 # prepare_data_lrs()
 # unzip_video()
