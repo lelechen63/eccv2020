@@ -198,8 +198,15 @@ def prepare_data_grid():
 def grid_check():
     root_path  ='/home/cxu-serve/p1/common/grid'
     _file = open(os.path.join(root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
-    datalist = pkl.load(_file)
+    testset = pkl.load(_file)
     _file.close()
+
+    _file = open(os.path.join(root_path,  'pickle','train_audio2lmark_grid.pkl'), "rb")
+    trainset = pkl.load(_file)
+    _file.close()
+    datalist = testset + trainset
+    train_list  = []
+    test_list  = []
     for index in range(len(datalist)):
         lmark_path = os.path.join(root_path ,  'align' , datalist[index][0] , datalist[index][1] + '_front.npy') 
         lmark = np.load( lmark_path )
@@ -214,8 +221,16 @@ def grid_check():
             datalist[index].append(True)
         else:
             datalist[index].append(False)
+        if datalist[index][0]  in set(s1,s3,s4,s8,s16,s17,s18,s19,s20,s23,s24,s27,s29,s31,s32,s33,s2,s5,s6,s7,s12,s22,s25,s26,s28,s34):
+            train_list.append(datalist[index])
+        else:
+            test_list.append(datalist[index])
+
+    with open(os.path.join(root_path, 'pickle','train_audio2lmark_grid.pkl'), 'wb') as handle:
+        pkl.dump(train_list, handle, protocol=pkl.HIGHEST_PROTOCOL)   
+
     with open(os.path.join(root_path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
-        pkl.dump(datalist, handle, protocol=pkl.HIGHEST_PROTOCOL)    
+        pkl.dump(test_list, handle, protocol=pkl.HIGHEST_PROTOCOL)     
 
 
 def prepare_standard1():  # get cropped image by input the reference image
