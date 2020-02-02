@@ -214,7 +214,7 @@ def grid_check():
             datalist[index].append(True)
         else:
             datalist[index].append(False)
-    with open(os.path.join(path, 'pickle','train_audio2lmark_grid.pkl'), 'wb') as handle:
+    with open(os.path.join(root_path, 'pickle','train_audio2lmark_grid.pkl'), 'wb') as handle:
         pkl.dump(datalist, handle, protocol=pkl.HIGHEST_PROTOCOL)    
 
 
