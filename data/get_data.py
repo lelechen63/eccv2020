@@ -125,8 +125,9 @@ def prepare_data_grid():
     for j in tqdm(range( len(gg))):
         i = gg[j]
         print ('+++++++', i)
+        count = 0
         for vid in os.listdir( os.path.join(align_path, i ) ):
-            count = 0
+            
             if os.path.exists(os.path.join( align_path ,  i , vid[:-6] + '_original.npy') ) and os.path.exists(os.path.join( path , 'mfcc' ,  i , vid[:-6] + '_mfcc.npy') ) and os.path.exists(os.path.join(path , 'audio' ,  i , vid[:-6]  +'.wav' )) :
                 audio_path = os.path.join( path, 'audio' ,  i , vid[:-6] + '.wav') 
                 sound, _ = librosa.load(audio_path, sr=44100)
@@ -145,7 +146,6 @@ def prepare_data_grid():
                         real_video.append(frame)
                     else:
                         break
-                print(len(real_video))
                 if os.path.exists('./tmp01'):
                     shutil.rmtree('./tmp01')
                 os.mkdir("./tmp01")
