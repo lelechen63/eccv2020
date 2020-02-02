@@ -200,7 +200,7 @@ def grid_check():
     _file = open(os.path.join(root_path,  'pickle','train_audio2lmark_grid.pkl'), "rb")
     datalist = pkl.load(_file)
     _file.close()
-    for indx in range(len(datalist)):
+    for index in range(len(datalist)):
         lmark_path = os.path.join(root_path ,  'align' , datalist[index][0] , datalist[index][1] + '_front.npy') 
         lmark = np.load( lmark_path )
         start_openrate = openrate(lmark[0])
