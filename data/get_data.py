@@ -174,7 +174,7 @@ def prepare_data_grid():
                 mmcv.frames2video('./tmp01', './gg/' + i +'_' + vid[:-6] +'.mp4' )
                 # count += 1 
                 # if count == 3:
-                    break
+                break
             break
                 # for ff in os.listdir( os.path.join(align_path, i )):
                 #     if fnmatch.fnmatch(ff, vid[:-6]  + '*diff*'):
