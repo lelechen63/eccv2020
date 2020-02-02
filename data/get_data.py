@@ -172,9 +172,9 @@ def prepare_data_grid():
                         cv2.circle(img ,  (y, x), 1, ( 255, 0 , 0), -1)
                     cv2.imwrite(  './tmp01/%06d.jpg'%ii, img)
                 mmcv.frames2video('./tmp01', './gg/' + i +'_' + vid[:-6] +'.mp4' )
-                # count += 1 
-                # if count == 3:
-            break
+                count += 1 
+            if count == 1:
+                break
         break
                 # for ff in os.listdir( os.path.join(align_path, i )):
                 #     if fnmatch.fnmatch(ff, vid[:-6]  + '*diff*'):
