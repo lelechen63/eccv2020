@@ -938,9 +938,9 @@ class GRID_raw_pca_landmark(Dataset):
             return example_landmark, landmark, t_mfcc,  lmark_path +'___' +  str(r)
 
         elif self.train=='demo':
-            self.datalist[index][0] = 's23'
-            self.datalist[index][1] = 'pgab8p'
-            self.datalist[index][2] = 'pgab8p_00001_diff.npy'
+            # self.datalist[index][0] = 's23'
+            # self.datalist[index][1] = 'pgab8p'
+            # self.datalist[index][2] = 'pgab8p_00001_diff.npy'
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
             audio_path = os.path.join('/home/cxu-serve/p1/common/grid/audio' ,self.datalist[index][0],  self.datalist[index][1] +'.wav' )
             lmark = np.load(lmark_path)[:,:,:-1]
