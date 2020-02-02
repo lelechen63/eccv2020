@@ -197,7 +197,7 @@ def prepare_data_grid():
 
 def grid_check():
     root_path  ='/home/cxu-serve/p1/common/grid'
-    _file = open(os.path.join(root_path,  'pickle','train_audio2lmark_grid.pkl'), "rb")
+    _file = open(os.path.join(root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
     datalist = pkl.load(_file)
     _file.close()
     for index in range(len(datalist)):
@@ -214,7 +214,7 @@ def grid_check():
             datalist[index].append(True)
         else:
             datalist[index].append(False)
-    with open(os.path.join(root_path, 'pickle','train_audio2lmark_grid.pkl'), 'wb') as handle:
+    with open(os.path.join(root_path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
         pkl.dump(datalist, handle, protocol=pkl.HIGHEST_PROTOCOL)    
 
 
