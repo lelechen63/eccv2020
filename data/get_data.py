@@ -221,7 +221,7 @@ def grid_check():
             datalist[index].append(True)
         else:
             datalist[index].append(False)
-        if datalist[index][0]  in set(s1,s3,s4,s8,s16,s17,s18,s19,s20,s23,s24,s27,s29,s31,s32,s33,s2,s5,s6,s7,s12,s22,s25,s26,s28,s34):
+        if datalist[index][0]  in set("s1","s3","s4","s8","s16","s17","s18","s19","s20","s23","s24","s27","s29","s31","s32","s33","s2","s5","s6","s7","s12","s22","s25","s26","s28","s34"):
             train_list.append(datalist[index])
         else:
             test_list.append(datalist[index])

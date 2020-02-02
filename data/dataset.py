@@ -884,8 +884,16 @@ class GRID_raw_pca_landmark(Dataset):
             mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
             mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
             example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
+            if self.datalist[index][2] == True:
+                ss = 0
+            else:
+                ss = 8
+            if self.datalist[index][3] == True:
+                ee = 75
+            else:
+                ee = 68
             r =random.choice(
-                [x for x in range(0, 75)])
+                [x for x in range(ss, ee)])
             
             t_mfcc =mfcc[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
             t_mfcc = t_mfcc*np.power(10.0, self.augList[rnd_dB]/20.0)
@@ -938,9 +946,7 @@ class GRID_raw_pca_landmark(Dataset):
             return example_landmark, landmark, t_mfcc,  lmark_path +'___' +  str(r)
 
         elif self.train=='demo':
-            # self.datalist[index][0] = 's23'
-            # self.datalist[index][1] = 'pgab8p'
-            # self.datalist[index][2] = 'pgab8p_00001_diff.npy'
+            
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
             audio_path = os.path.join('/home/cxu-serve/p1/common/grid/audio' ,self.datalist[index][0],  self.datalist[index][1] +'.wav' )
             lmark = np.load(lmark_path)[:,:,:-1]
