@@ -132,10 +132,10 @@ def prepare_data_grid():
                 sound, _ = librosa.load(audio_path, sr=44100)
                 lmark_path = os.path.join( align_path ,  i , vid[:-6] + '_front.npy')
                 lmark1 = np.load(lmark_path)[:,:,:2]
-                face_utils.write_video_wpts_wsound( lmark1, sound, 44100, './gg', i +'_' + vid[:-6] +'_front'   , [0.0,256.0], [0.0,256.0])
+                #face_utils.write_video_wpts_wsound( lmark1, sound, 44100, './gg', i +'_' + vid[:-6] +'_front'   , [0.0,256.0], [0.0,256.0])
                 lmark_path = os.path.join( align_path ,  i , vid[:-6] + '_original.npy')
                 lmark2 = np.load(lmark_path)[:,:,:2]
-                face_utils.write_video_wpts_wsound( lmark2, sound, 44100, './gg', i +'_' + vid[:-6] +'_original'   , [0.0,256.0], [0.0,256.0])
+                #face_utils.write_video_wpts_wsound( lmark2, sound, 44100, './gg', i +'_' + vid[:-6] +'_original'   , [0.0,256.0], [0.0,256.0])
                 video_path =  os.path.join( align_path ,  i , vid[:-6] + '_crop.mp4')
                 cap = cv2.VideoCapture(video_path)
                 real_video = []
@@ -159,7 +159,7 @@ def prepare_data_grid():
                         y =int(lmark2[ii][jj][0])
                         cv2.circle(img ,  (y, x), 1, ( 255, 0 , 0), -1)
                     cv2.imwrite(  './tmp01/%06d.jpg'%ii, img)
-                mmcv.frames2video('./tmp01', './gg/' + i +'_' + vid[:-6] +'.mp4' )
+                #mmcv.frames2video('./tmp01', './gg/' + i +'_' + vid[:-6] +'.mp4' )
                 count += 1 
                 if count == 3:
                     break
