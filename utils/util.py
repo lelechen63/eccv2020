@@ -309,6 +309,18 @@ def mse_metrix(lmark1, lmark2):
         return distance.mean()
 
 
+def openrate(lmark1):
+    open_pair = []
+    for i in range(3):
+        open_pair.append([i + 61, 67 - i])
+    open_rate1 = []
+    for k in range(3):
+        open_rate1.append(lmark1[open_pair[k][0],:2] - lmark1[open_pair[k][1], :2])
+        
+    open_rate1 = np.asarray(open_rate1)
+    return open_rate1.mean() 
+        
+
 def openrate_metrix(lmark1, lmark2):
     open_pair = []
     for i in range(3):
@@ -316,10 +328,10 @@ def openrate_metrix(lmark1, lmark2):
     open_rate1 = []
     open_rate2 = []
     for k in range(3):
-        open_rate1.append(lmark1[open_pair[k][0],:-1] - lmark1[open_pair[k][1], :-1])
+        open_rate1.append(lmark1[open_pair[k][0],:2] - lmark1[open_pair[k][1], :2])
         
         
-        open_rate2.append(lmark2[open_pair[k][0],:-1] - lmark2[open_pair[k][1], :-1])
+        open_rate2.append(lmark2[open_pair[k][0],:2] - lmark2[open_pair[k][1], :2])
         
     open_rate1 = np.asarray(open_rate1)
     open_rate2 = np.asarray(open_rate2)
@@ -443,13 +455,13 @@ def plot_flmarks(pts, lab, xLim, yLim, xLab, yLab, figsize=(10, 10), sentence = 
         plt.plot([pts[refpts[1], 0], pts[refpts[0], 0]], [pts[refpts[1], 1], pts[refpts[0], 1]], 'k', ms=4)
 
 
-    pts = np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/mean_grid_front.npy')
-    if len(pts.shape) != 2:
-        pts = pts.reshape( 68, 2)
-    lookup = faceLmarkLookup
-    plt.plot(pts[:,0], pts[:,1], 'go', ms=4)
-    for refpts in lookup:
-        plt.plot([pts[refpts[1], 0], pts[refpts[0], 0]], [pts[refpts[1], 1], pts[refpts[0], 1]], 'g', ms=4)
+    # pts = np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/mean_grid_front.npy')
+    # if len(pts.shape) != 2:
+    #     pts = pts.reshape( 68, 2)
+    # lookup = faceLmarkLookup
+    # plt.plot(pts[:,0], pts[:,1], 'go', ms=4)
+    # for refpts in lookup:
+    #     plt.plot([pts[refpts[1], 0], pts[refpts[0], 0]], [pts[refpts[1], 1], pts[refpts[0], 1]], 'g', ms=4)
 
 
     plt.xlabel(xLab, fontsize = font['size'] + 4, fontweight='bold')

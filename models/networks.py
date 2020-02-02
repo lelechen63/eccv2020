@@ -946,19 +946,19 @@ class AT_PCA_net(nn.Module):
                       norm_layer(ngf * 4), activation]
         self.audio_eocder = nn.Sequential( * model  )
         
-        # self.lmark_encoder = nn.Sequential(
-        #     nn.Linear(20,64),
-        #     nn.ReLU(True),
-        #     nn.Dropout(0.5),
-        #     nn.Linear(64,256),
-        #     nn.ReLU(True),
-        #     nn.Dropout(0.5),
-        #     )
+        self.lmark_encoder = nn.Sequential(
+            nn.Linear(20,64),
+            nn.ReLU(True),
+            nn.Dropout(0.5),
+            nn.Linear(64,256),
+            nn.ReLU(True),
+            nn.Dropout(0.5),
+            )
         self.audio_eocder_fc = nn.Sequential(
             nn.Linear(256 *  7 * 3,2048),
             nn.ReLU(True),
             nn.Dropout(0.5),
-            nn.Linear(2048,512),
+            nn.Linear(2048,256),
             nn.ReLU(True),
             nn.Dropout(0.5),
             )
@@ -971,14 +971,14 @@ class AT_PCA_net(nn.Module):
         hidden = ( torch.autograd.Variable(torch.zeros(1, audio.size(0), 256).cuda()),
                       torch.autograd.Variable(torch.zeros(1, audio.size(0), 256).cuda()))
         lstm_input = []
-        # example_landmark_f = self.lmark_encoder(example_landmark)
+        example_landmark_f = self.lmark_encoder(example_landmark)
         for step_t in range(audio.size(1)):
             current_audio = audio[ : ,step_t , :, :].unsqueeze(1)
             current_feature = self.audio_eocder(current_audio)
             current_feature = current_feature.view(current_feature.size(0), -1)
             current_feature = self.audio_eocder_fc(current_feature)
-            # features = torch.cat([example_landmark_f,  current_feature], 1)
-            lstm_input.append(current_feature)
+            features = torch.cat([example_landmark_f,  current_feature], 1)
+            lstm_input.append(features)
         lstm_input = torch.stack(lstm_input, dim = 1)
         lstm_out, hidden = self.lstm(lstm_input, hidden)
         fc_out   = []
@@ -1012,7 +1012,7 @@ class SPCH2FLM(nn.Module):
         h = F.dropout(F.leaky_relu(self.conv7(h), 0.3), 0.2)
         features = h = h.view(h.size(0), -1)
         #print (features.shape)
-        h = F.leaky_relu(self.fc1(h), 0.3)
+        h = self.fc1(h)
         return h, features
 
 
@@ -1022,12 +1022,19 @@ class SPCH2FLM2(nn.Module):
         self.numFilters = numFilters
         self.filterWidth = filterWidth
         self.conv1 = nn.Conv1d(1, self.numFilters, self.filterWidth, stride=2, padding=0, dilation=1)
+        self.norm1 = nn.BatchNorm1d(self.numFilters)
         self.conv2 = nn.Conv1d(self.numFilters, self.numFilters, self.filterWidth, stride=2, padding=0, dilation=1)
+        self.norm2 = nn.BatchNorm1d(self.numFilters)
         self.conv3 = nn.Conv1d(self.numFilters, 2*self.numFilters, self.filterWidth, stride=2, padding=0, dilation=1)  
+        self.norm3 = nn.BatchNorm1d(self.numFilters*2)
         self.conv4 = nn.Conv1d(self.numFilters * 2, 2*self.numFilters, self.filterWidth, stride=2, padding=0, dilation=1)      
+        self.norm4 = nn.BatchNorm1d(self.numFilters *2)
         self.conv5 = nn.Conv1d(2*self.numFilters, 4*self.numFilters, self.filterWidth, stride=2, padding=0, dilation=1)
+        self.norm5 = nn.BatchNorm1d(self.numFilters*4)
         self.conv6 = nn.Conv1d(4*self.numFilters, 4*self.numFilters, self.filterWidth, stride=2, padding=0, dilation=1)
+        self.norm6 = nn.BatchNorm1d(self.numFilters*4)
         self.conv7 = nn.Conv1d(4*self.numFilters, 8*self.numFilters, self.filterWidth, stride=2, padding=0, dilation=1)
+        self.norm7 = nn.BatchNorm1d(self.numFilters*8)
         self.fc1 = nn.Linear(46080, 256) 
        
         self.fc2 = nn.Linear(512, 20) 
@@ -1036,16 +1043,16 @@ class SPCH2FLM2(nn.Module):
            
     def forward(self, lmark, x):
         example =F.dropout(F.leaky_relu(self.lmark_fc1(lmark), 0.3), 0.2)
-        h = F.dropout(F.leaky_relu(self.conv1(x), 0.3), 0.2)
-        h = F.dropout(F.leaky_relu(self.conv2(h), 0.3), 0.2)
-        h = F.dropout(F.leaky_relu(self.conv3(h), 0.3), 0.2)
-        h = F.dropout(F.leaky_relu(self.conv4(h), 0.3), 0.2)
-        h = F.dropout(F.leaky_relu(self.conv5(h), 0.3), 0.2)
-        h = F.dropout(F.leaky_relu(self.conv6(h), 0.3), 0.2)
-        h = F.dropout(F.leaky_relu(self.conv7(h), 0.3), 0.2)
+        h = F.dropout(F.leaky_relu(self.norm1(self.conv1(x)),  0.3), 0.2)
+        h = F.dropout(F.leaky_relu(self.norm2(self.conv2(h)), 0.3), 0.2)
+        h = F.dropout(F.leaky_relu(self.norm3(self.conv3(h)), 0.3), 0.2)
+        h = F.dropout(F.leaky_relu(self.norm4(self.conv4(h)), 0.3), 0.2)
+        h = F.dropout(F.leaky_relu(self.norm5(self.conv5(h)), 0.3), 0.2)
+        h = F.dropout(F.leaky_relu(self.norm6(self.conv6(h)), 0.3), 0.2)
+        h = F.dropout(F.leaky_relu(self.norm7(self.conv7(h)), 0.3), 0.2)
         features = h = h.view(h.size(0), -1)
         #print (features.shape)
         h = F.leaky_relu(self.fc1(h), 0.3)
         new = torch.cat([h, example ],  1)
-        h = F.leaky_relu(self.fc2(new), 0.3)
+        h = self.fc2(new)
         return h, features

@@ -141,7 +141,7 @@ class Trainer():
                     audio = Variable(audio.float()).cuda()
                     example_landmark = Variable(example_landmark.float()).cuda()
                 else:
-                    lmark    = Variable(lmark.float())
+                    lmark  = Variable(lmark.float())
                     audio = Variable(audio.float())
                     example_landmark = Variable(example_landmark.float())
 

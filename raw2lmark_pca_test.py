@@ -16,9 +16,9 @@ import numpy as np
 from collections import OrderedDict
 import argparse
 
-from data.dataset import  GRID_1D_lstm_pca_landmark
+from data.dataset import  GRID_raw_pca_landmark
 
-from models.networks import  AT_PCA_net
+from models.networks import  SPCH2FLM2
 
 from torch.nn import init
 from utils import util, face_utils
@@ -75,12 +75,12 @@ def parse_args():
     
     parser.add_argument("--model_name",
                         type=str,
-                        default="./checkpoints/atnet_pca/atnet_lstm_1.pth")
+                        default="./checkpoints/atnet_raw_pca_with_exmaple/atnet_lstm_4.pth")
                         # default="/mnt/disk1/dat/lchen63/lrw/model/model_gan_r2/r_generator_38.pth")
                         # default='/media/lele/DATA/lrw/data2/model')
     parser.add_argument("--sample_dir",
                         type=str,
-                        default="./sample/atnet_pca_test/")
+                        default="./sample/atnet_raw_pca_with_exmaple/")
                         # default="/mnt/disk1/dat/lchen63/lrw/test_result/model_gan_r2/")
                         # default='/media/lele/DATA/lrw/data2/sample/lstm_gan')
     parser.add_argument('--device_ids', type=str, default='0')
@@ -98,7 +98,7 @@ def test():
     # os.environ["CUDA_VISIBLE_DEVICES"] = config.device_ids
     config.cuda1 = torch.device('cuda:0')
     config.is_train = 'demo'
-    generator = AT_PCA_net()
+    generator = SPCH2FLM2()
     device_ids = [int(i) for i in config.device_ids.split(',')]
     generator    = nn.DataParallel(generator, device_ids= device_ids).cuda()
     
@@ -116,7 +116,7 @@ def test():
     print ('load pretrained [{}]'.format(config.model_name))
 
     
-    dataset = GRID_1D_lstm_pca_landmark( train=config.is_train)
+    dataset = GRID_raw_pca_landmark( train=config.is_train)
     data_loader = DataLoader(dataset,
                     batch_size=config.batch_size,
                     num_workers= config.num_thread,
@@ -131,8 +131,7 @@ def test():
         os.mkdir(os.path.join(config.sample_dir, 'real'))
     # if config.cuda:
     #     generator = generator.cuda()
-    generator.eval()
-        
+    generator.eval() 
     mse_loss_fn = nn.MSELoss()
     for step,  (example_landmark, lmark, audio, lmark_path) in enumerate(data_loader):
         with torch.no_grad():
@@ -140,13 +139,16 @@ def test():
             if step == 5:
                 break
             if config.cuda:
-                lmark    = Variable(lmark.float()).cuda(config.cuda1)
-                audio = Variable(audio.float()).cuda(config.cuda1)
-                example_landmark = Variable(example_landmark.float()).cuda(config.cuda1) 
+                if config.is_train == 'demo':
+                    lmark    = Variable(lmark[0].float()).cuda(config.cuda1)
+                    audio = Variable(audio[0].float()).cuda(config.cuda1)
+                    example_landmark = Variable(example_landmark[0].float()).cuda(config.cuda1) 
+                else:
+                    lmark    = Variable(lmark.float()).cuda(config.cuda1)
+                    audio = Variable(audio.float()).cuda(config.cuda1)
+                    example_landmark = Variable(example_landmark.float()).cuda(config.cuda1) 
                 mse_loss_fn   = mse_loss_fn.cuda(config.cuda1)
-            fake_lmark= generator(example_landmark, audio)
-            loss =  mse_loss_fn(fake_lmark , lmark) 
-            print("  loss1: {:.8f}".format( loss))
+            fake_lmark, _= generator(example_landmark, audio)
             lmark = lmark.data.cpu().numpy()
             fake_lmark = fake_lmark.data.cpu().numpy()
             lmark = np.dot(lmark,component) + mean
@@ -155,13 +157,9 @@ def test():
             fake_lmark = fake_lmark.reshape(config.batch_size, config.lstm_len , 68 * 2)
             audio_path = lmark_path[0].replace('align', 'audio').replace('_front.npy', '.wav')
             sound, _ = librosa.load(audio_path, sr=44100)
-            
             face_utils.write_video_wpts_wsound(fake_lmark[0], sound, 44100, config.sample_dir, 'fake%05d'%step, [0.0,256.0], [0.0,256.0])
-            # for indx in range(config.batch_size):
-            #     for jj in range(config.lstm_len):
-            #         name = "{}/real_{}_{}_{}.png".format(os.path.join(config.sample_dir, 'real'),step, indx,jj)
-            #         util.plot_flmarks(lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
-            #         name = "{}/fake_{}_{}_{}.png".format(os.path.join(config.sample_dir, 'fake'),step, indx,jj)
-            #         util.plot_flmarks(fake_lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
+
+            face_utils.write_video_wpts_wsound(lmark[0], sound, 44100, config.sample_dir, 'real%05d'%step, [0.0,256.0], [0.0,256.0])
+            
 
 test()

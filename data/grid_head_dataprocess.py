@@ -185,26 +185,15 @@ def pca_lmark_grid():
             indexs = random.sample(range(0,70), 20)
             for i in indexs:
                 landmarks.append(lmark[i])
-        #     if len(landmarks) ==100:
-        #         break
-        # break
+       
     landmarks = np.stack(landmarks)
     print (landmarks.shape)
-    # landmarks = landmarks[:,:,:2]
-    # print (landmarks.shape)
     landmarks = landmarks.reshape(landmarks.shape[0], 136)
-    # mean = np.mean(landmarks,0)
-    # print (mean)
     pca = PCA(n_components=20)
     pca.fit(landmarks)
     
     np.save('../basics/mean_grid_front.npy', pca.mean_)
-    # landmarks = landmarks - mean.expand_as(landmarks)
-
-    # U,S,V  = torch.svd(torch.t(landmarks))
     np.save('../basics/U_grid_front.npy',  pca.components_)
-    # data_reduced = np.dot(landmarks - pca.mean_, pca.components_.T)
-    # data_original = np.dot(data_reduced, pca.components_) + pca.mean_
 
 pca_lmark_grid()
 

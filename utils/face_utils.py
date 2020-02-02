@@ -243,7 +243,7 @@ def write_video_wpts_wsound(frames, sound, fs, path, fname, xLim, yLim):
         print ('Exp')
 
     if len(frames.shape) < 3:
-        frames = np.reshape(frames, (frames.shape[0], frames.shape[1]/2, 2))
+        frames = np.reshape(frames, (frames.shape[0], 68, 2))
     print (frames.shape)
 
     FFMpegWriter = manimation.writers['ffmpeg']
@@ -260,7 +260,6 @@ def write_video_wpts_wsound(frames, sound, fs, path, fname, xLim, yLim):
 
     librosa.output.write_wav(os.path.join(path, fname+'.wav'), sound, fs)
 
-    rect = (0, 0, 600, 600)
     
     if frames.shape[1] == 20:
         lookup = [[x[0] - 48, x[1] - 48] for x in Mouth]

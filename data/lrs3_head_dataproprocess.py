@@ -118,18 +118,6 @@ def RT_compute():
             #     continue
             lmark = np.load(lmark_path)
             ############################################## smooth the landmark
-            
-            # for i in range(lmark.shape[1]):
-            #     x = lmark[: , i,0]
-            #     x = face_utils.smooth(x, window_len=5)
-            #     lmark[: ,i,0 ] = x[2:-2]
-            #     y = lmark[:, i, 1]
-            #     y = face_utils.smooth(y, window_len=5)
-            #     lmark[: ,i,1  ] = y[2:-2]
-            #     z = lmark[:, i, 2]
-            #     z = face_utils.smooth(z, window_len=5)
-            #     lmark[: ,i, 2  ] = z[2:-2]
-            # np.save(normed_path, lmark)
             length = lmark.shape[0] 
             lmark_part = np.zeros((length,len(consider_key),3))
             RTs =  np.zeros((length,6))
@@ -156,6 +144,54 @@ def RT_compute():
         print (front_path)
             # break
         # break
+def pca_lmark_lrs():
+    root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain'
+    train_list = sorted(os.listdir(root))
+    batch_length = int( len(train_list))
+    landmarks = []
+    k = 20
+    norm_lmark = np.load('../basics/s1_pgbk6n_01.npy')
+    for i in tqdm(range(batch_length)):
+        p_id = train_list[i]
+        person_path = os.path.join(root, p_id)
+        videos = sorted(os.listdir(person_path))
+        for vid in videos:
+            
+            if vid[-9:] !=  'front.npy':
+                continue
+            lmark_path = os.path.join( person_path,vid)
+            lmark = np.load(lmark_path)[:,:,:2]
+            # if lmark.shape[0]< 70:
+            #     continue
+            for i in range(lmark.shape[1]):
+                x = lmark[: , i,0]
+                x = face_utils.smooth(x, window_len=5)
+                lmark[: ,i,0 ] = x[2:-2]
+                y = lmark[:, i, 1]
+                y = face_utils.smooth(y, window_len=5)
+                lmark[: ,i,1  ] = y[2:-2] 
+            openrates = []
+            for  i in range(lmark.shape[0]):
+                openrates.append(openrate(lmark[i]))
+            openrates = np.asarray(openrates)
+            min_index = np.argmin(np.absolute(openrates))
+            diff =  lmark[min_index] - norm_lmark
+            # print (lmark_path[:-10] +'_diff.npy')
+            np.save(lmark_path[:-10] +'_%05d_diff.npy'%(min_index) , diff)
+            lmark = lmark - diff
+            indexs = random.sample(range(0,70), 20)
+            for i in indexs:
+                landmarks.append(lmark[i])
+       
+    landmarks = np.stack(landmarks)
+    print (landmarks.shape)
+    landmarks = landmarks.reshape(landmarks.shape[0], 136)
+    pca = PCA(n_components=20)
+    pca.fit(landmarks)
+    
+    np.save('../basics/mean_grid_front.npy', pca.mean_)
+    np.save('../basics/U_grid_front.npy',  pca.components_)
+
 # RT_compute()
 landmark_extractor()
 # extract_audio()

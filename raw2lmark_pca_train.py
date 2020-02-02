@@ -156,7 +156,7 @@ class Trainer():
                                   step+1, num_steps_per_epoch, loss,  t1-t0,  time.time() - t1))
                 # if (step) % (int(num_steps_per_epoch  / 2 )) == 0 and step != 0:
                 t0 = time.time()
-            if epoch  % 20 == 0:
+            if epoch  % 10 == 0:
                 lmark = lmark.data.cpu().numpy()
                 fake_lmark = fake_lmark.data.cpu().numpy()
                 lmark = np.dot(lmark,component) + mean
