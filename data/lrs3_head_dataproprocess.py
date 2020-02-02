@@ -56,7 +56,7 @@ def landmark_extractor():
     fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda:0')
 
     train_list = sorted(os.listdir('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain'))
-    batch_length = int(0.01 * len(train_list))
+    batch_length = int( 0.5 *  len(train_list))
     for i in tqdm(range(batch_length * (config.batch_id -1), batch_length * (config.batch_id))):
         p_id = train_list[i]
         person_path = os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain', p_id)

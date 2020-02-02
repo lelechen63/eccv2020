@@ -138,11 +138,22 @@ import random
 from sklearn.decomposition import PCA
 from utils import face_utils
 
+def openrate(lmark1):
+    open_pair = []
+    for i in range(3):
+        open_pair.append([i + 61, 67 - i])
+    open_rate1 = []
+    for k in range(3):
+        open_rate1.append(lmark1[open_pair[k][0],:2] - lmark1[open_pair[k][1], :2])
+        
+    open_rate1 = np.asarray(open_rate1)
+    return open_rate1.mean()
 def pca_lmark_grid():
     train_list = sorted(os.listdir('/home/cxu-serve/p1/common/grid/align'))
     batch_length = int( len(train_list))
     landmarks = []
     k = 20
+    norm_lmark = np.load('../basics/s1_pgbk6n_01.npy')
     for i in tqdm(range(batch_length)):
         p_id = train_list[i]
         person_path = os.path.join('/home/cxu-serve/p1/common/grid/align', p_id)
@@ -152,7 +163,7 @@ def pca_lmark_grid():
             if vid[-9:] !=  'front.npy':
                 continue
             lmark_path = os.path.join( person_path,vid)
-            lmark = np.load(lmark_path)[:,:,:-1]
+            lmark = np.load(lmark_path)[:,:,:2]
             if lmark.shape[0]< 70:
                 continue
             for i in range(lmark.shape[1]):
@@ -162,9 +173,18 @@ def pca_lmark_grid():
                 y = lmark[:, i, 1]
                 y = face_utils.smooth(y, window_len=5)
                 lmark[: ,i,1  ] = y[2:-2] 
+            openrates = []
+            for  i in range(lmark.shape[0]):
+                openrates.append(openrate(lmark[i]))
+            openrates = np.asarray(openrates)
+            min_index = np.argmin(np.absolute(openrates))
+            diff =  lmark[min_index] - norm_lmark
+            # print (lmark_path[:-10] +'_diff.npy')
+            np.save(lmark_path[:-10] +'_%05d_diff.npy'%(min_index) , diff)
+            lmark = lmark - diff
             indexs = random.sample(range(0,70), 20)
             for i in indexs:
-                landmarks.append(torch.from_numpy(lmark[i]))
+                landmarks.append(lmark[i])
         #     if len(landmarks) ==100:
         #         break
         # break

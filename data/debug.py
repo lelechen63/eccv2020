@@ -1,9 +1,9 @@
 import os 
 from scipy.io import wavfile
-path = '/home/cxu-serve/p1/common/grid/audio/s1'
-for i in os.listdir(path):
-    fs, data = wavfile.read(  os.path.join( path , i ))
-    print (data.shape , fs ,)
+# path = '/home/cxu-serve/p1/common/grid/audio/s1'
+# for i in os.listdir(path):
+#     fs, data = wavfile.read(  os.path.join( path , i ))
+#     print (data.shape , fs ,)
 
 # train_list = sorted(os.listdir('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain'))
 # total =  len(train_list)

@@ -88,8 +88,8 @@ class LRSLmark2rgbDataset(Dataset):
             video_path = os.path.join(self.root, 'pretrain', v_id[0] , v_id[1][:5] + '_crop.mp4'  )
             # mis_video_path = os.path.join(self.root, 'pretrain', mis_vid[0] , mis_vid[1][:5] + '_crop.mp4'  )
 
-            lmark_path = os.path.join(self.root, 'pretrain', v_id[0] , v_id[1]  )
-            
+            lmark_path = os.path.join(self.root, 'pretrain', v_id[0] , v_id[1][:5] +'_original.npy'  )
+            print (lmark_path)
             lmark = np.load(lmark_path)
             lmark = lmark[:,:,:-1]
             v_length = lmark.shape[0]
@@ -443,8 +443,10 @@ class GRID_1D_lstm_landmark(Dataset):
         if self.train == 'train':
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
             mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
-            lmark = np.load(lmark_path)[:,:,:-1]
-            
+            lmark = np.load(lmark_path)[:,:,:2]
+            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
+            diff = np.load(diff_path)
+            reference_id = int(self.datalist[index][2].split('_')[1])
             for i in range(lmark.shape[1]):
                 x = lmark[: , i,0]
                 x = face_utils.smooth(x, window_len=5)
@@ -452,13 +454,14 @@ class GRID_1D_lstm_landmark(Dataset):
                 y = lmark[:, i, 1]
                 y = face_utils.smooth(y, window_len=5)
                 lmark[: ,i,1  ] = y[2:-2] 
+            lmark = lmark - diff
             lmark = torch.FloatTensor(lmark)
             mfcc = np.load(mfcc_path)
             left_append = mfcc[:12]
             right_append = mfcc[-16:]
             mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
             mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
+            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
             r =random.choice(
                 [x for x in range(0,41)])
             mfccs = []
@@ -478,7 +481,9 @@ class GRID_1D_lstm_landmark(Dataset):
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
             mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
             lmark = np.load(lmark_path)[:,:,:-1]
-            
+            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
+            diff = np.load(diff_path)
+            reference_id = int(self.datalist[index][2].split('_')[1])
             for i in range(lmark.shape[1]):
                 x = lmark[: , i,0]
                 x = face_utils.smooth(x, window_len=5)
@@ -486,7 +491,7 @@ class GRID_1D_lstm_landmark(Dataset):
                 y = lmark[:, i, 1]
                 y = face_utils.smooth(y, window_len=5)
                 lmark[: ,i,1  ] = y[2:-2] 
-            lmark = torch.FloatTensor(lmark)
+            lmark = torch.FloatTensor(lmark - diff)
             mfcc = np.load(mfcc_path)
             example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
            
@@ -494,7 +499,7 @@ class GRID_1D_lstm_landmark(Dataset):
             right_append = mfcc[-16:]
             mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
             mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
+            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
             r =random.choice(
                 [x for x in range(0,41)])
             mfccs = []
@@ -548,7 +553,9 @@ class GRID_1D_lstm_pca_landmark(Dataset):
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
             mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
             lmark = np.load(lmark_path)[:,:,:2]
-            
+            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
+            diff = np.load(diff_path)
+            reference_id = int(self.datalist[index][2].split('_')[1])
             for i in range(lmark.shape[1]):
                 x = lmark[: , i,0]
                 x = face_utils.smooth(x, window_len=5)
@@ -556,6 +563,7 @@ class GRID_1D_lstm_pca_landmark(Dataset):
                 y = lmark[:, i, 1]
                 y = face_utils.smooth(y, window_len=5)
                 lmark[: ,i,1  ] = y[2:-2] 
+            lmark = lmark - diff
             lmark = lmark.reshape(lmark.shape[0], 136)
             lmark = np.dot(lmark - self.mean, self.component.T)
 
@@ -565,7 +573,7 @@ class GRID_1D_lstm_pca_landmark(Dataset):
             right_append = mfcc[-16:]
             mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
             mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
+            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
             r =random.choice(
                 [x for x in range(0,41)])
             mfccs = []
@@ -585,7 +593,9 @@ class GRID_1D_lstm_pca_landmark(Dataset):
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
             mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
             lmark = np.load(lmark_path)[:,:,:-1]
-            
+            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
+            diff = np.load(diff_path)
+            reference_id = int(self.datalist[index][2].split('_')[1])
             for i in range(lmark.shape[1]):
                 x = lmark[: , i,0]
                 x = face_utils.smooth(x, window_len=5)
@@ -593,6 +603,7 @@ class GRID_1D_lstm_pca_landmark(Dataset):
                 y = lmark[:, i, 1]
                 y = face_utils.smooth(y, window_len=5)
                 lmark[: ,i,1  ] = y[2:-2] 
+            lmark = lmark - diff
             lmark = lmark.reshape(lmark.shape[0], 136)
             # print (lmark.shape, self.mean.shape, self.component.T.shape)
             lmark = np.dot(lmark - self.mean, self.component.T)
@@ -605,7 +616,7 @@ class GRID_1D_lstm_pca_landmark(Dataset):
             right_append = mfcc[-16:]
             mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
             mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
+            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
             r =random.choice(
                 [x for x in range(0,41)])
             mfccs = []
@@ -685,6 +696,7 @@ class GRID_raw_lstm_pca_landmark(Dataset):
             mfccs = []
             for ind in range(self.num_frames):
                 t_mfcc =mfcc[(r + ind )* chunck_size : (r + ind + 7)* chunck_size]
+                t_mfcc = t_mfcc*np.power(10.0, self.augList[rnd_dB]/20.0)
                 t_mfcc = torch.FloatTensor(t_mfcc)
                 mfccs.append(t_mfcc)
             mfccs = torch.stack(mfccs, dim = 0)
@@ -725,6 +737,7 @@ class GRID_raw_lstm_pca_landmark(Dataset):
             mfccs = []
             for ind in range(self.num_frames):
                 t_mfcc =mfcc[(r + ind )*chunck_size: (r + ind + 7)*chunck_size]
+                
                 t_mfcc = torch.FloatTensor(t_mfcc)
                 mfccs.append(t_mfcc)
             mfccs = torch.stack(mfccs, dim = 0)
@@ -773,8 +786,10 @@ class GRID_raw_pca_landmark(Dataset):
             # try:
         if self.train == 'train':
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
-            # mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
+            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
             lmark = np.load(lmark_path)[:,:,:2]
+            diff = np.load(diff_path)
+            reference_id = int(self.datalist[index][2].split('_')[1])
             audio_path = os.path.join('/home/cxu-serve/p1/common/grid/audio' ,self.datalist[index][0],  self.datalist[index][1] +'.wav' )
             rnd_dB = np.random.randint(0, high=len(self.augList), size=[1, ])[0]
             for i in range(lmark.shape[1]):
@@ -784,6 +799,7 @@ class GRID_raw_pca_landmark(Dataset):
                 y = lmark[:, i, 1]
                 y = face_utils.smooth(y, window_len=5)
                 lmark[: ,i,1  ] = y[2:-2] 
+            lmark = lmark - diff
             lmark = lmark.reshape(lmark.shape[0], 136)
             lmark = np.dot(lmark - self.mean, self.component.T)
 
@@ -794,7 +810,7 @@ class GRID_raw_pca_landmark(Dataset):
             right_append = mfcc[-4 * chunck_size:]
             mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
             mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
+            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
             r =random.choice(
                 [x for x in range(0, 75)])
             
@@ -812,7 +828,9 @@ class GRID_raw_pca_landmark(Dataset):
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
             audio_path = os.path.join('/home/cxu-serve/p1/common/grid/audio' ,self.datalist[index][0],  self.datalist[index][1] +'.wav' )
             lmark = np.load(lmark_path)[:,:,:-1]
-            
+            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
+            diff = np.load(diff_path)
+            reference_id = int(self.datalist[index][2].split('_')[1])
             for i in range(lmark.shape[1]):
                 x = lmark[: , i,0]
                 x = face_utils.smooth(x, window_len=5)
@@ -820,6 +838,7 @@ class GRID_raw_pca_landmark(Dataset):
                 y = lmark[:, i, 1]
                 y = face_utils.smooth(y, window_len=5)
                 lmark[: ,i,1  ] = y[2:-2] 
+            lmark = lmark - diff
             lmark = lmark.reshape(lmark.shape[0], 136)
             # print (lmark.shape, self.mean.shape, self.component.T.shape)
             lmark = np.dot(lmark - self.mean, self.component.T)
@@ -833,7 +852,7 @@ class GRID_raw_pca_landmark(Dataset):
             right_append = mfcc[-4 * chunck_size:]
             mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
             mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
+            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
             
             r =random.choice(
                 [x for x in range(0, 75)])

@@ -8,8 +8,8 @@ import cv2
 import face_alignment
 
 def prepare_data_lrs():
-    root = '/mnt/Data02/lchen63/lrs/'
-    # root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4'
+    # root = '/mnt/Data02/lchen63/lrs/'
+    root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4'
     path = os.path.join( root , 'pretrain')
     trainset = []
     testset = []
@@ -108,13 +108,12 @@ def unzip_video():
         # command = 'rm -rf ' + os.path.join(path , 's' + str(i) ,'video')
         # print (command)
     
-
+import fnmatch
 def prepare_data_grid():
     path ='/home/cxu-serve/p1/common/grid'
     # path = "/mnt/Data/lchen63/grid"
     trainset = []
     testset  =[]
-    lmarks = []
     align_path = os.path.join( path , 'align')
 
     gg = os.listdir(align_path)
@@ -123,14 +122,20 @@ def prepare_data_grid():
         for vid in os.listdir( os.path.join(align_path, i ) ):
             if os.path.exists(os.path.join( align_path ,  i , vid[:-6] + '_original.npy') ) and os.path.exists(os.path.join( path , 'mfcc' ,  i , vid[:-6] + '_mfcc.npy') ) and os.path.exists(os.path.join(path , 'audio' ,  i , vid[:-6]  +'.wav' )) :
                 # print ( os.path.join(align_path, i, vid[:-6] + '_crop.mp4'  ) )
-                lmarks.append( np.load(os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))[:0] )
-                lmarks.append( np.load(os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))[-1:]) 
+                
+                for ff in os.listdir( os.path.join(align_path, i )):
+                    if fnmatch.fnmatch(ff, vid[:-6]  + '*diff*'):
+                        break
                 if  i == 's1' or i == 's2' or i == 's20' or i == 's22':
-                    testset.append( [i , vid[:-6]] )
+                    testset.append( [i , vid[:-6], ff] )
+
                 else:
-                    trainset.append( [i , vid[:-6]] )
+                    trainset.append( [i , vid[:-6], ff] )
             else:
-                print (os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))
+                continue
+        print (trainset[-1])
+                
+                # print (os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))
         # break
     # print (len(trainset))
     # print (len(testset))
