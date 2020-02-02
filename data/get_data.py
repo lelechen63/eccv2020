@@ -109,6 +109,11 @@ def unzip_video():
         # print (command)
     
 import fnmatch
+import librosa
+from utils import face_utils
+import shutil
+import mmcv
+
 def prepare_data_grid():
     path ='/home/cxu-serve/p1/common/grid'
     # path = "/mnt/Data/lchen63/grid"
@@ -120,39 +125,62 @@ def prepare_data_grid():
     for j in tqdm(range( len(gg))):
         i = gg[j]
         for vid in os.listdir( os.path.join(align_path, i ) ):
+            count = 0
             if os.path.exists(os.path.join( align_path ,  i , vid[:-6] + '_original.npy') ) and os.path.exists(os.path.join( path , 'mfcc' ,  i , vid[:-6] + '_mfcc.npy') ) and os.path.exists(os.path.join(path , 'audio' ,  i , vid[:-6]  +'.wav' )) :
-                # print ( os.path.join(align_path, i, vid[:-6] + '_crop.mp4'  ) )
-                
-                for ff in os.listdir( os.path.join(align_path, i )):
-                    if fnmatch.fnmatch(ff, vid[:-6]  + '*diff*'):
+                audio_path = os.path.join( path, 'audio' ,  i , vid[:-6] + '.wav') 
+                sound, _ = librosa.load(audio_path, sr=44100)
+                lmark_path = os.path.join( align_path ,  i , vid[:-6] + '_front.npy')
+                lmark1 = np.load(lmark_path)[:,:,:2]
+                face_utils.write_video_wpts_wsound( lmark1, sound, 44100, './gg', i +'_' + vid[:-6] +'_front'   , [0.0,256.0], [0.0,256.0])
+                lmark_path = os.path.join( align_path ,  i , vid[:-6] + '_original.npy')
+                lmark2 = np.load(lmark_path)[:,:,:2]
+                face_utils.write_video_wpts_wsound( lmark2, sound, 44100, './gg', i +'_' + vid[:-6] +'_original'   , [0.0,256.0], [0.0,256.0])
+                video_path =  os.path.join( align_path ,  i , vid[:-6] + '_crop.mp4')
+                cap = cv2.VideoCapture(video_path)
+                real_video = []
+                while(cap.isOpened()):
+                    ret, frame = cap.read()
+                    if ret == True:
+                        real_video.append(frame)
+                    else:
                         break
-                if  i == 's1' or i == 's2' or i == 's20' or i == 's22':
-                    testset.append( [i , vid[:-6], ff] )
+                print(len(real_video))
+                if os.path.exists('./tmp01'):
+                    shutil.rmtree('./tmp01')
+                os.mkdir("./tmp01")
+                for ii in range(lmark1.shape[0]):
+                    img = real_video[ii]
+                    for jj in range(68):
+                        x=int(lmark1[ii][jj][1])
+                        y =int(lmark1[ii][jj][0])
+                        cv2.circle(img, (y, x), 1, (0, 0, 255), -1)
+                        x=int(lmark2[ii][jj][1])
+                        y =int(lmark2[ii][jj][0])
+                        cv2.circle(img ,  (y, x), 1, ( 255, 0 , 0), -1)
+                    cv2.imwrite(  './tmp01/%06d.jpg'%ii, img)
+                mmcv.frames2video('./tmp01', './gg/' + i +'_' + vid[:-6] +'.mp4' )
+                count += 1 
+                if count == 3:
+                    break
+            # break
+                # for ff in os.listdir( os.path.join(align_path, i )):
+                #     if fnmatch.fnmatch(ff, vid[:-6]  + '*diff*'):
+                #         break
+            #     if  i == 's1' or i == 's2' or i == 's20' or i == 's22':
+            #         testset.append( [i , vid[:-6], ff] )
 
-                else:
-                    trainset.append( [i , vid[:-6], ff] )
-            else:
-                continue
-        print (trainset[-1])
+            #     else:
+            #         trainset.append( [i , vid[:-6], ff] )
+            # else:
+            #     continue
                 
                 # print (os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))
         # break
-    # print (len(trainset))
-    # print (len(testset))
-    # lmarks = np.asarray(lmarks)
-    # mean_lmarks = np.mean(lmarks, axis=0)
-    # mean_lmarks = np.mean(mean_lmarks, axis=0)
-    # xLim=(0.0, 256.0)
-    # yLim=(0.0, 256.0)
-    # xLab = 'x'
-    # yLab = 'y'
-    # util.plot_flmarks(mean_lmarks, './gg.png', xLim, yLim, xLab, yLab, figsize=(10, 10) )
-    # np.save('../basics/grid_mean.npy' , mean_lmarks)
-
-    with open(os.path.join(path, 'pickle','train_audio2lmark_grid.pkl'), 'wb') as handle:
-        pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
-    with open(os.path.join(path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
-        pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+   
+    # with open(os.path.join(path, 'pickle','train_audio2lmark_grid.pkl'), 'wb') as handle:
+    #     pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+    # with open(os.path.join(path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
+    #     pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
 def prepare_standard1():  # get cropped image by input the reference image
     img_path = '/home/cxu-serve/p1/lchen63/voxceleb/unzip/tmp/tmp/00001_00030.png'
@@ -197,7 +225,7 @@ def prepare_standard2():
     
 # prepare_standard2()
 
-# prepare_data_grid() 
+prepare_data_grid() 
 # prepare_data_faceforencs_oppo()
-prepare_data_lrs()
+# prepare_data_lrs()
 # unzip_video()
