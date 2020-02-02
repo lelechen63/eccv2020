@@ -433,7 +433,7 @@ class GRID_1D_lstm_landmark(Dataset):
             _file.close()
         elif self.train =='demo' :
             _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
-            self.demo_data = pkl.load(_file)
+            self.datalist = pkl.load(_file)
             _file.close()
 
     
