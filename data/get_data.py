@@ -114,6 +114,18 @@ from utils import face_utils
 import shutil
 import mmcv
 
+def openrate(lmark1):
+    open_pair = []
+    for i in range(3):
+        open_pair.append([i + 61, 67 - i])
+    open_rate1 = []
+    for k in range(3):
+        open_rate1.append( np.abs(lmark1[open_pair[k][0],:2] - lmark1[open_pair[k][1], :2]))
+        
+    open_rate1 = np.asarray(open_rate1)
+    return open_rate1.mean() 
+        
+
 def prepare_data_grid():
     path ='/home/cxu-serve/p1/common/grid'
     # path = "/mnt/Data/lchen63/grid"
@@ -127,7 +139,6 @@ def prepare_data_grid():
         print ('+++++++', i)
         count = 0
         for vid in os.listdir( os.path.join(align_path, i ) ):
-            
             if os.path.exists(os.path.join( align_path ,  i , vid[:-6] + '_original.npy') ) and os.path.exists(os.path.join( path , 'mfcc' ,  i , vid[:-6] + '_mfcc.npy') ) and os.path.exists(os.path.join(path , 'audio' ,  i , vid[:-6]  +'.wav' )) :
                 audio_path = os.path.join( path, 'audio' ,  i , vid[:-6] + '.wav') 
                 sound, _ = librosa.load(audio_path, sr=44100)
@@ -152,6 +163,7 @@ def prepare_data_grid():
                 for ii in range(lmark1.shape[0]):
                     img = real_video[ii]
                     for jj in range(68):
+                        print ('_++++++++++++' , openrate(lmark1[ii]))
                         x=int(lmark1[ii][jj][1])
                         y =int(lmark1[ii][jj][0])
                         cv2.circle(img, (y, x), 1, (0, 0, 255), -1)
@@ -160,10 +172,10 @@ def prepare_data_grid():
                         cv2.circle(img ,  (y, x), 1, ( 255, 0 , 0), -1)
                     cv2.imwrite(  './tmp01/%06d.jpg'%ii, img)
                 mmcv.frames2video('./tmp01', './gg/' + i +'_' + vid[:-6] +'.mp4' )
-                count += 1 
-                if count == 3:
+                # count += 1 
+                # if count == 3:
                     break
-            # break
+            break
                 # for ff in os.listdir( os.path.join(align_path, i )):
                 #     if fnmatch.fnmatch(ff, vid[:-6]  + '*diff*'):
                 #         break
@@ -182,6 +194,28 @@ def prepare_data_grid():
     #     pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
     # with open(os.path.join(path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
     #     pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+
+def grid_check():
+    root_path  ='/home/cxu-serve/p1/common/grid'
+    _file = open(os.path.join(root_path,  'pickle','train_audio2lmark_grid.pkl'), "rb")
+    datalist = pkl.load(_file)
+    _file.close()
+    for indx in range(len(datalist)):
+        lmark_path = os.path.join(root_path ,  'align' , datalist[index][0] , datalist[index][1] + '_front.npy') 
+        lmark = np.load( lmark_path )
+        start_openrate = openrate(lmark[0])
+        if start_openrate < 1.5:
+            datalist[index].append(True)
+        else:
+            datalist[index].append(False)
+        end_openrate = openrate(lmark[-1])
+
+        if end_openrate < 1.5:
+            datalist[index].append(True)
+        else:
+            datalist[index].append(False)
+
+
 
 def prepare_standard1():  # get cropped image by input the reference image
     img_path = '/home/cxu-serve/p1/lchen63/voxceleb/unzip/tmp/tmp/00001_00030.png'
