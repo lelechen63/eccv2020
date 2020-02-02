@@ -162,8 +162,8 @@ def prepare_data_grid():
                 os.mkdir("./tmp01")
                 for ii in range(lmark1.shape[0]):
                     img = real_video[ii]
+                    print ('_++++++++++++' , openrate(lmark1[ii]))
                     for jj in range(68):
-                        print ('_++++++++++++' , openrate(lmark1[ii]))
                         x=int(lmark1[ii][jj][1])
                         y =int(lmark1[ii][jj][0])
                         cv2.circle(img, (y, x), 1, (0, 0, 255), -1)
