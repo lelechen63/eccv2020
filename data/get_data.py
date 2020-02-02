@@ -162,7 +162,7 @@ def prepare_data_grid():
                 os.mkdir("./tmp01")
                 for ii in range(lmark1.shape[0]):
                     img = real_video[ii]
-                    print ('_++++++++++++' ，str(ii) , openrate(lmark1[ii]))
+                    print ('_++++++++++++' ，ii , openrate(lmark1[ii]))
                     for jj in range(68):
                         x=int(lmark1[ii][jj][1])
                         y =int(lmark1[ii][jj][0])
