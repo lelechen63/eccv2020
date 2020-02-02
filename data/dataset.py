@@ -432,7 +432,7 @@ class GRID_1D_lstm_landmark(Dataset):
             self.datalist = pkl.load(_file)
             _file.close()
         elif self.train =='demo' :
-            _file = open(os.path.join(self.root_path, "img_demo.pkl"), "rb")
+            _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
             self.demo_data = pkl.load(_file)
             _file.close()
 
@@ -476,7 +476,7 @@ class GRID_1D_lstm_landmark(Dataset):
             landmark = landmark.contiguous().view( self.num_frames, -1 )
 
             return example_landmark, landmark, mfccs
-        else:
+        elif self.train =='test':
 
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
             mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
@@ -513,6 +513,42 @@ class GRID_1D_lstm_landmark(Dataset):
             lmark = lmark.contiguous().view(self.num_frames, -1 )
 
             return example_landmark, lmark, mfccs, lmark_path
+        else:
+            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
+            mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
+            lmark = np.load(lmark_path)[:,:,:-1]
+            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
+            diff = np.load(diff_path)
+            reference_id = int(self.datalist[index][2].split('_')[1])
+            for i in range(lmark.shape[1]):
+                x = lmark[: , i,0]
+                x = face_utils.smooth(x, window_len=5)
+                lmark[: ,i,0 ] = x[2:-2]
+                y = lmark[:, i, 1]
+                y = face_utils.smooth(y, window_len=5)
+                lmark[: ,i,1  ] = y[2:-2] 
+            lmark = torch.FloatTensor(lmark - diff)
+            mfcc = np.load(mfcc_path)
+            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
+           
+            left_append = mfcc[:12]
+            right_append = mfcc[-16:]
+            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
+            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
+            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
+            # r =random.choice(
+            #     [x for x in range(0,41)])
+            mfccs = []
+            for ind in range(75):
+                t_mfcc =mfcc[( ind )*4: ( ind + 7)*4, 1:]
+                t_mfcc = torch.FloatTensor(t_mfcc)
+                mfccs.append(t_mfcc)
+            mfccs = torch.stack(mfccs, dim = 0)
+            # lmark  =lmark[r : r + self.num_frames,:]
+            example_landmark = example_landmark.contiguous().view(-1)
+            lmark = lmark.contiguous().view(75,  -1 )
+
+            return example_landmark, lmark, mfccs, lmark_path
 
        
     def __len__(self):
@@ -521,7 +557,7 @@ class GRID_1D_lstm_landmark(Dataset):
         elif self.train=='test':
             return len(self.datalist)
         else:
-            print ('8888888888888')
+            return len(self.datalist)
 class GRID_1D_lstm_pca_landmark(Dataset):
     def __init__(self,
                  train='train'):

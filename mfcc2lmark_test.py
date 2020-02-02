@@ -66,7 +66,7 @@ def parse_args():
                         default=1)
     parser.add_argument("--lstm_len",
                         type=int,
-                        default=32)
+                        default=75)
     parser.add_argument("--cuda",
                         default=True)
     
@@ -94,7 +94,7 @@ config = parse_args()
 def test():
     # os.environ["CUDA_VISIBLE_DEVICES"] = config.device_ids
     config.cuda1 = torch.device('cuda:0')
-    config.is_train = 'test'
+    config.is_train = 'demo'
     generator = AT_net()
     device_ids = [int(i) for i in config.device_ids.split(',')]
     generator    = nn.DataParallel(generator, device_ids= device_ids).cuda()
@@ -116,7 +116,7 @@ def test():
     data_loader = DataLoader(dataset,
                     batch_size=config.batch_size,
                     num_workers= config.num_thread,
-                    shuffle=False, drop_last=True)
+                    shuffle=True, drop_last=True)
     data_iter = iter(data_loader)
     data_iter.next()
     if not os.path.exists(config.sample_dir):
@@ -146,13 +146,16 @@ def test():
             fake_lmark = fake_lmark.data.cpu().numpy() 
             lmark = lmark.view(config.batch_size, config.lstm_len, 136)
             lmark = lmark.data.cpu().numpy()
-
-            for indx in range(config.batch_size):
-                for jj in range(config.lstm_len):
-                    name = "{}/real_{}_{}_{}.png".format(os.path.join(config.sample_dir, 'real'),step, indx,jj)
-                    util.plot_flmarks(lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
-                    name = "{}/fake_{}_{}_{}.png".format(os.path.join(config.sample_dir, 'fake'),step, indx,jj)
-                    util.plot_flmarks(fake_lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
+            audio_path = lmark_path[0].replace('align', 'audio').replace('_front.npy', '.wav')
+            sound, _ = librosa.load(audio_path, sr=44100)
+            
+            face_utils.write_video_wpts_wsound(fake_lmark[0], sound, 44100, config.sample_dir, 'fake%05d'%step, [0.0,256.0], [0.0,256.0])
+            # for indx in range(config.batch_size):
+            #     for jj in range(config.lstm_len):
+            #         name = "{}/real_{}_{}_{}.png".format(os.path.join(config.sample_dir, 'real'),step, indx,jj)
+            #         util.plot_flmarks(lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
+            #         name = "{}/fake_{}_{}_{}.png".format(os.path.join(config.sample_dir, 'fake'),step, indx,jj)
+            #         util.plot_flmarks(fake_lmark[indx,jj], name, xLim, yLim, xLab, yLab, figsize=(10, 10))
            
 
 
