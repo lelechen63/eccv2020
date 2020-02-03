@@ -61,8 +61,8 @@ def mounth_open2close(lmark): # if the open rate is too large, we need to manual
         print (mean)
         tmp = lmark[open_pair[k][0],:2]
         diffs.append((mean - lmark[open_pair[k][0],:2]).copy())
-        lmark[open_pair[k][0],:2] = mean - (mean - lmark[open_pair[k][0],:2]) * 0.1
-        lmark[open_pair[k][1],:2] = mean + (mean - lmark[open_pair[k][0],:2]) * 0.1
+        lmark[open_pair[k][0],:2] = mean - (mean - lmark[open_pair[k][0],:2]) * 0.3
+        lmark[open_pair[k][1],:2] = mean + (mean - lmark[open_pair[k][0],:2]) * 0.3
 
     diffs.insert(0, 0.6 * diffs[2])
     diffs.append( 0.6 * diffs[2])

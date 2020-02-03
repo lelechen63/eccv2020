@@ -70,6 +70,7 @@ def openrate(lmark1):
         
     open_rate1 = np.asarray(open_rate1)
     return open_rate1.mean()
+
 def mounth_open2close(lmark): # if the open rate is too large, we need to manually make the mounth to be closed.
     open_pair = []
     for i in range(3):
@@ -83,14 +84,21 @@ def mounth_open2close(lmark): # if the open rate is too large, we need to manual
 
     for k in range(3):
         mean = (lmark[open_pair[k][0],:2] + lmark[open_pair[k][1],:2] )/ 2
-        lmark[open_pair[k][0],:2] = mean 
-        lmark[open_pair[k][1],:2] = mean
-        diffs.append(mean - lmark[open_pair[k][0],:2])
-    diffs.insert(0, 0.6 * mean)
-    diffs.append( 0.6 * mean)
+        print (mean)
+        tmp = lmark[open_pair[k][0],:2]
+        diffs.append((mean - lmark[open_pair[k][0],:2]).copy())
+        lmark[open_pair[k][0],:2] = mean - (mean - lmark[open_pair[k][0],:2]) * 0.3
+        lmark[open_pair[k][1],:2] = mean + (mean - lmark[open_pair[k][0],:2]) * 0.3
+
+    diffs.insert(0, 0.6 * diffs[2])
+    diffs.append( 0.6 * diffs[2])
+    print (diffs)
     diffs = np.asarray(diffs)
     lmark[49:54,:2] +=  diffs
-    lmark[55:60,:2] -=  diffs
+    lmark[55:60,:2] -=  diffs 
+    return lmark
+
+
 
 
 def preprocess_img(img_path):  # get cropped image by input the reference image
@@ -101,13 +109,10 @@ def preprocess_img(img_path):  # get cropped image by input the reference image
     dis_list = np.array([])
     videos = []
     x_list, y_list, dis_list, videos, _ = face_tracker.crop_image(frame, count = 0)
-
     dis = np.mean(dis_list)
-    print (dis)
     top_left_x = x_list - (80 * dis / 90)
     top_left_y = y_list - (100* dis / 90)
     side_length = int((205 * dis / 90))
-
     if top_left_x[0] < 0 or top_left_y[0] < 0:
         img_size = videos[0].shape
         tempolate = np.ones((img_size[0] * 2, img_size[1]* 2 , 3), np.uint8) * 255
@@ -118,7 +123,6 @@ def preprocess_img(img_path):  # get cropped image by input the reference image
         top_left_y[0] = top_left_y[0] + tempolate_middle[1]  -middle[1]
         roi = tempolate[int(top_left_x[0]):int(top_left_x[0]) + side_length ,int(top_left_y[0]):int(top_left_y[0]) + side_length]
         roi =cv2.resize(roi,(256,256))
-        
     else:
         roi = videos[0][int(top_left_x[0]):int(top_left_x[0]) + side_length ,int(top_left_y[0]):int(top_left_y[0]) + side_length]
         roi =cv2.resize(roi,(256,256))
@@ -128,43 +132,69 @@ def preprocess_img(img_path):  # get cropped image by input the reference image
     fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda:0')
     frame = cv2.cvtColor(roi,cv2.COLOR_BGR2RGB )
     preds = fa.get_landmarks(frame)[0]
+    
     ##########make the mounth closed
-
+    if openrate(preds) > 1:
+        preds = mounth_open2close(preds)
 
     return roi, preds
 
+def get_demo_batch(audio_path , lmark):
+    mean =  np.load('./basics/mean_grid_front.npy')
+    component = np.load('./basics/U_grid_front.npy')
+    norm_lmark = np.load('../basics/s1_pgbk6n_01.npy')
+    diff =  lmark - norm_lmark
+
+    speech, fs = librosa.load(audio_path, sr=50000)
+    chunck_size =int(fs * 0.04 )
+    length = (speech / chunck_size)
+    left_append = speech[: 3 * chunck_size]
+    right_append = speech[-4 * chunck_size:]
+    speech = np.insert( speech, 0, left_append ,axis=  0)
+    speech = np.insert( speech, -1, right_append ,axis=  0)
+    norm_lmark = norm_lmark.reshape(1, 136)
+    norm_lmark = np.dot(norm_lmark - mean, component.T)
+    norm_lmark = torch.FloatTensor(norm_lmark)
+
+    example_landmark = norm_lmark.repeat(length,1)
+
+    chunks = []
+    for r in range(length):
+        t_chunk =speech[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
+        t_chunk = torch.FloatTensor(t_chunk)
+        chunks.append(t_chunk)
+    chunks = torch.stack(chunks, 0)
+    print (chunks.shape, example_landmark.shape)
+    return example_landmark,  chunks
+ 
+a,b = get_demo_batch('/home/cxu-serve/p1/common/grid/audio/s1/bbaf3s.wav' , np.load('./basics/mean_grid_front.npy'))
+
+
 def test():
-    os.environ["CUDA_VISIBLE_DEVICES"] = config.device_ids
-    if os.path.exists('../temp'):
-        shutil.rmtree('../temp')
-    os.mkdir('../temp')
-    os.mkdir('../temp/img')
-    os.mkdir('../temp/motion')
-    os.mkdir('../temp/attention')
-    pca = torch.FloatTensor( np.load('../basics/U_lrw1.npy')[:,:6]).cuda()
-    mean =torch.FloatTensor( np.load('../basics/mean_lrw1.npy')).cuda()
-    decoder = VG_net()
-    encoder = AT_net()
-    if config.cuda:
-        encoder = encoder.cuda()
-        decoder = decoder.cuda()
-    state_dict2 = multi2single(config.vg_model, 1)
+    mean =  np.load('./basics/mean_grid_front.npy')
+    component = np.load('./basics/U_grid_front.npy')
+    config.cuda1 = torch.device('cuda:0')
 
-    # state_dict2 = torch.load(config.video_model, map_location=lambda storage, loc: storage)
-    decoder.load_state_dict(state_dict2)
+    _ , lmark = preprocess_img(config.person)
+    data_batch = get_demo_batch(config.in_file, lmark)
 
-    state_dict = multi2single(config.at_model, 1)
-    encoder.load_state_dict(state_dict)
+    generator = SPCH2FLM2()
+    device_ids = [int(i) for i in config.device_ids.split(',')]
+    generator    = nn.DataParallel(generator, device_ids= device_ids).cuda()
+    generator.load_state_dict(torch.load(config.model_name))
+    print ('load pretrained [{}]'.format(config.model_name))
 
-    encoder.eval()
-    decoder.eval()
+
+    if os.path.exists('./temp'):
+        shutil.rmtree('./temp')
+    os.mkdir('./temp')
+    os.mkdir('./temp/img')
+    os.mkdir('./temp/motion')
+    os.mkdir('./temp/attention')
+    
     test_file = config.in_file
 
-    example_image, example_landmark = generator_demo_example_lips( config.person)
-    transform = transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
-     ])        
+    
     example_image = cv2.cvtColor(example_image, cv2.COLOR_BGR2RGB)
     example_image = transform(example_image)
 
@@ -239,4 +269,4 @@ def test():
         print ('The generated video is: {}'.format(os.path.join(config.sample_dir , 'results.mov')))
         
 
-test()
+# test()
