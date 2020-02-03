@@ -150,7 +150,7 @@ def get_demo_batch(audio_path , lmark):  #lmark size should be 136
     speech, fs = librosa.load(audio_path, sr=50000)
     print (speech.shape)
     chunck_size =int(fs * 0.04 )
-    length = (speech.shape[0] / chunck_size)
+    length = int(speech.shape[0] / chunck_size)
     left_append = speech[: 3 * chunck_size]
     right_append = speech[-4 * chunck_size:]
     speech = np.insert( speech, 0, left_append ,axis=  0)
