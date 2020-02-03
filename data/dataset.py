@@ -933,15 +933,21 @@ class GRID_raw_pca_landmark(Dataset):
             mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
             mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
             example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-            
+            if self.datalist[index][2] == True:
+                ss = 0
+            else:
+                ss = 8
+            if self.datalist[index][3] == True:
+                ee = 75
+            else:
+                ee = 68
             r =random.choice(
-                [x for x in range(0, 75)])
+                [x for x in range(ss, ee)])
             
             t_mfcc =mfcc[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
             t_mfcc = torch.FloatTensor(t_mfcc)
             landmark  =lmark[r]
-            # example_landmark = example_landmark.contiguous().view(-1)
-            # lmark = lmark.contiguous().view(self.num_frames, -1 )
+            
 
             return example_landmark, landmark, t_mfcc,  lmark_path +'___' +  str(r)
 
