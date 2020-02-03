@@ -142,7 +142,7 @@ def preprocess_img(img_path):  # get cropped image by input the reference image
 def get_demo_batch(audio_path , lmark):
     mean =  np.load('./basics/mean_grid_front.npy')
     component = np.load('./basics/U_grid_front.npy')
-    norm_lmark = np.load('../basics/s1_pgbk6n_01.npy')
+    norm_lmark = np.load('./basics/s1_pgbk6n_01.npy')
     diff =  lmark - norm_lmark
 
     speech, fs = librosa.load(audio_path, sr=50000)
