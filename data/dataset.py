@@ -836,7 +836,6 @@ class GRID_raw_pca_landmark(Dataset):
         self.train = train
         self.num_frames = 32
         self.root_path = '/home/cxu-serve/p1/common/grid'
-        
         if self.train=='train':
             _file = open(os.path.join(self.root_path,  'pickle','train_audio2lmark_grid.pkl'), "rb")
             self.datalist = pkl.load(_file)
@@ -853,7 +852,6 @@ class GRID_raw_pca_landmark(Dataset):
         self.mean =  np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/mean_grid_front.npy')
         self.component = np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/U_grid_front.npy')
         self.augList = [-12, -9, -6, -3, 0, 3, 6]
-# data_original = np.dot(data_reduced,component) + mean
     def __getitem__(self, index):
         # In training phase, it return real_image, wrong_image, text
             # try:
