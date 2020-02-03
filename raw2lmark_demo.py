@@ -138,13 +138,13 @@ def preprocess_img(img_path):  # get cropped image by input the reference image
         preds = mounth_open2close(preds)
 
     return roi, preds
-
-def get_demo_batch(audio_path , lmark):
+ 
+def get_demo_batch(audio_path , lmark):  #lmark size should be 136
     mean =  np.load('./basics/mean_grid_front.npy')
     component = np.load('./basics/U_grid_front.npy')
     norm_lmark = np.load('./basics/s1_pgbk6n_01.npy')
-
-    print (lmark.shape , norm_lmark.shape)
+    norm_lmark = norm_lmark.reshape(-1)
+    # print (lmark.shape , norm_lmark.shape)
     diff =  lmark - norm_lmark
 
     speech, fs = librosa.load(audio_path, sr=50000)
