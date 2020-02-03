@@ -119,7 +119,6 @@ def vis():
         #     break
         if ret == True:
             print (count)
-            print (openrate( fake_lmark[count] ))
             frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
             preds = lmark[count]
             
