@@ -44,8 +44,8 @@ def parse_args():
     return parser.parse_args()
 config = parse_args()
 
-detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor('./basics/shape_predictor_68_face_landmarks.dat')
+# detector = dlib.get_frontal_face_detector()
+# predictor = dlib.shape_predictor('./basics/shape_predictor_68_face_landmarks.dat')
 
 def multi2single(model_path, id):
     checkpoint = torch.load(model_path)
