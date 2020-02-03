@@ -158,9 +158,7 @@ def get_demo_batch(audio_path , lmark):  #lmark size should be 136
     norm_lmark = norm_lmark.reshape(1, 136)
     norm_lmark = np.dot(norm_lmark - mean, component.T)
     norm_lmark = torch.FloatTensor(norm_lmark)
-    print (type(norm_lmark))
-    print (length)
-    example_landmark = norm_lmark.repeat(length,1)
+    example_landmark = norm_lmark.repeat((length,1))
 
     chunks = []
     for r in range(length):
