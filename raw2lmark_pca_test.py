@@ -148,7 +148,7 @@ def test():
                     audio = Variable(audio.float()).cuda(config.cuda1)
                     example_landmark = Variable(example_landmark.float()).cuda(config.cuda1) 
                 mse_loss_fn   = mse_loss_fn.cuda(config.cuda1)
-            fake_lmark, _= generator(example_landmark, audio)
+            fake_lmark, _ = generator(example_landmark, audio)
             lmark = lmark.data.cpu().numpy()
             fake_lmark = fake_lmark.data.cpu().numpy()
             lmark = np.dot(lmark,component) + mean
