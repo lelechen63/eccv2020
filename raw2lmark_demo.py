@@ -148,8 +148,9 @@ def get_demo_batch(audio_path , lmark):  #lmark size should be 136
     diff =  lmark - norm_lmark
 
     speech, fs = librosa.load(audio_path, sr=50000)
+    print (speech.shape)
     chunck_size =int(fs * 0.04 )
-    length = (speech / chunck_size)
+    length = (speech.shape[0] / chunck_size)
     left_append = speech[: 3 * chunck_size]
     right_append = speech[-4 * chunck_size:]
     speech = np.insert( speech, 0, left_append ,axis=  0)
@@ -157,7 +158,8 @@ def get_demo_batch(audio_path , lmark):  #lmark size should be 136
     norm_lmark = norm_lmark.reshape(1, 136)
     norm_lmark = np.dot(norm_lmark - mean, component.T)
     norm_lmark = torch.FloatTensor(norm_lmark)
-
+    print (type(norm_lmark))
+    print (length)
     example_landmark = norm_lmark.repeat(length,1)
 
     chunks = []
