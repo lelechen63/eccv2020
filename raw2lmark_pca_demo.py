@@ -33,7 +33,7 @@ def parse_args():
 
     parser.add_argument("--model_name",
                         type=str,
-                        default="./checkpoints/atnet_raw_pca_with_exmaple_select/atnet_lstm_3.pth")
+                        default="./checkpoints/atnet_raw_pca_with_exmaple/atnet_lstm_4.pth")
     parser.add_argument( "--sample_dir",
                     type=str,
                     default="./results")

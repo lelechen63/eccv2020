@@ -75,7 +75,7 @@ def parse_args():
     
     parser.add_argument("--model_name",
                         type=str,
-                        default="./checkpoints/atnet_raw_pca_with_exmaple_select/atnet_lstm_3.pth")
+                        default="./checkpoints/atnet_raw_pca_with_exmaple_select/atnet_lstm_4.pth")
                         # default="/mnt/disk1/dat/lchen63/lrw/model/model_gan_r2/r_generator_38.pth")
                         # default='/media/lele/DATA/lrw/data2/model')
     parser.add_argument("--sample_dir",

@@ -304,8 +304,6 @@ class FaceForensicsLmark2rgbDataset(Dataset):
         #     return None
 
 
-
-
 class GridLmark2rgbDataset(Dataset):
     """ Dataset object used to access the pre-processed VoxCelebDataset """
     def __init__(self,opt):
@@ -416,598 +414,177 @@ class GridLmark2rgbDataset(Dataset):
         #     return None
 
 
-class GRID_1D_lstm_landmark(Dataset):
-    def __init__(self,
-                 train='train'):
-        self.train = train
-        self.num_frames = 32
-        self.root_path = '/home/cxu-serve/p1/common/grid'
+class VoxcelebLmark2rgbDataset(Dataset):
+    """ Dataset object used to access the pre-processed VoxCelebDataset """
+
+    def __init__(self,opt):
+        """
+        Instantiates the Dataset.
+        :param root: Path to the folder where the pre-processed dataset is stored.
+        :param extension: File extension of the pre-processed video files.
+        :param shuffle: If True, the video files will be shuffled.
+        :param transform: Transformations to be done to all frames of the video files.
+        :param shuffle_frames: If True, each time a video is accessed, its frames will be shuffled.
+        """
         
-        if self.train=='train':
-            _file = open(os.path.join(self.root_path,  'pickle','train_audio2lmark_grid.pkl'), "rb")
-            self.datalist = pkl.load(_file)
+        self.output_shape   = tuple([opt.loadSize, opt.loadSize])
+        self.num_frames = opt.num_frames
+        self.opt = opt
+        self.root  = opt.dataroot
+
+        if opt.isTrain:
+            if self.root == '/home/cxu-serve/p1/lchen63/voxceleb' or opt.use_ft:
+                _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
+            else:
+                _file = open(os.path.join(self.root, 'txt',  "train_front_rt2.pkl"), "rb")
+
+            self.data = pkl.load(_file)
+            
             _file.close()
-        elif self.train =='test':
-            _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
-            self.datalist = pkl.load(_file)
+        elif opt.demo:
+
+            _file = open(os.path.join(self.root, 'txt', "demo.pkl"), "rb")
+            # self.data = pkl._Unpickler(_file)
+            # self.data.encoding = 'latin1'
+            # self.data = self.data.load()
+            self.data = pkl.load(_file)
             _file.close()
-        elif self.train =='demo' :
-            _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
-            self.datalist = pkl.load(_file)
+
+        else:
+            _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
+            # self.data = pkl._Unpickler(_file)
+            # self.data.encoding = 'latin1'
+            # self.data = self.data.load()[1:]
+            self.data = pkl.load(_file)
             _file.close()
+        print (len(self.data))
+        
+        self.transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
+        ])
+
+
+    def __len__(self):
+        return len(self.data) 
 
     
+    def name(self):
+        return 'Lmark2rgbDataset'
+
     def __getitem__(self, index):
-        # In training phase, it return real_image, wrong_image, text
-            # try:
-        if self.train == 'train':
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
-            mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
-            lmark = np.load(lmark_path)[:,:,:2]
-            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
-            diff = np.load(diff_path)
-            reference_id = int(self.datalist[index][2].split('_')[1])
-            for i in range(lmark.shape[1]):
-                x = lmark[: , i,0]
-                x = face_utils.smooth(x, window_len=5)
-                lmark[: ,i,0 ] = x[2:-2]
-                y = lmark[:, i, 1]
-                y = face_utils.smooth(y, window_len=5)
-                lmark[: ,i,1  ] = y[2:-2] 
-            lmark = lmark - diff
-            lmark = torch.FloatTensor(lmark)
-            mfcc = np.load(mfcc_path)
-            left_append = mfcc[:12]
-            right_append = mfcc[-16:]
-            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
-            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-            r =random.choice(
-                [x for x in range(0,41)])
-            mfccs = []
-            for ind in range(self.num_frames):
-                t_mfcc =mfcc[(r + ind )*4: (r + ind + 7)*4, 1:]
-                t_mfcc = torch.FloatTensor(t_mfcc)
-                mfccs.append(t_mfcc)
-            mfccs = torch.stack(mfccs, dim = 0)
-            landmark  =lmark[r : r + self.num_frames,:]
+        # try:
+            v_id = self.data[index][0]
+            video_path = os.path.join(self.root, 'unzip', v_id + '.mp4')
+            ani_video_path = os.path.join(self.root, 'unzip', v_id + '_ani.mp4')
+            rt_path = os.path.join(self.root, 'unzip', v_id + '_sRT.npy')
+            lmark_path = os.path.join(self.root, 'unzip', v_id + '.npy')
 
-            example_landmark = example_landmark.contiguous().view(-1)
-            landmark = landmark.contiguous().view( self.num_frames, -1 )
 
-            return example_landmark, landmark, mfccs
-        elif self.train =='test':
-
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
-            mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
             lmark = np.load(lmark_path)[:,:,:-1]
-            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
-            diff = np.load(diff_path)
-            reference_id = int(self.datalist[index][2].split('_')[1])
-            for i in range(lmark.shape[1]):
-                x = lmark[: , i,0]
-                x = face_utils.smooth(x, window_len=5)
-                lmark[: ,i,0 ] = x[2:-2]
-                y = lmark[:, i, 1]
-                y = face_utils.smooth(y, window_len=5)
-                lmark[: ,i,1  ] = y[2:-2] 
-            lmark = torch.FloatTensor(lmark - diff)
-            mfcc = np.load(mfcc_path)
-            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
-           
-            left_append = mfcc[:12]
-            right_append = mfcc[-16:]
-            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
-            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-            r =random.choice(
-                [x for x in range(0,41)])
-            mfccs = []
-            for ind in range(self.num_frames):
-                t_mfcc =mfcc[(r + ind )*4: (r + ind + 7)*4, 1:]
-                t_mfcc = torch.FloatTensor(t_mfcc)
-                mfccs.append(t_mfcc)
-            mfccs = torch.stack(mfccs, dim = 0)
-            lmark  =lmark[r : r + self.num_frames,:]
-            example_landmark = example_landmark.contiguous().view(-1)
-            lmark = lmark.contiguous().view(self.num_frames, -1 )
+            rt = np.load(rt_path)[:,:3]
 
-            return example_landmark, lmark, mfccs, lmark_path
-        else:
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
-            mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
-            lmark = np.load(lmark_path)[:,:,:-1]
-            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
-            diff = np.load(diff_path)
-            reference_id = int(self.datalist[index][2].split('_')[1])
-            for i in range(lmark.shape[1]):
-                x = lmark[: , i,0]
-                x = face_utils.smooth(x, window_len=5)
-                lmark[: ,i,0 ] = x[2:-2]
-                y = lmark[:, i, 1]
-                y = face_utils.smooth(y, window_len=5)
-                lmark[: ,i,1  ] = y[2:-2] 
-            lmark = torch.FloatTensor(lmark - diff)
-            mfcc = np.load(mfcc_path)
-            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
-           
-            left_append = mfcc[:12]
-            right_append = mfcc[-16:]
-            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
-            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-            # r =random.choice(
-            #     [x for x in range(0,41)])
-            mfccs = []
-            for ind in range(75):
-                t_mfcc =mfcc[( ind )*4: ( ind + 7)*4, 1:]
-                t_mfcc = torch.FloatTensor(t_mfcc)
-                mfccs.append(t_mfcc)
-            mfccs = torch.stack(mfccs, dim = 0)
-            # lmark  =lmark[r : r + self.num_frames,:]
-            example_landmark = example_landmark.contiguous().view(-1)
-            lmark = lmark.contiguous().view(75,  -1 )
+            v_length = lmark.shape[0]
 
-            return example_landmark, lmark, mfccs, lmark_path
+            real_video  = mmcv.VideoReader(video_path)
+            ani_video = mmcv.VideoReader(ani_video_path)
 
-       
-    def __len__(self):
-        if self.train=='train':
-            return len(self.datalist)
-        elif self.train=='test':
-            return len(self.datalist)
-        else:
-            return len(self.datalist)
-class GRID_1D_lstm_pca_landmark(Dataset):
-    def __init__(self,
-                 train='train'):
-        self.train = train
-        self.num_frames = 32
-        self.root_path = '/home/cxu-serve/p1/common/grid'
-        
-        if self.train=='train':
-            _file = open(os.path.join(self.root_path,  'pickle','train_audio2lmark_grid.pkl'), "rb")
-            self.datalist = pkl.load(_file)
-            _file.close()
-        elif self.train =='test':
-            _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
-            self.datalist = pkl.load(_file)
-            _file.close()
-        elif self.train =='demo' :
-            _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
-            self.datalist = pkl.load(_file)
-            _file.close()
+            # sample frames for embedding network
+            if self.opt.isTrain:
+                if self.opt.use_ft:
+                    if self.num_frames  ==1 :
+                        input_indexs = [0]
+                        target_id = 0
+                    elif self.num_frames == 8:
+                        input_indexs = [0,7,15,23,31,39,47,55]
+                        target_id =  random.sample(input_indexs, 1)
+                        input_indexs = set(input_indexs ) - set(target_id)
+                        input_indexs =list(input_indexs) 
 
-        self.mean =  np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/mean_grid_front.npy')
-        self.component = np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/U_grid_front.npy')
+                    elif self.num_frames == 32:
+                        input_indexs = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63]
+                        target_id =  random.sample(input_indexs, 1)
+                        input_indexs = set(input_indexs ) - set(target_id)
+                        input_indexs =list(input_indexs)                    
+                else:
+                    input_indexs  = set(random.sample(range(0,64), self.num_frames))
+                    # we randomly choose a target frame 
+                    target_id =  random.randint( 64, v_length - 1)
+            else:
+                if self.opt.use_ft:
+                    if self.num_frames  ==1 :
+                        input_indexs = [0]
+                        target_id = 75
+                    elif self.num_frames == 8:
+                        input_indexs = [0,7,15,23,31,39,47,55]
+                        target_id =  75
+                        # input_indexs = set(input_indexs ) - set(target_id)
+                        # input_indexs =list(input_indexs) 
 
-# data_original = np.dot(data_reduced,component) + mean
-    def __getitem__(self, index):
-        # In training phase, it return real_image, wrong_image, text
-            # try:
-        if self.train == 'train':
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
-            mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
-            lmark = np.load(lmark_path)[:,:,:2]
-            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
-            diff = np.load(diff_path)
-            reference_id = int(self.datalist[index][2].split('_')[1])
-            for i in range(lmark.shape[1]):
-                x = lmark[: , i,0]
-                x = face_utils.smooth(x, window_len=5)
-                lmark[: ,i,0 ] = x[2:-2]
-                y = lmark[:, i, 1]
-                y = face_utils.smooth(y, window_len=5)
-                lmark[: ,i,1  ] = y[2:-2] 
-            lmark = lmark - diff
-            lmark = lmark.reshape(lmark.shape[0], 136)
-            lmark = np.dot(lmark - self.mean, self.component.T)
+                    elif self.num_frames == 32:
+                        input_indexs = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63]
+                        target_id =  75
+                        # input_indexs = set(input_indexs ) - set(target_id)
+                        # input_indexs =list(input_indexs)                    
+                else:
+                    input_indexs  = set(random.sample(range(0,64), self.num_frames))
+                    # we randomly choose a target frame 
+                    target_id =  random.randint( 64, v_length - 1)
 
-            lmark = torch.FloatTensor(lmark)
-            mfcc = np.load(mfcc_path)
-            left_append = mfcc[:12]
-            right_append = mfcc[-16:]
-            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
-            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-            r =random.choice(
-                [x for x in range(0,41)])
-            mfccs = []
-            for ind in range(self.num_frames):
-                t_mfcc =mfcc[(r + ind )*4: (r + ind + 7)*4, 1:]
-                t_mfcc = torch.FloatTensor(t_mfcc)
-                mfccs.append(t_mfcc)
-            mfccs = torch.stack(mfccs, dim = 0)
-            landmark  =lmark[r : r + self.num_frames,:]
+            reference_frames = []
+            reference_rt_diffs = []
+            if type(target_id) == list:
+                target_id = target_id[0] 
 
-            # example_landmark = example_landmark.contiguous().view(-1)
-            # landmark = landmark.contiguous().view( self.num_frames, -1 )
+            target_rt = rt[target_id]
+            for t in input_indexs:
 
-            return example_landmark, landmark, mfccs
-        elif self.train == 'test':
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
-            mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
-            lmark = np.load(lmark_path)[:,:,:-1]
-            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
-            diff = np.load(diff_path)
-            reference_id = int(self.datalist[index][2].split('_')[1])
-            for i in range(lmark.shape[1]):
-                x = lmark[: , i,0]
-                x = face_utils.smooth(x, window_len=5)
-                lmark[: ,i,0 ] = x[2:-2]
-                y = lmark[:, i, 1]
-                y = face_utils.smooth(y, window_len=5)
-                lmark[: ,i,1  ] = y[2:-2] 
-            lmark = lmark - diff
-            lmark = lmark.reshape(lmark.shape[0], 136)
-            # print (lmark.shape, self.mean.shape, self.component.T.shape)
-            lmark = np.dot(lmark - self.mean, self.component.T)
-            lmark = torch.FloatTensor(lmark)
-            
-            mfcc = np.load(mfcc_path)
-            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-           
-            left_append = mfcc[:12]
-            right_append = mfcc[-16:]
-            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
-            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-            r =random.choice(
-                [x for x in range(0,41)])
-            mfccs = []
-            for ind in range(self.num_frames):
-                t_mfcc =mfcc[(r + ind )*4: (r + ind + 7)*4, 1:]
-                t_mfcc = torch.FloatTensor(t_mfcc)
-                mfccs.append(t_mfcc)
-            mfccs = torch.stack(mfccs, dim = 0)
-            lmark  =lmark[r : r + self.num_frames,:]
-            # example_landmark = example_landmark.contiguous().view(-1)
-            # lmark = lmark.contiguous().view(self.num_frames, -1 )
-
-            return example_landmark, lmark, mfccs, lmark_path
-        else:
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
-            mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
-            lmark = np.load(lmark_path)[:,:,:-1]
-            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
-            diff = np.load(diff_path)
-            reference_id = int(self.datalist[index][2].split('_')[1])
-            for i in range(lmark.shape[1]):
-                x = lmark[: , i,0]
-                x = face_utils.smooth(x, window_len=5)
-                lmark[: ,i,0 ] = x[2:-2]
-                y = lmark[:, i, 1]
-                y = face_utils.smooth(y, window_len=5)
-                lmark[: ,i,1  ] = y[2:-2] 
-            lmark = lmark - diff
-            lmark = lmark.reshape(lmark.shape[0], 136)
-            # print (lmark.shape, self.mean.shape, self.component.T.shape)
-            lmark = np.dot(lmark - self.mean, self.component.T)
-            lmark = torch.FloatTensor(lmark)
-            
-            mfcc = np.load(mfcc_path)
-            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-           
-            left_append = mfcc[:12]
-            right_append = mfcc[-16:]
-            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
-            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-            
-            mfccs = []
-            for ind in range(75):
-                t_mfcc =mfcc[( ind )*4: ( ind + 7)*4, 1:]
-                t_mfcc = torch.FloatTensor(t_mfcc)
-                mfccs.append(t_mfcc)
-            mfccs = torch.stack(mfccs, dim = 0)
-            # example_landmark = example_landmark.contiguous().view(-1)
-            # lmark = lmark.contiguous().view(self.num_frames, -1 )
-
-            return example_landmark, lmark, mfccs, lmark_path
-       
-    def __len__(self):
-        if self.train=='train':
-            return len(self.datalist)
-        elif self.train=='test':
-            return len(self.datalist)
-        else:
-            return len(self.datalist)
-
-class GRID_raw_lstm_pca_landmark(Dataset):
-    def __init__(self,
-                 train='train'):
-        self.train = train
-        self.num_frames = 32
-        self.root_path = '/home/cxu-serve/p1/common/grid'
-        
-        if self.train=='train':
-            _file = open(os.path.join(self.root_path,  'pickle','train_audio2lmark_grid.pkl'), "rb")
-            self.datalist = pkl.load(_file)
-            _file.close()
-        elif self.train =='test':
-            _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
-            self.datalist = pkl.load(_file)
-            _file.close()
-        elif self.train =='demo' :
-            _file = open(os.path.join(self.root_path, "img_demo.pkl"), "rb")
-            self.demo_data = pkl.load(_file)
-            _file.close()
-
-        self.mean =  np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/mean_grid_front.npy')
-        self.component = np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/U_grid_front.npy')
-        self.augList = [-12, -9, -6, -3, 0, 3, 6]
-# data_original = np.dot(data_reduced,component) + mean
-    def __getitem__(self, index):
-        # In training phase, it return real_image, wrong_image, text
-            # try:
-        if self.train == 'train':
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
-            # mfcc_path = os.path.join(self.root_path, 'mfcc' , self.datalist[index][0],  self.datalist[index][1] +'_mfcc.npy') 
-            lmark = np.load(lmark_path)[:,:,:2]
-            audio_path = os.path.join('/home/cxu-serve/p1/common/grid/audio' ,self.datalist[index][0],  self.datalist[index][1] +'.wav' )
-            rnd_dB = np.random.randint(0, high=len(self.augList), size=[1, ])[0]
-            for i in range(lmark.shape[1]):
-                x = lmark[: , i,0]
-                x = face_utils.smooth(x, window_len=5)
-                lmark[: ,i,0 ] = x[2:-2]
-                y = lmark[:, i, 1]
-                y = face_utils.smooth(y, window_len=5)
-                lmark[: ,i,1  ] = y[2:-2] 
-            lmark = lmark.reshape(lmark.shape[0], 136)
-            lmark = np.dot(lmark - self.mean, self.component.T)
-
-            lmark = torch.FloatTensor(lmark)
-            fs, mfcc = wavfile.read( audio_path)
-            chunck_size = int(fs * 0.04 )
-            left_append = mfcc[: 3 * chunck_size]
-            right_append = mfcc[-4 * chunck_size:]
-            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
-            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
-            r =random.choice(
-                [x for x in range(0,41)])
-            mfccs = []
-            for ind in range(self.num_frames):
-                t_mfcc =mfcc[(r + ind )* chunck_size : (r + ind + 7)* chunck_size]
-                t_mfcc = t_mfcc*np.power(10.0, self.augList[rnd_dB]/20.0)
-                t_mfcc = torch.FloatTensor(t_mfcc)
-                mfccs.append(t_mfcc)
-            mfccs = torch.stack(mfccs, dim = 0)
-            landmark  =lmark[r : r + self.num_frames,:]
-            # example_landmark = example_landmark.contiguous().view(-1)
-            # landmark = landmark.contiguous().view( self.num_frames, -1 )
-
-            return example_landmark, landmark, mfccs
-        else:
-
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
-            audio_path = os.path.join('/home/cxu-serve/p1/common/grid/audio' ,self.datalist[index][0],  self.datalist[index][1] +'.wav' )
-            lmark = np.load(lmark_path)[:,:,:-1]
-            
-            for i in range(lmark.shape[1]):
-                x = lmark[: , i,0]
-                x = face_utils.smooth(x, window_len=5)
-                lmark[: ,i,0 ] = x[2:-2]
-                y = lmark[:, i, 1]
-                y = face_utils.smooth(y, window_len=5)
-                lmark[: ,i,1  ] = y[2:-2] 
-            lmark = lmark.reshape(lmark.shape[0], 136)
-            # print (lmark.shape, self.mean.shape, self.component.T.shape)
-            lmark = np.dot(lmark - self.mean, self.component.T)
-            lmark = torch.FloatTensor(lmark)
-            
-            fs, mfcc = wavfile.read( audio_path)
-            chunck_size =int(fs * 0.04 ) 
-            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
-           
-            left_append = mfcc[: 3 * chunck_size]
-            right_append = mfcc[-4 * chunck_size:]
-            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
-            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[0,:]  # since the lips in all 0 frames are closed 
-            r =random.choice(
-                [x for x in range(0,41)])
-            mfccs = []
-            for ind in range(self.num_frames):
-                t_mfcc =mfcc[(r + ind )*chunck_size: (r + ind + 7)*chunck_size]
+                reference_rt_diffs.append( rt[t] - target_rt )
+                rgb_t =  mmcv.bgr2rgb(real_video[t]) 
+                lmark_t = lmark[t]
+                lmark_rgb = plot_landmarks( lmark_t)
+                # lmark_rgb = np.array(lmark_rgb) 
+                # resize 224 to 256
+                rgb_t  = cv2.resize(rgb_t, self.output_shape)
+                lmark_rgb  = cv2.resize(lmark_rgb, self.output_shape)
                 
-                t_mfcc = torch.FloatTensor(t_mfcc)
-                mfccs.append(t_mfcc)
-            mfccs = torch.stack(mfccs, dim = 0)
-            lmark  =lmark[r : r + self.num_frames,:]
-            # example_landmark = example_landmark.contiguous().view(-1)
-            # lmark = lmark.contiguous().view(self.num_frames, -1 )
-
-            return example_landmark, lmark, mfccs, lmark_path
-
-       
-    def __len__(self):
-        if self.train=='train':
-            return len(self.datalist)
-        elif self.train=='test':
-            return len(self.datalist)
-        else:
-            print ('8888888888888')
-
-
-class GRID_raw_pca_landmark(Dataset):
-    def __init__(self,
-                 train='train'):
-        self.train = train
-        self.num_frames = 32
-        self.root_path = '/home/cxu-serve/p1/common/grid'
-        if self.train=='train':
-            _file = open(os.path.join(self.root_path,  'pickle','train_audio2lmark_grid.pkl'), "rb")
-            self.datalist = pkl.load(_file)
-            _file.close()
-        elif self.train =='test':
-            _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
-            self.datalist = pkl.load(_file)
-            _file.close()
-        elif self.train =='demo' :
-            _file = open(os.path.join(self.root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
-            self.datalist = pkl.load(_file)
-            _file.close()
-        print (len(self.datalist))
-        self.mean =  np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/mean_grid_front.npy')
-        self.component = np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/U_grid_front.npy')
-        self.augList = [-12, -9, -6, -3, 0, 3, 6]
-    def __getitem__(self, index):
-        # In training phase, it return real_image, wrong_image, text
-            # try:
-        if self.train == 'train':
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
-            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_%05d_diff.npy'%self.datalist[index][4])
-            lmark = np.load(lmark_path)[:,:,:2]
-            diff = np.load(diff_path)
-            reference_id = int(self.datalist[index][4])
-            audio_path = os.path.join('/home/cxu-serve/p1/common/grid/audio' ,self.datalist[index][0],  self.datalist[index][1] +'.wav' )
-            rnd_dB = np.random.randint(0, high=len(self.augList), size=[1, ])[0]
-            for i in range(lmark.shape[1]):
-                x = lmark[: , i,0]
-                x = face_utils.smooth(x, window_len=5)
-                lmark[: ,i,0 ] = x[2:-2]
-                y = lmark[:, i, 1]
-                y = face_utils.smooth(y, window_len=5)
-                lmark[: ,i,1  ] = y[2:-2] 
-            lmark = lmark - diff
-            lmark = lmark.reshape(lmark.shape[0], 136)
-            lmark = np.dot(lmark - self.mean, self.component.T)
-
-            lmark = torch.FloatTensor(lmark)
-            fs, mfcc = wavfile.read( audio_path)
-            chunck_size = int(fs * 0.04 )
-            left_append = mfcc[: 3 * chunck_size]
-            right_append = mfcc[-4 * chunck_size:]
-            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
-            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-            if self.datalist[index][2] == True :
-                if  self.datalist[index][3] == True:
-                    r =random.choice( [x for x in range(0, 10)] + [x for x in range(65, 74)])
-                else:
-                    r =random.choice( [x for x in range(0, 10)] )
-            else:
-                if  self.datalist[index][3] == True:
-                    r =random.choice([x for x in range(65, 74)])
-                else:
-                    r =random.choice( [x for x in range(10, 65)] )
-            # if lmark.shape[0] != 75:
-            #     print  (lmark.shape[0])
-            # r = 74
-            t_mfcc =mfcc[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
-            t_mfcc = t_mfcc*np.power(10.0, self.augList[rnd_dB]/20.0)
-            t_mfcc = torch.FloatTensor(t_mfcc)
-
-            landmark  =lmark[r]
-            # example_landmark = example_landmark.contiguous().view(-1)
-            # landmark = landmark.contiguous().view( self.num_frames, -1 )
-
-            return example_landmark, landmark, t_mfcc ,  lmark_path +'___' +  str(r)
-        elif self.train=='test':
-
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
-            audio_path = os.path.join('/home/cxu-serve/p1/common/grid/audio' ,self.datalist[index][0],  self.datalist[index][1] +'.wav' )
-            lmark = np.load(lmark_path)[:,:,:-1]
-            # if len(self.datalist[index]) != 5:
-            #     print (len(self.datalist[index]) , self.datalist[index])
-            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_%05d_diff.npy'%self.datalist[index][4])
-            diff = np.load(diff_path)
-            reference_id = int(self.datalist[index][4])
-            for i in range(lmark.shape[1]):
-                x = lmark[: , i,0]
-                x = face_utils.smooth(x, window_len=5)
-                lmark[: ,i,0 ] = x[2:-2]
-                y = lmark[:, i, 1]
-                y = face_utils.smooth(y, window_len=5)
-                lmark[: ,i,1  ] = y[2:-2] 
-            lmark = lmark - diff
-            lmark = lmark.reshape(lmark.shape[0], 136)
-            # print (lmark.shape, self.mean.shape, self.component.T.shape)
-            lmark = np.dot(lmark - self.mean, self.component.T)
-            lmark = torch.FloatTensor(lmark)
+                # to tensor
+                rgb_t = self.transform(rgb_t)
+                lmark_rgb = self.transform(lmark_rgb)
+                reference_frames.append(torch.cat([rgb_t, lmark_rgb],0))  # (6, 256, 256)   
+            reference_rt_diffs = np.absolute(reference_rt_diffs)
+            reference_rt_diffs = np.mean(reference_rt_diffs, axis =1)
+            # similar_id  = input_indexs[np.argmin(r_diff)]
+            similar_id  = np.argmin(reference_rt_diffs)
+            reference_frames = torch.stack(reference_frames)
             
-            fs, mfcc = wavfile.read( audio_path)
-            chunck_size =int(fs * 0.04 ) 
-           
-            left_append = mfcc[: 3 * chunck_size]
-            right_append = mfcc[-4 * chunck_size:]
-            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
-            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-            if self.datalist[index][2] == True :
-                if  self.datalist[index][3] == True:
-                    r =random.choice( [x for x in range(0, 10)] + [x for x in range(65, 74)])
-                else:
-                    r =random.choice( [x for x in range(0, 10)] )
-            else:
-                if  self.datalist[index][3] == True:
-                    r =random.choice([x for x in range(65, 74)])
-                else:
-                    r =random.choice( [x for x in range(10, 65)] )
-            
-            t_mfcc =mfcc[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
-            t_mfcc = torch.FloatTensor(t_mfcc)
-            landmark  =lmark[r]
-            
+            ############################################################################
+            target_rgb = real_video[target_id]
+            target_ani = ani_video[target_id]
+            target_lmark = lmark[target_id]
 
-            return example_landmark, landmark, t_mfcc,  lmark_path +'___' +  str(r)
+            target_rgb = mmcv.bgr2rgb(target_rgb)
+            target_rgb = cv2.resize(target_rgb, self.output_shape)
+            target_rgb = self.transform(target_rgb)
 
-        elif self.train=='demo':
-            
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
-            audio_path = os.path.join('/home/cxu-serve/p1/common/grid/audio' ,self.datalist[index][0],  self.datalist[index][1] +'.wav' )
-            lmark = np.load(lmark_path)[:,:,:-1]
-            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
-            diff = np.load(diff_path)
-            reference_id = int(self.datalist[index][2].split('_')[1])
-            for i in range(lmark.shape[1]):
-                x = lmark[: , i,0]
-                x = face_utils.smooth(x, window_len=5)
-                lmark[: ,i,0 ] = x[2:-2]
-                y = lmark[:, i, 1]
-                y = face_utils.smooth(y, window_len=5)
-                lmark[: ,i,1  ] = y[2:-2] 
-            lmark = lmark - diff
-            lmark = lmark.reshape(lmark.shape[0], 136)
-            # print (lmark.shape, self.mean.shape, self.component.T.shape)
-            lmark = np.dot(lmark - self.mean, self.component.T)
-            lmark = torch.FloatTensor(lmark)#.view(75,20)
-            
-            fs, mfcc = wavfile.read( audio_path)
-            chunck_size =int(fs * 0.04 ) 
-           
-            left_append = mfcc[: 3 * chunck_size]
-            right_append = mfcc[-4 * chunck_size:]
-            mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
-            mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
-            example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-            
-            example_landmark = example_landmark.repeat(75,1)
-            mfccs = []
-            for r in range(75):
-                t_mfcc =mfcc[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
-                t_mfcc = torch.FloatTensor(t_mfcc)
-                mfccs.append(t_mfcc)
-            mfccs = torch.stack(mfccs, 0)
-            # example_landmark = example_landmark.contiguous().view(-1)
-            # lmark = lmark.contiguous().view(self.num_frames, -1 )
+            target_ani = mmcv.bgr2rgb(target_ani)
+            target_ani = cv2.resize(target_ani, self.output_shape)
+            target_ani = self.transform(target_ani)
 
-            return example_landmark, lmark, mfccs,  lmark_path 
-       
-    def __len__(self):
-        if self.train=='train':
-            return len(self.datalist)
-        elif self.train=='test':
-            return len(self.datalist)
-        else:
-            return len(self.datalist)
-# dataset = GRID_raw_pca_landmark( train='train')
-# data_loader = DataLoader(dataset,
-#                             batch_size=2,
-#                             num_workers=1,
-#                             shuffle=False, drop_last=True)
-# for i in range (10):
-#     for step, (example_landmark, lmark, audio) in enumerate(data_loader):
+            target_lmark = plot_landmarks(target_lmark)
+            target_lmark  = cv2.resize(target_lmark, self.output_shape)
+            target_lmark = self.transform(target_lmark)
+            similar_frame = reference_frames[similar_id,:3]
+            cropped_similar_image = similar_frame.clone()
+            mask = target_ani > -0.9
+            mask = scipy.ndimage.morphology.binary_dilation(mask.numpy(),iterations = 5).astype(np.bool)
+            cropped_similar_image[torch.tensor(mask)] = -1 
+            # cropped_similar_image[torch.tensor(target_ani > -0.9)] = -1 
 
-#         print (example_landmark.shape)
+
+            input_dic = {'v_id' : v_id, 'target_lmark': target_lmark, 'reference_frames': reference_frames, \
+            'target_rgb': target_rgb, 'target_ani': target_ani, 'reference_ids':str(input_indexs), 'target_id': target_id \
+            , 'similar_frame': similar_frame, "cropped_similar_image" : cropped_similar_image}
+            return input_dic
+        # except:
+        #     return None

@@ -174,7 +174,6 @@ def _crop_video(video, pid = 0):
 			roi = tempolate[int(top_left_x[i]):int(top_left_x[i]) + side_length ,int(top_left_y[i]):int(top_left_y[i]) + side_length]
 			roi =cv2.resize(roi,(256,256))
 			cv2.imwrite('./temp%05d/%05d.png'%(pid, i), roi)
-
 		else:
 			roi = videos[i][int(top_left_x[i]):int(top_left_x[i]) + side_length ,int(top_left_y[i]):int(top_left_y[i]) + side_length]
 			roi =cv2.resize(roi,(256,256))

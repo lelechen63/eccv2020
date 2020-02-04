@@ -102,7 +102,9 @@ class Trainer():
         mean =  np.load('./basics/mean_grid_front.npy')
         component = np.load('./basics/U_grid_front.npy')
         for epoch in range(self.start_epoch, config.max_epochs):
+            Flage = True
             if epoch % 10==0:
+                Flage = False
                 self.generator.eval()
                 with torch.no_grad():
                     for step,  (example_landmark, lmark, audio, path) in enumerate(self.test_loader):
@@ -131,7 +133,8 @@ class Trainer():
                                     util.plot_flmarks(fake_lmark[indx], name, xLim, yLim, xLab, yLab, figsize=(10, 10), sentence = path[indx])
                         if step == 3:
                             break
-            self.generator.train()
+            if Flage == False:
+                self.generator.train()
             for step, (example_landmark, lmark, audio , path) in enumerate(self.data_loader):
                 t1 = time.time()
 
