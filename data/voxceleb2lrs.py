@@ -125,8 +125,8 @@ def align_videos(config):
                         ani_video_path = os.path.join( root_path , identities[index], v_id, ff[:-4] + '_ani.mp4')
                         lmark_path = os.path.join( root_path , identities[index], v_id, ff)
                         
-                        # if os.path.exists(ori_video_path[:-4] + '_aligned.mp4'):
-                        #     continue
+                        if os.path.exists(ori_video_path[:-4] + '_aligned.mp4'):
+                            continue
                         if os.path.exists(ori_video_path) and os.path.exists(ani_video_path) and os.path.exists(lmark_path) :
                             _crop_video(ori_video_path, ani_video_path, lmark_path )
                     except:
