@@ -113,7 +113,7 @@ def align_videos(config):
     identities = sorted(os.listdir( root_path))
     total = len(identities)
     batch_size = int(0.1 * total)
-    for index  in range(total):
+    for index  in range(batch_size *  2 ,total):
     # for index  in range(batch_size * (config.batch_id -1) , batch_size * (config.batch_id)):
         video_ids  = os.listdir( os.path.join( root_path , identities[index]))
         for v_id in video_ids:
