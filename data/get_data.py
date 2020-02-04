@@ -139,61 +139,84 @@ def prepare_data_grid():
         print ('+++++++', i)
         count = 0
         for vid in os.listdir( os.path.join(align_path, i ) ):
-            if os.path.exists(os.path.join( align_path ,  i , vid[:-6] + '_original.npy') ) and os.path.exists(os.path.join( path , 'mfcc' ,  i , vid[:-6] + '_mfcc.npy') ) and os.path.exists(os.path.join(path , 'audio' ,  i , vid[:-6]  +'.wav' )) :
-                audio_path = os.path.join( path, 'audio' ,  i , vid[:-6] + '.wav') 
-                sound, _ = librosa.load(audio_path, sr=44100)
+            if os.path.exists(os.path.join( align_path ,  i , vid[:-6] + '_front.npy') )  and os.path.exists(os.path.join(path , 'audio' ,  i , vid[:-6]  +'.wav' )) :
+                tmp = [i , vid[:-6]]
                 lmark_path = os.path.join( align_path ,  i , vid[:-6] + '_front.npy')
-                lmark1 = np.load(lmark_path)[:,:,:2]
-                # face_utils.write_video_wpts_wsound( lmark1, sound, 44100, './gg', i +'_' + vid[:-6] +'_front'   , [0.0,256.0], [0.0,256.0])
-                lmark_path = os.path.join( align_path ,  i , vid[:-6] + '_original.npy')
-                lmark2 = np.load(lmark_path)[:,:,:2]
-                # face_utils.write_video_wpts_wsound( lmark2, sound, 44100, './gg', i +'_' + vid[:-6] +'_original'   , [0.0,256.0], [0.0,256.0])
-                video_path =  os.path.join( align_path ,  i , vid[:-6] + '_crop.mp4')
-                cap = cv2.VideoCapture(video_path)
-                real_video = []
-                while(cap.isOpened()):
-                    ret, frame = cap.read()
-                    if ret == True:
-                        real_video.append(frame)
-                    else:
-                        break
-                if os.path.exists('./tmp01'):
-                    shutil.rmtree('./tmp01')
-                os.mkdir("./tmp01")
-                for ii in range(lmark1.shape[0]):
-                    img = real_video[ii]
-                    print ('_++++++++++++' ,ii , openrate(lmark1[ii]))
-                    for jj in range(68):
-                        x=int(lmark1[ii][jj][1])
-                        y =int(lmark1[ii][jj][0])
-                        cv2.circle(img, (y, x), 1, (0, 0, 255), -1)
-                        x=int(lmark2[ii][jj][1])
-                        y =int(lmark2[ii][jj][0])
-                        cv2.circle(img ,  (y, x), 1, ( 255, 0 , 0), -1)
-                    cv2.imwrite(  './tmp01/%06d.jpg'%ii, img)
-                mmcv.frames2video('./tmp01', './gg/' + i +'_' + vid[:-6] +'.mp4' )
-                count += 1 
-            if count == 1:
-                break
-        break
+                lmark = np.load( lmark_path )
+                if lmark.shape[0]< 74:
+                    continue
+                start_openrate = openrate(lmark[0])
+                print (lmark_path)
+                if start_openrate < 1.1:
+                    count += 1
+                    tmp.append(True)    
+                    # print ('++++++++++++++++' , start_openrate )
+                else:
+                    tmp.append(False)
+                    # print ('------', start_openrate )
+                end_openrate = openrate(lmark[-1])
+
+                if end_openrate < 1.1:
+                    # print ('++-------++' , end_openrate )
+                    tmp.append(True)
+                else:
+                    # print ('++-========++' , end_openrate )
+                    tmp.append(False)
+            #     audio_path = os.path.join( path, 'audio' ,  i , vid[:-6] + '.wav') 
+            #     sound, _ = librosa.load(audio_path, sr=44100)
+            #     lmark_path = os.path.join( align_path ,  i , vid[:-6] + '_front.npy')
+            #     lmark1 = np.load(lmark_path)[:,:,:2]
+            #     # face_utils.write_video_wpts_wsound( lmark1, sound, 44100, './gg', i +'_' + vid[:-6] +'_front'   , [0.0,256.0], [0.0,256.0])
+            #     lmark_path = os.path.join( align_path ,  i , vid[:-6] + '_original.npy')
+            #     lmark2 = np.load(lmark_path)[:,:,:2]
+            #     # face_utils.write_video_wpts_wsound( lmark2, sound, 44100, './gg', i +'_' + vid[:-6] +'_original'   , [0.0,256.0], [0.0,256.0])
+            #     video_path =  os.path.join( align_path ,  i , vid[:-6] + '_crop.mp4')
+            #     cap = cv2.VideoCapture(video_path)
+            #     real_video = []
+            #     while(cap.isOpened()):
+            #         ret, frame = cap.read()
+            #         if ret == True:
+            #             real_video.append(frame)
+            #         else:
+            #             break
+            #     if os.path.exists('./tmp01'):
+            #         shutil.rmtree('./tmp01')
+            #     os.mkdir("./tmp01")
+            #     for ii in range(lmark1.shape[0]):
+            #         img = real_video[ii]
+            #         print ('_++++++++++++' ,ii , openrate(lmark1[ii]))
+            #         for jj in range(68):
+            #             x=int(lmark1[ii][jj][1])
+            #             y =int(lmark1[ii][jj][0])
+            #             cv2.circle(img, (y, x), 1, (0, 0, 255), -1)
+            #             x=int(lmark2[ii][jj][1])
+            #             y =int(lmark2[ii][jj][0])
+            #             cv2.circle(img ,  (y, x), 1, ( 255, 0 , 0), -1)
+            #         cv2.imwrite(  './tmp01/%06d.jpg'%ii, img)
+            #     mmcv.frames2video('./tmp01', './gg/' + i +'_' + vid[:-6] +'.mp4' )
+            #     count += 1 
+            # if count == 1:
+                # break
+        # break
                 # for ff in os.listdir( os.path.join(align_path, i )):
                 #     if fnmatch.fnmatch(ff, vid[:-6]  + '*diff*'):
                 #         break
-            #     if  i == 's1' or i == 's2' or i == 's20' or i == 's22':
-            #         testset.append( [i , vid[:-6], ff] )
+                if  i in set(["s1","s3","s4","s8","s16","s17","s18","s19","s20","s23","s24","s27","s29","s31","s32","s33","s2","s5","s6","s7","s12","s22","s25","s26","s28","s34"]):
+                    trainset.append( tmp )
 
-            #     else:
-            #         trainset.append( [i , vid[:-6], ff] )
+                else:
+                    testset.append( tmp )
             # else:
             #     continue
                 
                 # print (os.path.join( align_path ,  i , vid[:-6] + '_original.npy'))
         # break
-   
-    # with open(os.path.join(path, 'pickle','train_audio2lmark_grid.pkl'), 'wb') as handle:
-    #     pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
-    # with open(os.path.join(path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
-    #     pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+    print  (count)
+    print  (len(trainset))
+    with open(os.path.join(path, 'pickle','train_audio2lmark_grid.pkl'), 'wb') as handle:
+        pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+    with open(os.path.join(path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
+        pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
 def grid_check():
     root_path  ='/home/cxu-serve/p1/common/grid'
@@ -211,26 +234,31 @@ def grid_check():
         lmark_path = os.path.join(root_path ,  'align' , datalist[index][0] , datalist[index][1] + '_front.npy') 
         lmark = np.load( lmark_path )
         start_openrate = openrate(lmark[0])
+        print (lmark_path)
         if start_openrate < 1.1:
-            datalist[index].append(True)
+            datalist[index].append(True)    
+            print ('++++++++++++++++' , start_openrate )
         else:
             datalist[index].append(False)
+            print ('------', start_openrate )
         end_openrate = openrate(lmark[-1])
 
         if end_openrate < 1.1:
+            print ('++-------++' , end_openrate )
             datalist[index].append(True)
         else:
+            print ('++-========++' , end_openrate )
             datalist[index].append(False)
-        if datalist[index][0]  in set(["s1","s3","s4","s8","s16","s17","s18","s19","s20","s23","s24","s27","s29","s31","s32","s33","s2","s5","s6","s7","s12","s22","s25","s26","s28","s34"]):
-            train_list.append(datalist[index])
-        else:
-            test_list.append(datalist[index])
+        # if datalist[index][0]  in set(["s1","s3","s4","s8","s16","s17","s18","s19","s20","s23","s24","s27","s29","s31","s32","s33","s2","s5","s6","s7","s12","s22","s25","s26","s28","s34"]):
+        #     train_list.append(datalist[index])
+        # else:
+        #     test_list.append(datalist[index])
 
-    with open(os.path.join(root_path, 'pickle','train_audio2lmark_grid.pkl'), 'wb') as handle:
-        pkl.dump(train_list, handle, protocol=pkl.HIGHEST_PROTOCOL)   
+    # with open(os.path.join(root_path, 'pickle','train_audio2lmark_grid.pkl'), 'wb') as handle:
+    #     pkl.dump(train_list, handle, protocol=pkl.HIGHEST_PROTOCOL)   
 
-    with open(os.path.join(root_path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
-        pkl.dump(test_list, handle, protocol=pkl.HIGHEST_PROTOCOL)     
+    # with open(os.path.join(root_path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
+    #     pkl.dump(test_list, handle, protocol=pkl.HIGHEST_PROTOCOL)     
 
 
 def prepare_standard1():  # get cropped image by input the reference image
@@ -275,8 +303,8 @@ def prepare_standard2():
     np.save(lmark_path, preds)
     
 # prepare_standard2()
-grid_check()
-# prepare_data_grid() 
+# grid_check()
+prepare_data_grid() 
 # prepare_data_faceforencs_oppo()
 # prepare_data_lrs()
 # unzip_video()

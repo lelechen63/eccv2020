@@ -37,6 +37,32 @@ other = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], \
 
 faceLmarkLookup = Mouth + Nose + leftBrow + rightBrow + leftEye + rightEye + other
 
+def mounth_open2close(lmark): # if the open rate is too large, we need to manually make the mounth to be closed.
+    # the input lamrk need to be (68,2 ) or (68,3)
+    open_pair = []
+    for i in range(3):
+        open_pair.append([i + 61, 67 - i])
+    upper_part = [49,50,51,52,53]
+    lower_part = [59,58,57,56,55]
+    diffs = []
+
+    for k in range(3):
+        mean = (lmark[open_pair[k][0],:2] + lmark[open_pair[k][1],:2] )/ 2
+        print (mean)
+        tmp = lmark[open_pair[k][0],:2]
+        diffs.append((mean - lmark[open_pair[k][0],:2]).copy())
+        lmark[open_pair[k][0],:2] = mean - (mean - lmark[open_pair[k][0],:2]) * 0.3
+        lmark[open_pair[k][1],:2] = mean + (mean - lmark[open_pair[k][0],:2]) * 0.3
+    diffs.insert(0, 0.6 * diffs[2])
+    diffs.append( 0.6 * diffs[2])
+    print (diffs)
+    diffs = np.asarray(diffs)
+    lmark[49:54,:2] +=  diffs
+    lmark[55:60,:2] -=  diffs 
+    return lmark
+
+
+
 def rigid_transform_3D(A, B):
     assert len(A) == len(B)
 

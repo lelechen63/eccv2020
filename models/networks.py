@@ -1053,6 +1053,7 @@ class SPCH2FLM2(nn.Module):
         features = h = h.view(h.size(0), -1)
         #print (features.shape)
         h = F.leaky_relu(self.fc1(h), 0.3)
+        # print (h.shape , example.shape)
         new = torch.cat([h, example ],  1)
         h = self.fc2(new)
         return h, features

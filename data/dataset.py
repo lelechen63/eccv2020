@@ -857,10 +857,10 @@ class GRID_raw_pca_landmark(Dataset):
             # try:
         if self.train == 'train':
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
-            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
+            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_%05d_diff.npy'%self.datalist[index][4])
             lmark = np.load(lmark_path)[:,:,:2]
             diff = np.load(diff_path)
-            reference_id = int(self.datalist[index][2].split('_')[1])
+            reference_id = int(self.datalist[index][4])
             audio_path = os.path.join('/home/cxu-serve/p1/common/grid/audio' ,self.datalist[index][0],  self.datalist[index][1] +'.wav' )
             rnd_dB = np.random.randint(0, high=len(self.augList), size=[1, ])[0]
             for i in range(lmark.shape[1]):
@@ -882,17 +882,19 @@ class GRID_raw_pca_landmark(Dataset):
             mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
             mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
             example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-            if self.datalist[index][2] == True:
-                ss = 0
+            if self.datalist[index][2] == True :
+                if  self.datalist[index][3] == True:
+                    r =random.choice( [x for x in range(0, 10)] + [x for x in range(65, 74)])
+                else:
+                    r =random.choice( [x for x in range(0, 10)] )
             else:
-                ss = 8
-            if self.datalist[index][3] == True:
-                ee = 75
-            else:
-                ee = 68
-            r =random.choice(
-                [x for x in range(ss, ee)])
-            
+                if  self.datalist[index][3] == True:
+                    r =random.choice([x for x in range(65, 74)])
+                else:
+                    r =random.choice( [x for x in range(10, 65)] )
+            # if lmark.shape[0] != 75:
+            #     print  (lmark.shape[0])
+            # r = 74
             t_mfcc =mfcc[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
             t_mfcc = t_mfcc*np.power(10.0, self.augList[rnd_dB]/20.0)
             t_mfcc = torch.FloatTensor(t_mfcc)
@@ -907,9 +909,11 @@ class GRID_raw_pca_landmark(Dataset):
             lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
             audio_path = os.path.join('/home/cxu-serve/p1/common/grid/audio' ,self.datalist[index][0],  self.datalist[index][1] +'.wav' )
             lmark = np.load(lmark_path)[:,:,:-1]
-            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 
+            # if len(self.datalist[index]) != 5:
+            #     print (len(self.datalist[index]) , self.datalist[index])
+            diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_%05d_diff.npy'%self.datalist[index][4])
             diff = np.load(diff_path)
-            reference_id = int(self.datalist[index][2].split('_')[1])
+            reference_id = int(self.datalist[index][4])
             for i in range(lmark.shape[1]):
                 x = lmark[: , i,0]
                 x = face_utils.smooth(x, window_len=5)
@@ -931,16 +935,16 @@ class GRID_raw_pca_landmark(Dataset):
             mfcc = np.insert( mfcc, 0, left_append ,axis=  0)
             mfcc = np.insert( mfcc, -1, right_append ,axis=  0)
             example_landmark =lmark[reference_id,:]  # since the lips in all 0 frames are closed 
-            if self.datalist[index][2] == True:
-                ss = 0
+            if self.datalist[index][2] == True :
+                if  self.datalist[index][3] == True:
+                    r =random.choice( [x for x in range(0, 10)] + [x for x in range(65, 74)])
+                else:
+                    r =random.choice( [x for x in range(0, 10)] )
             else:
-                ss = 8
-            if self.datalist[index][3] == True:
-                ee = 75
-            else:
-                ee = 68
-            r =random.choice(
-                [x for x in range(ss, ee)])
+                if  self.datalist[index][3] == True:
+                    r =random.choice([x for x in range(65, 74)])
+                else:
+                    r =random.choice( [x for x in range(10, 65)] )
             
             t_mfcc =mfcc[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
             t_mfcc = torch.FloatTensor(t_mfcc)

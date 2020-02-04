@@ -6,4 +6,6 @@ checkpoints/*
 sample/*
 results/*
 *.pyc 
-
+audio/*
+image/*
+tmp.wav

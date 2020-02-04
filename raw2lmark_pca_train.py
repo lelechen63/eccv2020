@@ -117,7 +117,7 @@ class Trainer():
                         print (lmark[0,2:6])
                         print("[{}/{}][{}/{}]   loss1: {:.8f}".format(epoch+1, config.max_epochs, step+1, num_steps_per_epoch, loss))
                         
-                        if (epoch) % 50 ==0:
+                        if (epoch + 1) % 50 ==0:
                             lmark = lmark.data.cpu().numpy()
                             fake_lmark = fake_lmark.data.cpu().numpy()
                             lmark = np.dot(lmark,component) + mean
@@ -208,12 +208,12 @@ def parse_args():
                         # default = '/media/lele/DATA/lrw/data2/pickle')
     parser.add_argument("--model_dir",
                         type=str,
-                        default="./checkpoints/atnet_raw_pca_with_exmaple_select/")
+                        default="./checkpoints/atnet_raw_pca_with_exmaple/")
                         # default="/mnt/disk1/dat/lchen63/grid/model/model_gan_r")
                         # default='/media/lele/DATA/lrw/data2/model')
     parser.add_argument("--sample_dir",
                         type=str,
-                        default="./sample/atnet_raw_pca_with_exmaple_select/")
+                        default="./sample/atnet_raw_pca_with_exmaple/")
                         # default="/mnt/disk1/dat/lchen63/grid/sample/model_gan_r/")
                         # default='/media/lele/DATA/lrw/data2/sample/lstm_gan')
     parser.add_argument('--device_ids', type=str, default='0')

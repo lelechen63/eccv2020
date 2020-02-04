@@ -75,12 +75,12 @@ def parse_args():
     
     parser.add_argument("--model_name",
                         type=str,
-                        default="./checkpoints/atnet_raw_pca_with_exmaple/atnet_lstm_42.pth")
+                        default="./checkpoints/atnet_raw_pca_with_exmaple_select/atnet_lstm_3.pth")
                         # default="/mnt/disk1/dat/lchen63/lrw/model/model_gan_r2/r_generator_38.pth")
                         # default='/media/lele/DATA/lrw/data2/model')
     parser.add_argument("--sample_dir",
                         type=str,
-                        default="./sample/atnet_raw_pca_with_exmaple/")
+                        default="./sample/atnet_raw_pca_with_exmaple_select_test/")
                         # default="/mnt/disk1/dat/lchen63/lrw/test_result/model_gan_r2/")
                         # default='/media/lele/DATA/lrw/data2/sample/lstm_gan')
     parser.add_argument('--device_ids', type=str, default='0')
@@ -149,6 +149,9 @@ def test():
                     example_landmark = Variable(example_landmark.float()).cuda(config.cuda1) 
                 mse_loss_fn   = mse_loss_fn.cuda(config.cuda1)
             fake_lmark, _ = generator(example_landmark, audio)
+            gg =  example_landmark.cpu().numpy()
+            gg = np.dot(gg,component) + mean
+            np.save( os.path.join(config.sample_dir , 'step_%05d.npy')%step,gg[0] )
             lmark = lmark.data.cpu().numpy()
             fake_lmark = fake_lmark.data.cpu().numpy()
             lmark = np.dot(lmark,component) + mean

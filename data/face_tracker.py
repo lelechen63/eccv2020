@@ -20,10 +20,8 @@ from pathlib import Path
 from scipy.spatial.transform import Rotation as R
 res = 224
 import  utils.visualizer as Visualizer
-detector = dlib.get_frontal_face_detector()
-predictor = dlib.shape_predictor('../basics/shape_predictor_68_face_landmarks.dat')
 import pickle
-fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False,  device='cpu' )
+fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)#,  device='cpu' )
 
 def crop_image(frame_file, count, x_list = [], y_list = [], dis_list = [], videos = [],multi_face_times = 0, lStart=36, lEnd=41, rStart=42, rEnd=47):
 	image = cv2.imread(frame_file) if isinstance(frame_file, str) else frame_file

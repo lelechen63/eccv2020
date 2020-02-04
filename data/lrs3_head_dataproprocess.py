@@ -144,6 +144,21 @@ def RT_compute():
         print (front_path)
             # break
         # break
+import torch
+import random
+from sklearn.decomposition import PCA
+from utils import face_utils
+
+def openrate(lmark1):
+    open_pair = []
+    for i in range(3):
+        open_pair.append([i + 61, 67 - i])
+    open_rate1 = []
+    for k in range(3):
+        open_rate1.append(lmark1[open_pair[k][0],:2] - lmark1[open_pair[k][1], :2])
+        
+    open_rate1 = np.asarray(open_rate1)
+    return open_rate1.mean()
 def pca_lmark_lrs():
     root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain'
     train_list = sorted(os.listdir(root))

@@ -43,7 +43,7 @@ def landmark_extractor():
             try:
                 _crop_video(original_video_path, config.batch_id)
                 
-                
+    
                 command = 'ffmpeg -framerate 25  -i ./temp%05d'%config.batch_id + '/%05d.png  -vcodec libx264  -vf format=yuv420p -y ' +  cropped_video_path
                 os.system(command)
                 cap = cv2.VideoCapture(cropped_video_path)
@@ -144,56 +144,61 @@ def openrate(lmark1):
         open_pair.append([i + 61, 67 - i])
     open_rate1 = []
     for k in range(3):
-        open_rate1.append(lmark1[open_pair[k][0],:2] - lmark1[open_pair[k][1], :2])
+        open_rate1.append(np.absolute(lmark1[open_pair[k][0],:2] - lmark1[open_pair[k][1], :2]))
         
     open_rate1 = np.asarray(open_rate1)
     return open_rate1.mean()
+import pickle as pkl
 def pca_lmark_grid():
-    train_list = sorted(os.listdir('/home/cxu-serve/p1/common/grid/align'))
-    batch_length = int( len(train_list))
+    root_path  ='/home/cxu-serve/p1/common/grid'
+    _file = open(os.path.join(root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
+    datalist = pkl.load(_file)
+    _file.close()
+    batch_length = int( len(datalist))
     landmarks = []
     k = 20
     norm_lmark = np.load('../basics/s1_pgbk6n_01.npy')
-    for i in tqdm(range(batch_length)):
-        p_id = train_list[i]
-        person_path = os.path.join('/home/cxu-serve/p1/common/grid/align', p_id)
-        videos = sorted(os.listdir(person_path))
-        for vid in videos:
-            
-            if vid[-9:] !=  'front.npy':
-                continue
-            lmark_path = os.path.join( person_path,vid)
-            lmark = np.load(lmark_path)[:,:,:2]
-            if lmark.shape[0]< 70:
-                continue
-            for i in range(lmark.shape[1]):
-                x = lmark[: , i,0]
-                x = face_utils.smooth(x, window_len=5)
-                lmark[: ,i,0 ] = x[2:-2]
-                y = lmark[:, i, 1]
-                y = face_utils.smooth(y, window_len=5)
-                lmark[: ,i,1  ] = y[2:-2] 
-            openrates = []
-            for  i in range(lmark.shape[0]):
-                openrates.append(openrate(lmark[i]))
-            openrates = np.asarray(openrates)
-            min_index = np.argmin(np.absolute(openrates))
-            diff =  lmark[min_index] - norm_lmark
-            # print (lmark_path[:-10] +'_diff.npy')
-            np.save(lmark_path[:-10] +'_%05d_diff.npy'%(min_index) , diff)
-            lmark = lmark - diff
-            indexs = random.sample(range(0,70), 20)
-            for i in indexs:
-                landmarks.append(lmark[i])
+   
+    for index in tqdm(range(batch_length)):
+        # if index == 10:
+        #     break
+        lmark_path = os.path.join(root_path ,  'align' , datalist[index][0] , datalist[index][1] + '_front.npy') 
+        lmark = np.load(lmark_path)[:,:,:2]
+        # if lmark.shape[0]< 74:
+        #     continue
+
+        openrates = []
+        for  i in range(lmark.shape[0]):
+            openrates.append(openrate(lmark[i]))
+        openrates = np.asarray(openrates)
+        min_index = np.argmin(openrates)
+        diff =  lmark[min_index] - norm_lmark
+        np.save(lmark_path[:-10] +'_%05d_diff.npy'%(min_index) , diff)
+        datalist[index].append(min_index) 
+    #     lmark = lmark - diff
+    #     if datalist[index][2] == True: 
+    #         indexs = random.sample(range(0,10), 6)
+    #         for i in indexs:
+    #             landmarks.append(lmark[i])
+    #     if datalist[index][3] == True: 
+    #         indexs = random.sample(range(65,74), 6)
+    #         for i in indexs:
+    #             landmarks.append(lmark[i])
+
+    #     indexs = random.sample(range(11,65), 10)
+    #     for i in indexs:
+    #         landmarks.append(lmark[i])
        
-    landmarks = np.stack(landmarks)
-    print (landmarks.shape)
-    landmarks = landmarks.reshape(landmarks.shape[0], 136)
-    pca = PCA(n_components=20)
-    pca.fit(landmarks)
+    # landmarks = np.stack(landmarks)
+    # print (landmarks.shape)
+    # landmarks = landmarks.reshape(landmarks.shape[0], 136)
+    # pca = PCA(n_components=20)
+    # pca.fit(landmarks)
     
-    np.save('../basics/mean_grid_front.npy', pca.mean_)
-    np.save('../basics/U_grid_front.npy',  pca.components_)
+    # np.save('../basics/mean_grid_front.npy', pca.mean_)
+    # np.save('../basics/U_grid_front.npy',  pca.components_)
+    with open(os.path.join(root_path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
+        pkl.dump(datalist, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
 pca_lmark_grid()
 
