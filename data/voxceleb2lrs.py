@@ -23,8 +23,18 @@ from scipy.spatial.transform import Rotation as R
 res = 224
 import  utils.visualizer as Visualizer
 import pickle
-fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)#,  device='cpu' )
+import argparse
 
+# fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)#,  device='cpu' )
+def parse_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-b', "--batch_id",
+                     type=int,
+                     default=1)
+    
+    return parser.parse_args()
+config = parse_args()
 def crop_image( lmark,  x_list = [], y_list = [], dis_list = [], lStart=36, lEnd=41, rStart=42, rEnd=47):
 
 	new_shape = lmark
@@ -98,13 +108,13 @@ def _crop_video(video, ani_video, lmark_path):
     out.release()
     out2.release()
 
-def align_videos():
+def align_videos(config):
     root_path = '/mnt/Data/lchen63/unzip/test_video'
     identities = sorted(os.listdir( root_path))
     total = len(identities)
     batch_size = int(0.2 * total)
     
-    for index  in range(batch_size * b : batch_size * (b + 1)):
+    for index  in range(batch_size * (config.batch_id -1) , batch_size * (config.batch_id)):
         video_ids  = os.listdir( os.path.join( root_path , identities[index]))
         for v_id in video_ids:
             all_files  =  os.listdir( os.path.join( root_path , identities[index], v_id))
@@ -126,7 +136,7 @@ def align_videos():
         #     break
         # break
         
-align_videos()
+align_videos(config)
 
 
 def prepare_standard1():  # get cropped image by input the reference image
