@@ -135,7 +135,7 @@ def align_videos(config):
 
 def RT_compute(config):
     consider_key = [1,2,3,4,5,11,12,13,14,15,27,28,29,30,31,32,33,34,35,39,42,36,45,17,21,22,26]
-    root_path = '/mnt/Data/lchen63/voxceleb2/unzip/test_video'
+    root_path = '/mnt/Data/lchen63/voxceleb2/unzip/dev_video'
     # root_path ='/home/cxu-serve/p1/common/voxceleb2/unzip/test_video'
     identities = sorted(os.listdir( root_path))
     total = len(identities)
