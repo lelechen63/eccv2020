@@ -469,9 +469,8 @@ def plot_flmarks(pts, lab, xLim, yLim, xLab, yLab, figsize=(10, 10), sentence = 
     plt.clf()
     plt.close()
 
-def plot_flmarks3D(pts, lab, xLim, yLim, xLab, yLab, figsize=(10, 10)):
-    if len(pts.shape) != 3:
-        pts = np.reshape(pts, (pts.shape[0]/2, 2))
+def plot_flmarks3D(pts, lab, xLim, yLim, zLim,rotate=False,  figsize=(10, 10), sentence =None):
+    pts = np.reshape(pts, (68, 3))
     print (pts.shape)
 
     if pts.shape[0] == 20:
@@ -481,18 +480,34 @@ def plot_flmarks3D(pts, lab, xLim, yLim, xLab, yLab, figsize=(10, 10)):
         lookup = faceLmarkLookup
 
     plt.figure(figsize=figsize)
-    plt.plot(pts[:,0], pts[:,1], 'ko', ms=4)
-    for refpts in lookup:
-        plt.plot([pts[refpts[1], 0], pts[refpts[0], 0]], [pts[refpts[1], 1], pts[refpts[0], 1]], 'k', ms=4)
+    ax = plt.axes(projection='3d')
+    l, = ax.plot3D([], [], [], 'ko', ms=2)
 
-    plt.xlabel(xLab, fontsize = font['size'] + 4, fontweight='bold')
-    plt.gca().xaxis.tick_top()
-    plt.gca().xaxis.set_label_position('top') 
-    plt.ylabel(yLab, fontsize = font['size'] + 4, fontweight='bold')
-    plt.xlim(xLim)
-    plt.ylim(yLim)
-    plt.gca().invert_yaxis()
-   
+    lines = [ax.plot([], [], [], 'k', lw=1)[0] for _ in range(3*len(lookup))]
+    ax.set_xlim3d(xLim)     
+    ax.set_ylim3d(yLim)     
+    ax.set_zlim3d(zLim)
+    ax.set_xlabel('x', fontsize=28)
+    ax.set_ylabel('y', fontsize=28)
+    ax.set_zlabel('z', fontsize=28)
+    ax.set_yticklabels([])
+    ax.set_xticklabels([])
+    ax.set_zticklabels([])
+    if rotate:
+            angles = np.linspace(60, 120,1)
+    else:
+        angles = np.linspace(60, 60, 1)
+
+    ax.view_init(elev=60, azim=angles[0])
+    l.set_data(pts[:,0], pts[:,1])
+    l.set_3d_properties(pts[:,2])
+    cnt = 0
+    for refpts in lookup:
+        lines[cnt].set_data([pts[refpts[1], 0], pts[refpts[0], 0]], [pts[refpts[1], 1], pts[refpts[0], 1]])
+        lines[cnt].set_3d_properties([pts[ refpts[1], 2], pts[refpts[0], 2]])
+        cnt+=1
+    if sentence is not None:
+        plt.xlabel(sentence)
     plt.savefig(lab, dpi = 300, bbox_inches='tight')
     plt.clf()
     plt.close()

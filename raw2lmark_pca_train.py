@@ -13,9 +13,9 @@ import numpy as np
 from collections import OrderedDict
 import argparse
 
-from data.dataset import  GRID_raw_pca_landmark
+from data.a2l_dataset import  GRID_raw_pca_landmark, GRID_raw_pca_3dlandmark
 
-from models.networks import  SPCH2FLM2
+from models.networks import  A2L
 
 from torch.nn import init
 from utils import util
@@ -56,7 +56,7 @@ def initialize_weights( net, init_type='normal', gain=0.02):
 
 class Trainer():
     def __init__(self, config):
-        self.generator = SPCH2FLM2()
+        self.generator = A2L()
         
         self.l1_loss_fn =  nn.L1Loss()
         self.mse_loss_fn = nn.MSELoss()
@@ -65,7 +65,6 @@ class Trainer():
         if config.cuda:
             device_ids = [int(i) for i in config.device_ids.split(',')]
             self.generator     = nn.DataParallel(self.generator, device_ids=device_ids).cuda()
-            # self.generator     = self.generator.cuda()
             self.mse_loss_fn   = self.mse_loss_fn.cuda(config.cuda1)
             self.l1_loss_fn = self.l1_loss_fn.cuda(config.cuda1)
 
@@ -74,10 +73,15 @@ class Trainer():
        
         self.opt_g = torch.optim.Adam( self.generator.parameters(),
             lr=config.lr, betas=(config.beta1, config.beta2))
-        
-        self.train_dataset = GRID_raw_pca_landmark( train=config.is_train)
+        if config.threeD:
+            self.train_dataset = GRID_raw_pca_3dlandmark( train=config.is_train)
 
-        self.test_dataset = GRID_raw_pca_landmark( train= 'test')
+            self.test_dataset = GRID_raw_pca_3dlandmark( train= 'test')
+        
+        else:
+            self.train_dataset = GRID_raw_pca_landmark( train=config.is_train)
+
+            self.test_dataset = GRID_raw_pca_landmark( train= 'test')
         
 
         self.data_loader = DataLoader(self.train_dataset,
@@ -97,13 +101,23 @@ class Trainer():
         t0 = time.time()
         xLim=(0.0, 256.0)
         yLim=(0.0, 256.0)
+        zLim=(-128, 128.0)
         xLab = 'x'
         yLab = 'y'
-        mean =  np.load('./basics/mean_grid_front.npy')
-        component = np.load('./basics/U_grid_front.npy')
+        
+        if config.threeD:
+            mean =  np.load('./basics/mean_grid_front_3d.npy')
+            component = np.load('./basics/U_grid_front_3d.npy')
+        else:
+            mean =  np.load('./basics/mean_grid_front.npy')
+            component = np.load('./basics/U_grid_front.npy')
+        if config.load_model:
+            self.generator.load_state_dict(torch.load(config.model_name))
+            print ('load pretrained [{}]'.format(config.model_name))
+        self.generator.train()
         for epoch in range(self.start_epoch, config.max_epochs):
             Flage = True
-            if epoch % 10==0:
+            if (epoch + 1) % 10==0:
                 Flage = False
                 self.generator.eval()
                 with torch.no_grad():
@@ -124,13 +138,21 @@ class Trainer():
                             fake_lmark = fake_lmark.data.cpu().numpy()
                             lmark = np.dot(lmark,component) + mean
                             fake_lmark = np.dot(fake_lmark,component) + mean
-                            lmark = lmark.reshape(config.batch_size , 68 * 2)
-                            fake_lmark = fake_lmark.reshape(config.batch_size , 68 * 2)
+                            if config.threeD:
+                                lmark = lmark.reshape(config.batch_size , 68 * 3)
+                                fake_lmark = fake_lmark.reshape(config.batch_size , 68 * 3)
+                            else:
+                                lmark = lmark.reshape(config.batch_size , 68 * 2)
+                                fake_lmark = fake_lmark.reshape(config.batch_size , 68 * 2)
                             for indx in range( min (config.batch_size , 64 )):
-                                    name = "{}test_real_{}_{}.png".format(config.sample_dir,cc, indx)
-                                    util.plot_flmarks(lmark[indx], name, xLim, yLim, xLab, yLab, figsize=(10, 10), sentence = path[indx])
-                                    name = "{}test_fake_{}_{}.png".format(config.sample_dir,cc, indx)
-                                    util.plot_flmarks(fake_lmark[indx], name, xLim, yLim, xLab, yLab, figsize=(10, 10), sentence = path[indx])
+                                real_name = "{}test_real_{}_{}.png".format(config.sample_dir,cc, indx)
+                                fake_name = "{}test_fake_{}_{}.png".format(config.sample_dir,cc, indx)
+                                if confif.threeD:
+                                    util.plot_flmarks3D(lmark[indx], real_name, xLim, yLim, zLim, figsize=(10, 10), sentence = path[indx])
+                                    util.plot_flmarks3D(fake_lmark[indx], fake_name, xLim, yLim, zLim, figsize=(10, 10), sentence = path[indx])
+                                else:
+                                    util.plot_flmarks(lmark[indx], real_name, xLim, yLim, xLab, yLab, figsize=(10, 10), sentence = path[indx])
+                                    util.plot_flmarks(fake_lmark[indx], fake_name, xLim, yLim, xLab, yLab, figsize=(10, 10), sentence = path[indx])
                         if step == 3:
                             break
             if Flage == False:
@@ -159,18 +181,26 @@ class Trainer():
                                   step+1, num_steps_per_epoch, loss,  t1-t0,  time.time() - t1))
                 # if (step) % (int(num_steps_per_epoch  / 2 )) == 0 and step != 0:
                 t0 = time.time()
-            if epoch  % 50 == 0:
+            if epoch  % 20 == 0:
                 lmark = lmark.data.cpu().numpy()
                 fake_lmark = fake_lmark.data.cpu().numpy()
                 lmark = np.dot(lmark,component) + mean
                 fake_lmark = np.dot(fake_lmark,component) + mean
-                lmark = lmark.reshape(config.batch_size , 68 * 2)
-                fake_lmark = fake_lmark.reshape(config.batch_size , 68 * 2)
-                for indx in range(min (config.batch_size , 64 )):
-                        name = "{}real_{}_{}.png".format(config.sample_dir,cc, indx)
-                        util.plot_flmarks(lmark[indx], name, xLim, yLim, xLab, yLab, figsize=(10, 10), sentence =  path[indx])
-                        name = "{}fake_{}_{}.png".format(config.sample_dir,cc, indx)
-                        util.plot_flmarks(fake_lmark[indx], name, xLim, yLim, xLab, yLab, figsize=(10, 10),sentence = path[indx])
+                if config.threeD:
+                    lmark = lmark.reshape(config.batch_size , 68 * 3)
+                    fake_lmark = fake_lmark.reshape(config.batch_size , 68 * 3)
+                else:
+                    lmark = lmark.reshape(config.batch_size , 68 * 2)
+                    fake_lmark = fake_lmark.reshape(config.batch_size , 68 * 2)
+                for indx in range( min (config.batch_size , 64 )):
+                    real_name = "{}test_real_{}_{}.png".format(config.sample_dir,cc, indx)
+                    fake_name = "{}test_fake_{}_{}.png".format(config.sample_dir,cc, indx)
+                    if config.threeD:
+                        util.plot_flmarks3D(lmark[indx], real_name, xLim, yLim, zLim, figsize=(10, 10), sentence = path[indx])
+                        util.plot_flmarks3D(fake_lmark[indx], fake_name, xLim, yLim, zLim, figsize=(10, 10), sentence = path[indx])
+                    else:
+                        util.plot_flmarks(lmark[indx], real_name, xLim, yLim, xLab, yLab, figsize=(10, 10), sentence = path[indx])
+                        util.plot_flmarks(fake_lmark[indx], fake_name, xLim, yLim, xLab, yLab, figsize=(10, 10), sentence = path[indx])
                 torch.save(self.generator.state_dict(),
                             "{}/atnet_lstm_{}.pth"
                             .format(config.model_dir,cc))
@@ -184,7 +214,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--lr",
                         type=float,
-                        default=0.0002)
+                        default=0.00002)
                         
     parser.add_argument("--beta1",
                         type=float,
@@ -211,12 +241,12 @@ def parse_args():
                         # default = '/media/lele/DATA/lrw/data2/pickle')
     parser.add_argument("--model_dir",
                         type=str,
-                        default="./checkpoints/atnet_raw_pca_with_exmaple/")
+                        default="./checkpoints/atnet_raw_pca/")
                         # default="/mnt/disk1/dat/lchen63/grid/model/model_gan_r")
                         # default='/media/lele/DATA/lrw/data2/model')
     parser.add_argument("--sample_dir",
                         type=str,
-                        default="./sample/atnet_raw_pca_with_exmaple/")
+                        default="./sample/atnet_raw_pca/")
                         # default="/mnt/disk1/dat/lchen63/grid/sample/model_gan_r/")
                         # default='/media/lele/DATA/lrw/data2/sample/lstm_gan')
     parser.add_argument('--device_ids', type=str, default='0')
@@ -225,9 +255,8 @@ def parse_args():
     parser.add_argument('--num_thread', type=int, default=2)
     parser.add_argument('--weight_decay', type=float, default=4e-4)
     parser.add_argument('--load_model', action='store_true')
-    parser.add_argument('--pretrained_dir', type=str)
-    parser.add_argument('--pretrained_epoch', type=int)
-    parser.add_argument('--start_epoch', type=int, default=0, help='start from 0')
+    parser.add_argument('--model_name', type=str, default = './checkpoints/atnet_raw_pca_with_exmaple/atnet_lstm_7.pth')
+    parser.add_argument('--threeD', action='store_true')
 
     return parser.parse_args()
 
@@ -240,7 +269,12 @@ if __name__ == "__main__":
 
     config = parse_args()
     config.is_train = 'train'
+
     import raw2lmark_pca_train as trainer
+    if config.threeD:
+        config.model_dir = config.model_dir + '_3d'
+        config.sample_dir = config.sample_dir + '_3d'
+
     if not os.path.exists(config.model_dir):
         os.mkdir(config.model_dir)
     if not os.path.exists(config.sample_dir):

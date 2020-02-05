@@ -7,6 +7,7 @@ import os
 import sys
 # from utils import face_utils
 import librosa
+from utils import util
 def smooth(x,window_len=11,window='hanning'):
    
     if x.ndim != 1:
@@ -72,6 +73,11 @@ def vis():
     # lmark_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/00j9bKdiOjk/00001_original.npy'
     lmark_path = '/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/utfjXffHDgg/00198_aligned_front.npy'
     norm_lmark = np.load('./basics/standard.npy')
+    print (norm_lmark.shape)
+    xLim=(0.0, 256.0)
+    yLim=(0.0, 256.0)
+    zLim=(-128, 128)
+    util.plot_flmarks3D(norm_lmark, './gg.png',xLim, yLim, zLim)
     # norm_lmark = mounth_open2close(norm_lmark)
     # np.save('./basics/s1_pgbk6n_01.npy', norm_lmark)
     lmark = np.load(lmark_path)[:,:,:2]
