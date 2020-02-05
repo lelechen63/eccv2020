@@ -200,8 +200,56 @@ def pca_lmark_grid():
     with open(os.path.join(root_path, 'pickle','test_audio2lmark_grid.pkl'), 'wb') as handle:
         pkl.dump(datalist, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
-pca_lmark_grid()
 
+def pca_3dlmark_grid():  ## this time we will use standard as tempolate to be consistent with voxceleb
+    root_path  ='/home/cxu-serve/p1/common/grid'
+    _file = open(os.path.join(root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
+    datalist = pkl.load(_file)
+    _file.close()
+    batch_length = int( len(datalist))
+    landmarks = []
+    k = 20
+    norm_lmark = np.load('../basics/standard.npy')
+    datalist3d = datalist.copy()
+    for index in tqdm(range(batch_length)):
+        lmark_path = os.path.join(root_path ,  'align' , datalist[index][0] , datalist[index][1] + '_front.npy') 
+        lmark = np.load(lmark_path)
+
+        openrates = []
+        for  i in range(lmark.shape[0]):
+            openrates.append(openrate(lmark[i]))
+        openrates = np.asarray(openrates)
+        min_index = np.argmin(openrates)
+        diff =  lmark[min_index] - norm_lmark
+        np.save(lmark_path[:-10] +'_%05d_diff_3d.npy'%(min_index) , diff)
+        datalist3d[index][-1] = min_index 
+        lmark = lmark - diff
+    #     if datalist[index][2] == True: 
+    #         indexs = random.sample(range(0,10), 6)
+    #         for i in indexs:
+    #             landmarks.append(lmark[i])
+    #     if datalist[index][3] == True: 
+    #         indexs = random.sample(range(65,74), 6)
+    #         for i in indexs:
+    #             landmarks.append(lmark[i])
+
+    #     indexs = random.sample(range(11,65), 10)
+    #     for i in indexs:
+    #         landmarks.append(lmark[i])
+       
+    # landmarks = np.stack(landmarks)
+    # print (landmarks.shape)
+    # landmarks = landmarks.reshape(landmarks.shape[0], 204)
+    # pca = PCA(n_components=k)
+    # pca.fit(landmarks)
+    
+    # np.save('../basics/mean_grid_front_3d.npy', pca.mean_)
+    # np.save('../basics/U_grid_front_3d.npy',  pca.components_)
+    with open(os.path.join(root_path, 'pickle','test_audio2lmark_grid_3d.pkl'), 'wb') as handle:
+        pkl.dump(datalist, handle, protocol=pkl.HIGHEST_PROTOCOL)
+
+# pca_lmark_grid()
+pca_3dlmark_grid()
 # data = np.load('/home/cxu-serve/p1/common/grid/align/s1/lwae8n_front.npy')[:,:,:2]
 # data = data.reshape(data.shape[0], 136)
 # print (data.shape)

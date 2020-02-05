@@ -183,7 +183,7 @@ def RT_compute(config):
                         print  (front_path)
                         continue
 # align_videos(config)
-RT_compute(config)
+# RT_compute(config)
 
 def prepare_standard1():  # get cropped image by input the reference image
     img_path = '/home/cxu-serve/p1/lchen63/voxceleb/unzip/tmp/tmp/00001_00030.png'

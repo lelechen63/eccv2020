@@ -2,11 +2,14 @@ import os
 import pickle as pkl
 import numpy as np
 from tqdm import tqdm
-from utils import util
+from utils import util, face_utils
 import face_tracker
 import cv2
 import face_alignment
-
+import fnmatch
+import librosa
+import shutil
+import mmcv
 def prepare_data_lrs():
     # root = '/mnt/Data02/lchen63/lrs/'
     root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4'
@@ -28,10 +31,8 @@ def prepare_data_lrs():
                     testset.append( [p_id, txt])
                 else:
                     trainset.append( [p_id, txt])
-
     print (len(trainset))
     print (len(testset))
-   
     with open(os.path.join(root, 'pickle','train_lmark2img.pkl'), 'wb') as handle:
         pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
     with open(os.path.join(root, 'pickle','test_lmark2img.pkl'), 'wb') as handle:
@@ -90,6 +91,48 @@ def prepare_data_faceforencs_oppo():
     with open(os.path.join(path, 'pickle','test_lmark2img.pkl'), 'wb') as handle:
         pkl.dump(test_list, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
+def prepare_data_vox2():
+    root = '/mnt/Data/lchen63'
+    root_path = os.path.join(root, 'unzip' , 'test_video' )
+
+    # root_path = '/mnt/Data/lchen63/unzip/test_video'
+    identities = sorted(os.listdir( root_path))
+    total = len(identities)
+    dataset  = []
+    for index  in range(total):
+        video_ids  = os.listdir( os.path.join( root_path , identities[index]))
+        print (index, total)
+        for v_id in tqdm(video_ids):
+            all_files  =  os.listdir( os.path.join( root_path , identities[index], v_id))
+            for ff in all_files:
+                if ff[6:] == 'aligned.npy':
+                    # try:
+                    lmark_path = os.path.join( root_path , identities[index], v_id, ff)
+                    rt_path = os.path.join( root_path , identities[index], v_id, ff[:5] + '_aligned_rt.npy')
+                    ani_video_path =  os.path.join( root_path , identities[index], v_id, ff[:5] + '_aligned_ani.mp4')
+                    video_path =  os.path.join( root_path , identities[index], v_id, ff[:5] + '_aligned.mp4')
+                
+                    if os.path.exists(video_path) and os.path.exists(ani_video_path) and os.path.exists(lmark_path) and  os.path.exists(rt_path) :
+                        # cap_real = cv2.VideoCapture(video_path)
+                        # cap_ani = cv2.VideoCapture(ani_video_path)
+                        # lmark = np.load(lmark_path)
+                        # flage = True
+                        # for gg in range(lmark.shape[0]):
+                        #     ret1, frame = cap_real.read()
+                        #     ret2, frame = cap_ani.read()
+                        #     if ret1 == False or ret2 == False:
+                        #         print (lmark_path)
+                        #         flage = False
+                        #         break
+                        # if flage:
+                        dataset.append([ identities[index], v_id, ff[:5]])
+                            
+             
+    print (len(dataset))
+    with open(os.path.join(root, 'pickle','test_lmark2img.pkl'), 'wb') as handle:
+        pkl.dump(dataset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+  
+
 def unzip_video():
     path = '/home/cxu-serve/p1/common/grid/zip'
     # zipfiles = os.listdir(path)
@@ -108,11 +151,7 @@ def unzip_video():
         # command = 'rm -rf ' + os.path.join(path , 's' + str(i) ,'video')
         # print (command)
     
-import fnmatch
-import librosa
-from utils import face_utils
-import shutil
-import mmcv
+
 
 def openrate(lmark1):
     open_pair = []
@@ -150,17 +189,13 @@ def prepare_data_grid():
                 if start_openrate < 1.1:
                     count += 1
                     tmp.append(True)    
-                    # print ('++++++++++++++++' , start_openrate )
                 else:
                     tmp.append(False)
-                    # print ('------', start_openrate )
                 end_openrate = openrate(lmark[-1])
 
                 if end_openrate < 1.1:
-                    # print ('++-------++' , end_openrate )
                     tmp.append(True)
                 else:
-                    # print ('++-========++' , end_openrate )
                     tmp.append(False)
             #     audio_path = os.path.join( path, 'audio' ,  i , vid[:-6] + '.wav') 
             #     sound, _ = librosa.load(audio_path, sr=44100)
@@ -264,7 +299,8 @@ def grid_check():
     
 # prepare_standard2()
 # grid_check()
-prepare_data_grid() 
+prepare_data_vox2()
+# prepare_data_grid() 
 # prepare_data_faceforencs_oppo()
 # prepare_data_lrs()
 # unzip_video()
