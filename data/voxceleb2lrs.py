@@ -24,6 +24,7 @@ res = 224
 import  utils.visualizer as Visualizer
 import pickle
 import argparse
+from utils import face_utils
 
 # fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)#,  device='cpu' )
 def parse_args():
@@ -113,7 +114,6 @@ def align_videos(config):
     identities = sorted(os.listdir( root_path))
     total = len(identities)
     batch_size = int(0.1 * total)
-    # for index  in range(batch_size *  2 ,total):
     for index  in range(batch_size * (config.batch_id -1) , batch_size * (config.batch_id)):
         video_ids  = os.listdir( os.path.join( root_path , identities[index]))
         for v_id in video_ids:
@@ -132,12 +132,59 @@ def align_videos(config):
                     except:
                         print  (ori_video_path)
                         continue
-        #             break
-        #     break
-        # break
-        
-align_videos(config)
 
+def RT_compute(config):
+    consider_key = [1,2,3,4,5,11,12,13,14,15,27,28,29,30,31,32,33,34,35,39,42,36,45,17,21,22,26]
+    root_path = '/mnt/Data/lchen63/unzip/dev_video'
+    # root_path ='/home/cxu-serve/p1/common/voxceleb2/unzip/test_video'
+    identities = sorted(os.listdir( root_path))
+    total = len(identities)
+    source = np.zeros((len(consider_key),3))
+    ff = np.load('../basics/standard.npy')
+    for m in range(len(consider_key)):
+        source[m] = ff[consider_key[m]]  
+    source = np.mat(source)
+    batch_size = int(0.1 * total)
+    for index  in range(total):
+        video_ids  = os.listdir( os.path.join( root_path , identities[index]))
+        for v_id in tqdm(video_ids):
+            all_files  =  os.listdir( os.path.join( root_path , identities[index], v_id))
+            for ff in all_files:
+                if ff[6:] == 'aligned.npy':
+                    try:
+                        lmark_path = os.path.join( root_path , identities[index], v_id, ff)
+                        rt_path = os.path.join( root_path , identities[index], v_id, ff[:5] + '_aligned_rt.npy')
+                        front_path =  os.path.join( root_path , identities[index], v_id, ff[:5] + '_aligned_front.npy')
+                        if os.path.exists(rt_path):
+                            continue
+                        lmark = np.load(lmark_path)
+
+                        length = lmark.shape[0] 
+                        lmark_part = np.zeros((length,len(consider_key),3))
+                        RTs =  np.zeros((length,6))
+                        frontlized =  np.zeros((length,68,3))
+                        for j in range(length):
+                            for m in range(len(consider_key)):
+                                lmark_part[:,m] = lmark[:,consider_key[m]]
+                            target = np.mat(lmark_part[j])
+                            ret_R, ret_t = face_utils.rigid_transform_3D( target, source)
+                            source_lmark  = np.mat(lmark[j])
+
+                            A2 = ret_R*source_lmark.T
+                            A2+= np.tile(ret_t, (1, 68))
+                            A2 = A2.T
+                            frontlized[j] = A2
+                            r = Rotation.from_dcm(ret_R)
+                            vec = r.as_rotvec()             
+                            RTs[j,:3] = vec
+                            RTs[j,3:] =  np.squeeze(np.asarray(ret_t))            
+                        np.save(rt_path, RTs)
+                        np.save(front_path, frontlized)
+                    except:
+                        print  (front_path)
+                        continue
+# align_videos(config)
+RT_compute(config)
 
 def prepare_standard1():  # get cropped image by input the reference image
     img_path = '/home/cxu-serve/p1/lchen63/voxceleb/unzip/tmp/tmp/00001_00030.png'

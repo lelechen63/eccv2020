@@ -70,10 +70,10 @@ def mounth_open2close(lmark): # if the open rate is too large, we need to manual
 def vis():
     # v_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/00j9bKdiOjk/00001_crop.mp4'
     # lmark_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/00j9bKdiOjk/00001_original.npy'
-    lmark_path = '/home/cxu-serve/p1/common/grid/align/s23/pgab8p_front.npy'
-    norm_lmark = np.load('./basics/s1_pgbk6n_01.npy')
-    norm_lmark = mounth_open2close(norm_lmark)
-    np.save('./basics/s1_pgbk6n_01.npy', norm_lmark)
+    lmark_path = '/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/utfjXffHDgg/00198_aligned_front.npy'
+    norm_lmark = np.load('./basics/standard.npy')
+    # norm_lmark = mounth_open2close(norm_lmark)
+    # np.save('./basics/s1_pgbk6n_01.npy', norm_lmark)
     lmark = np.load(lmark_path)[:,:,:2]
     # audio_path = lmark_path.replace('align', 'audio').replace('_front.npy', '.wav')
     # sound, _ = librosa.load(audio_path, sr=44100)
@@ -109,7 +109,7 @@ def vis():
     # lmark2 = np.load(gg_path)
     # lmark2 = lmark2.reshape( 68 , 2)
     # lmark_path ='/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/0MMSpsvqiG8/00004_original.npy'
-    v_path = '/home/cxu-serve/p1/common/grid/align/s23/pgab8p_crop.mp4'
+    v_path = '/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/utfjXffHDgg/00198_aligned.mp4'
     # v_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/0MMSpsvqiG8/00004_crop.mp4'
     cap  =  cv2.VideoCapture(v_path)
     
@@ -122,7 +122,7 @@ def vis():
         if ret == True:
             print (count)
             frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
-            preds = lmark[count]
+            preds =  lmark[count]
             
             fig = plt.figure(figsize=plt.figaspect(.5))
             ax = fig.add_subplot(1, 3, 1)
@@ -136,6 +136,17 @@ def vis():
             ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
             ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
             ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='w',lw=1) 
+            preds = norm_lmark
+            ax.plot(preds[0:17,0],preds[0:17,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[17:22,0],preds[17:22,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[22:27,0],preds[22:27,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[27:31,0],preds[27:31,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[31:36,0],preds[31:36,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[36:42,0],preds[36:42,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.axis('off') 
             
             preds = mounth_open2close(preds)
             ax = fig.add_subplot(1, 3, 2)
