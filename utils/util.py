@@ -199,16 +199,7 @@ other = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], \
 
 faceLmarkLookup = Mouth + Nose + leftBrow + rightBrow + leftEye + rightEye + other
 
-def oned_smooth(kps,ALPHA=0.2 ):
-    kps_new = np.zeros_like(kps)
-    for i in range(kps_new.shape[0]):
-        if i==0:
-            kps_new[i] = kps[i]
-        else:
-            kps_new[i] = ALPHA * kps[i] + (1-ALPHA) * kps_new[i-1]
 
-    # np.save(out_file, kps_new)
-    return kps_new
 
 def oned_smooth(x,window_len=11,window='hanning'):
     """smooth the data using a window with requested size.
