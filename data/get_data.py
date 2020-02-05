@@ -93,7 +93,7 @@ def prepare_data_faceforencs_oppo():
 
 def prepare_data_vox2():
     root = '/mnt/Data/lchen63/voxceleb2'
-    root_path = os.path.join(root, 'unzip' , 'test_video' )
+    root_path = os.path.join(root, 'unzip' , 'dev_video' )
 
     # root_path = '/mnt/Data/lchen63/unzip/test_video'
     identities = sorted(os.listdir( root_path))
@@ -129,7 +129,7 @@ def prepare_data_vox2():
                             
              
     print (len(dataset))
-    with open(os.path.join(root, 'pickle','test_lmark2img.pkl'), 'wb') as handle:
+    with open(os.path.join(root, 'pickle','dev_lmark2img.pkl'), 'wb') as handle:
         pkl.dump(dataset, handle, protocol=pkl.HIGHEST_PROTOCOL)
   
 
