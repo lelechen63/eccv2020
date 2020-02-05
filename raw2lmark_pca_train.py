@@ -228,7 +228,6 @@ def parse_args():
     parser.add_argument('--pretrained_dir', type=str)
     parser.add_argument('--pretrained_epoch', type=int)
     parser.add_argument('--start_epoch', type=int, default=0, help='start from 0')
-    parser.add_argument('--rnn', type=bool, default=True)
 
     return parser.parse_args()
 

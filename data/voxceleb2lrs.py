@@ -144,7 +144,6 @@ def RT_compute(config):
     for m in range(len(consider_key)):
         source[m] = ff[consider_key[m]]  
     source = np.mat(source)
-    batch_size = int(0.1 * total)
     for index  in range(total):
         video_ids  = os.listdir( os.path.join( root_path , identities[index]))
         for v_id in tqdm(video_ids):

@@ -334,12 +334,8 @@ class GridLmark2rgbDataset(Dataset):
             transforms.ToTensor(),
             transforms.Normalize(mean=(0.5, 0.5, 0.5), std=(0.5, 0.5, 0.5))
         ])
-
-
     def __len__(self):
         return len(self.data) 
-
-    
     def name(self):
         return 'GridLmark2rgbDataset'
 
@@ -433,9 +429,6 @@ class VoxcelebLmark2rgbDataset(Dataset):
         self.root  = opt.dataroot
 
         if opt.isTrain:
-            if self.root == '/home/cxu-serve/p1/lchen63/voxceleb' or opt.use_ft:
-                _file = open(os.path.join(self.root, 'txt', "front_rt2.pkl"), "rb")
-            else:
                 _file = open(os.path.join(self.root, 'txt',  "train_front_rt2.pkl"), "rb")
 
             self.data = pkl.load(_file)
@@ -470,7 +463,7 @@ class VoxcelebLmark2rgbDataset(Dataset):
 
     
     def name(self):
-        return 'Lmark2rgbDataset'
+        return 'VoxcelebLmark2rgbDataset'
 
     def __getitem__(self, index):
         # try:
