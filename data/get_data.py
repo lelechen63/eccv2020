@@ -92,7 +92,7 @@ def prepare_data_faceforencs_oppo():
         pkl.dump(test_list, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
 def prepare_data_vox2():
-    root = '/mnt/Data/lchen63'
+    root = '/mnt/Data/lchen63/voxceleb2'
     root_path = os.path.join(root, 'unzip' , 'test_video' )
 
     # root_path = '/mnt/Data/lchen63/unzip/test_video'
