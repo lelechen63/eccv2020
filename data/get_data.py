@@ -113,18 +113,7 @@ def prepare_data_vox2():
                     video_path =  os.path.join( root_path , identities[index], v_id, ff[:5] + '_aligned.mp4')
                 
                     if os.path.exists(video_path) and os.path.exists(ani_video_path) and os.path.exists(lmark_path) and  os.path.exists(rt_path) :
-                        # cap_real = cv2.VideoCapture(video_path)
-                        # cap_ani = cv2.VideoCapture(ani_video_path)
-                        # lmark = np.load(lmark_path)
-                        # flage = True
-                        # for gg in range(lmark.shape[0]):
-                        #     ret1, frame = cap_real.read()
-                        #     ret2, frame = cap_ani.read()
-                        #     if ret1 == False or ret2 == False:
-                        #         print (lmark_path)
-                        #         flage = False
-                        #         break
-                        # if flage:
+                        
                         dataset.append([ identities[index], v_id, ff[:5]])
                     else:
                         print (video_path)

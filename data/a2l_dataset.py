@@ -689,7 +689,7 @@ class GRID_raw_pca_3dlandmark(Dataset):
             return example_landmark, landmark, t_mfcc ,  lmark_path +'___' +  str(r)
         elif self.train=='test':
 
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front_3d.npy') 
+            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
             audio_path = os.path.join('/home/cxu-serve/p1/common/grid/audio' ,self.datalist[index][0],  self.datalist[index][1] +'.wav' )
             lmark = np.load(lmark_path)
             # if len(self.datalist[index]) != 5:
@@ -739,7 +739,7 @@ class GRID_raw_pca_3dlandmark(Dataset):
 
         elif self.train=='demo':
             
-            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front_3d.npy') 
+            lmark_path = os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][1] + '_front.npy') 
             audio_path = os.path.join('/home/cxu-serve/p1/common/grid/audio' ,self.datalist[index][0],  self.datalist[index][1] +'.wav' )
             lmark = np.load(lmark_path)
             diff_path =  os.path.join(self.root_path ,  'align' , self.datalist[index][0] , self.datalist[index][2]) 

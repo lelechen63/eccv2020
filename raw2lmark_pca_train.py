@@ -147,7 +147,7 @@ class Trainer():
                             for indx in range( min (config.batch_size , 64 )):
                                 real_name = "{}test_real_{}_{}.png".format(config.sample_dir,cc, indx)
                                 fake_name = "{}test_fake_{}_{}.png".format(config.sample_dir,cc, indx)
-                                if confif.threeD:
+                                if config.threeD:
                                     util.plot_flmarks3D(lmark[indx], real_name, xLim, yLim, zLim, figsize=(10, 10), sentence = path[indx])
                                     util.plot_flmarks3D(fake_lmark[indx], fake_name, xLim, yLim, zLim, figsize=(10, 10), sentence = path[indx])
                                 else:

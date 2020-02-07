@@ -471,7 +471,6 @@ def plot_flmarks(pts, lab, xLim, yLim, xLab, yLab, figsize=(10, 10), sentence = 
 
 def plot_flmarks3D(pts, lab, xLim, yLim, zLim,rotate=False,  figsize=(10, 10), sentence =None):
     pts = np.reshape(pts, (68, 3))
-    print (pts.shape)
 
     if pts.shape[0] == 20:
         lookup = [[x[0] - 48, x[1] - 48] for x in Mouth]
