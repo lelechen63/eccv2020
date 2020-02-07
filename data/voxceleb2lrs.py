@@ -113,8 +113,8 @@ def align_videos(config):
     root_path = '/mnt/Data/lchen63/voxceleb2/unzip/dev_video'
     identities = sorted(os.listdir( root_path))
     total = len(identities)
-    batch_size = int(0.1 * total)
-    for index  in range(batch_size * (config.batch_id -1) , batch_size * (config.batch_id)):
+    # batch_size = int(0.1 * total)
+    for index  in range(total):
         video_ids  = os.listdir( os.path.join( root_path , identities[index]))
         for v_id in video_ids:
             all_files  =  os.listdir( os.path.join( root_path , identities[index], v_id))
