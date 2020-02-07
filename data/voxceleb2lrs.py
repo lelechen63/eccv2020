@@ -110,7 +110,7 @@ def _crop_video(video, ani_video, lmark_path):
     out2.release()
 
 def align_videos(config):
-    root_path = '/mnt/Data/lchen63/unzip/dev_video'
+    root_path = '/mnt/Data/lchen63/voxceleb2/unzip/dev_video'
     identities = sorted(os.listdir( root_path))
     total = len(identities)
     batch_size = int(0.1 * total)
