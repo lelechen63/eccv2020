@@ -120,20 +120,22 @@ def align_videos(config):
             all_files  =  os.listdir( os.path.join( root_path , identities[index], v_id))
             for ff in all_files:
                 if ff[-3:] == 'npy' and len(ff) == 9:
-                    # try:
-                    ori_video_path =  os.path.join( root_path , identities[index], v_id, ff[:-4] + '.mp4')
-                    ani_video_path = os.path.join( root_path , identities[index], v_id, ff[:-4] + '_ani.mp4')
-                    lmark_path = os.path.join( root_path , identities[index], v_id, ff)
-                    
-                    if os.path.exists(ori_video_path[:-4] + '_aligned.mp4'):
+                    try:
+                        ori_video_path =  os.path.join( root_path , identities[index], v_id, ff[:-4] + '.mp4')
+                        ani_video_path = os.path.join( root_path , identities[index], v_id, ff[:-4] + '_ani.mp4')
+                        lmark_path = os.path.join( root_path , identities[index], v_id, ff)
+                        
+                        if os.path.exists(ori_video_path[:-4] + '_aligned.mp4'):
+                            print ('*****')
+                            continue
+                        if os.path.exists(ori_video_path) and os.path.exists(ani_video_path) and os.path.exists(lmark_path) :
+                            _crop_video(ori_video_path, ani_video_path, lmark_path )
+                            print  ( '=======================' , ori_video_path)
+                    except:
+                        print  ( '++++++++++++++++++' , ori_video_path)
                         continue
-                    if os.path.exists(ori_video_path) and os.path.exists(ani_video_path) and os.path.exists(lmark_path) :
-                        _crop_video(ori_video_path, ani_video_path, lmark_path )
-                    # except:
-                    #     print  (ori_video_path)
-                    #     continue
-                else:
-                    print (ff)
+                # else:
+                #     print (ff)
 def RT_compute(config):
     consider_key = [1,2,3,4,5,11,12,13,14,15,27,28,29,30,31,32,33,34,35,39,42,36,45,17,21,22,26]
     root_path = '/mnt/Data/lchen63/voxceleb2/unzip/dev_video'
