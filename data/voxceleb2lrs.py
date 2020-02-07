@@ -157,7 +157,7 @@ def RT_compute(config):
             for ff in all_files:
                 print (ff[6:])
                 if ff[6:] == 'aligned.npy':
-                    # try:
+                    try:
                         lmark_path = os.path.join( root_path , identities[index], v_id, ff)
                         rt_path = os.path.join( root_path , identities[index], v_id, ff[:5] + '_aligned_rt.npy')
                         front_path =  os.path.join( root_path , identities[index], v_id, ff[:5] + '_aligned_front.npy')
@@ -186,11 +186,11 @@ def RT_compute(config):
                             RTs[j,3:] =  np.squeeze(np.asarray(ret_t))            
                         np.save(rt_path, RTs)
                         np.save(front_path, frontlized)
-                    # except:
-                    #     print  (front_path)
-                    #     continue
+                    except:
+                        print  (front_path)
+                        continue
 align_videos(config)
-# RT_compute(config)
+RT_compute(config)
 
 def prepare_standard1():  # get cropped image by input the reference image
     img_path = '/home/cxu-serve/p1/lchen63/voxceleb/unzip/tmp/tmp/00001_00030.png'
