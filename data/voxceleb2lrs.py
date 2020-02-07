@@ -131,6 +131,8 @@ def align_videos(config):
                         if os.path.exists(ori_video_path) and os.path.exists(ani_video_path) and os.path.exists(lmark_path) :
                             _crop_video(ori_video_path, ani_video_path, lmark_path )
                             print  ( '=======================' , ori_video_path)
+                        else:
+                            print ('------')
                     except:
                         print  ( '++++++++++++++++++' , ori_video_path)
                         continue
