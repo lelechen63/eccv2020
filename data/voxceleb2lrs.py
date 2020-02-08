@@ -132,7 +132,7 @@ def align_videos(config):
                             _crop_video(ori_video_path, ani_video_path, lmark_path )
                             print  ( '=======================' , ori_video_path)
                         else:
-                            print (ff)
+                            print (ori_video_path)
                             print ('------')
                     except:
                         print  ( '++++++++++++++++++' , ori_video_path)
