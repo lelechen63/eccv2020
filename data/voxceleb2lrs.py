@@ -160,13 +160,14 @@ def RT_compute(config):
         for v_id in tqdm(video_ids):
             all_files  =  os.listdir( os.path.join( root_path , identities[index], v_id))
             for ff in all_files:
-                print (ff[6:])
+                # print (ff[6:])
                 if ff[6:] == 'aligned.npy':
                     try:
                         lmark_path = os.path.join( root_path , identities[index], v_id, ff)
                         rt_path = os.path.join( root_path , identities[index], v_id, ff[:5] + '_aligned_rt.npy')
                         front_path =  os.path.join( root_path , identities[index], v_id, ff[:5] + '_aligned_front.npy')
                         if os.path.exists(rt_path):
+                            print ('----')
                             continue
                         lmark = np.load(lmark_path)
 
