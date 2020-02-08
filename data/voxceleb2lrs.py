@@ -146,6 +146,8 @@ def RT_compute(config):
     # root_path ='/home/cxu-serve/p1/common/voxceleb2/unzip/test_video'
     identities = sorted(os.listdir( root_path))
     total = len(identities)
+    batch_size = int(0.2 * total)
+
     source = np.zeros((len(consider_key),3))
     ff = np.load('../basics/standard.npy')
     for m in range(len(consider_key)):
@@ -192,7 +194,7 @@ def RT_compute(config):
                     except:
                         print  (front_path)
                         continue
-align_videos(config)
+# align_videos(config)
 RT_compute(config)
 
 def prepare_standard1():  # get cropped image by input the reference image
