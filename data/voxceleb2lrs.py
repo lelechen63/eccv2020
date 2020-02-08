@@ -113,8 +113,9 @@ def align_videos(config):
     root_path = '/mnt/Data/lchen63/voxceleb2/unzip/dev_video'
     identities = sorted(os.listdir( root_path))
     total = len(identities)
-    # batch_size = int(0.1 * total)
-    for index  in range(total):
+    batch_size = int(0.1 * total)
+    # for index  in range(total):
+    for index in range ( batch_size * (config.batch_id - 1 ), batch_size * (config.batch_id )):
         video_ids  = os.listdir( os.path.join( root_path , identities[index]))
         for v_id in video_ids:
             all_files  =  os.listdir( os.path.join( root_path , identities[index], v_id))
@@ -150,7 +151,8 @@ def RT_compute(config):
     for m in range(len(consider_key)):
         source[m] = ff[consider_key[m]]  
     source = np.mat(source)
-    for index  in range(total):
+    # for index  in range(total):
+    for index in range ( batch_size * (config.batch_id - 1 ), batch_size * (config.batch_id )):
         print (index, total)
         video_ids  = os.listdir( os.path.join( root_path , identities[index]))
         for v_id in tqdm(video_ids):
