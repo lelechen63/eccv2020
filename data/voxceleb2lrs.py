@@ -195,8 +195,8 @@ def RT_compute(config):
                     except:
                         print  (front_path)
                         continue
-align_videos(config)
-RT_compute(config)
+# align_videos(config)
+# RT_compute(config)
 
 def prepare_standard1():  # get cropped image by input the reference image
     img_path = '/home/cxu-serve/p1/lchen63/voxceleb/unzip/tmp/tmp/00001_00030.png'
@@ -240,3 +240,14 @@ def prepare_standard2():
     np.save(lmark_path, preds)
 
 
+def tmp():
+    path = '/data/lchen63/vox_obj/vox'
+    ff = os.listdir(path)
+    for f in ff:
+        gg = f.split('__')
+        new_path = os.path.join( path , gg[0] , gg[1], gg[2], gg[3])
+        old_path = os.path.join(path , f)
+        command = 'mv ' + old_path +' ' + new_path
+        print (command)
+        # os.system(command)
+tmp()

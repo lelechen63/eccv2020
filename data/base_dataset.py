@@ -1,10 +1,19 @@
-### Copyright (C) 2017 NVIDIA Corporation. All rights reserved. 
-### Licensed under the CC BY-NC-SA 4.0 license (https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode).
-import torch.utils.data as data
+# Copyright (c) 2019, NVIDIA Corporation. All rights reserved.
+#
+# This work is made available
+# under the Nvidia Source Code License (1-way Commercial).
+# To view a copy of this license, visit
+# https://nvlabs.github.io/few-shot-vid2vid/License.txt
+
 from PIL import Image
-import torchvision.transforms as transforms
 import numpy as np
 import random
+import torch
+import torch.utils.data as data
+import torchvision.transforms as transforms
+from util.distributed import master_only_print as print
+
+import pdb
 
 class BaseDataset(data.Dataset):
     def __init__(self):
@@ -106,6 +115,18 @@ def get_video_params(opt, n_frames_total, cur_seq_len, index):
         ref_range = list(range(max(0, start_idx - max_range), max(1, start_idx - min_range))) \
                   + list(range(min(start_idx + min_range, cur_seq_len - 1), min(start_idx + max_range, cur_seq_len)))
         ref_indices = np.random.choice(ref_range, size=opt.n_shot)    # indices for reference frames
+
+    elif opt.example:
+        n_frames_total = min(cur_seq_len, n_frames_total)             # total number of frames to load
+        max_t_step = min(4, (cur_seq_len-1) // max(1, (n_frames_total-1)))        
+        t_step = np.random.randint(max_t_step) + 1                    # spacing between neighboring sampled frames                
+        
+        offset_max = max(1, cur_seq_len - (n_frames_total-1)*t_step)  # maximum possible frame index for the first frame
+
+        start_idx = np.random.randint(offset_max)                 # offset for the first frame to load        
+        
+        ref_indices = opt.ref_img_id.split(',')
+        ref_indices = [int(i) for i in ref_indices]
 
     else:
         n_frames_total = 1
