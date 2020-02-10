@@ -5,7 +5,7 @@ def tmp():
     path = '/data/lchen63/vox_obj/vox'
     ff = os.listdir(path)
     for f in ff:
-        gg = f.split('__')
+        gg = f.split('___')
         new_path = os.path.join( path , gg[0] , gg[1], gg[2], gg[3])
         old_path = os.path.join(path , f)
         command = 'mv ' + old_path +' ' + new_path
