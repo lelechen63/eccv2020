@@ -12,7 +12,7 @@ import numpy as np
 from collections import OrderedDict
 import argparse
 import cv2
-from models.networks import  SPCH2FLM2
+from models.networks import  A2L
 from scipy.io import wavfile
 import scipy.signal
 from torch.nn import init
@@ -33,7 +33,7 @@ def parse_args():
 
     parser.add_argument("--model_name",
                         type=str,
-                        default="./checkpoints/atnet_raw_pca_with_exmaple/atnet_lstm_7.pth")
+                        default="./checkpoints/atnet_raw_pca_3d/atnet_lstm_28.pth")
     parser.add_argument( "--sample_dir",
                     type=str,
                     default="./results")
@@ -41,6 +41,8 @@ def parse_args():
     parser.add_argument('-p','--person', type=str, default='./image/musk1.jpg')
     parser.add_argument('--device_ids', type=str, default='0')
     parser.add_argument('--num_thread', type=int, default=1)   
+    parser.add_argument('--threeD', action='store_true')
+
     return parser.parse_args()
 config = parse_args()
 
@@ -95,8 +97,6 @@ def mounth_open2close(lmark): # if the open rate is too large, we need to manual
     lmark[49:54,:2] +=  diffs
     lmark[55:60,:2] -=  diffs 
     return lmark
-
-
 
 
 def preprocess_img(img_path):  # get cropped image by input the reference image
@@ -155,11 +155,20 @@ def preprocess_img(img_path):  # get cropped image by input the reference image
     return roi, preds
  
 def get_demo_batch(audio_path , lmark):  #lmark size should be 136
-    if len(lmark.shape) > 1:
-        lmark = lmark[:,:2].reshape(-1)
-    mean =  np.load('./basics/mean_grid_front.npy')
-    component = np.load('./basics/U_grid_front.npy')
+    if config.threeD:
+        if len(lmark.shape) > 1:
+            lmark = lmark.reshape(-1)
+        mean =  np.load('./basics/mean_grid_front_3d.npy')
+        component = np.load('./basics/U_grid_front_3d.npy')
+    else:
+        if len(lmark.shape) > 1:
+            lmark = lmark[:,:2].reshape(-1)
+        mean =  np.load('./basics/mean_grid_front.npy')
+        component = np.load('./basics/U_grid_front.npy')
     norm_lmark = np.load('./basics/s1_pgbk6n_01.npy')
+    if not config.threeD:
+        norm_lmark = norm_lmark[:,:2]
+    print  (norm_lmark.shape)
     ##########make the mounth closed
     if openrate(norm_lmark) > 1:
         print ('==============enforce mouth to be closed')
@@ -183,7 +192,8 @@ def get_demo_batch(audio_path , lmark):  #lmark size should be 136
     right_append = speech[-4 * chunck_size:]
     speech = np.insert( speech, 0, left_append ,axis=  0)
     speech = np.insert( speech, -1, right_append ,axis=  0)
-    norm_lmark = norm_lmark.reshape(1, 136)
+    
+    norm_lmark = norm_lmark.reshape(1, -1)
 
     norm_lmark = np.dot(norm_lmark - mean, component.T)
     norm_lmark = torch.FloatTensor(norm_lmark)
@@ -202,15 +212,19 @@ def get_demo_batch(audio_path , lmark):  #lmark size should be 136
 
 
 def test():
-    mean =  np.load('./basics/mean_grid_front.npy')
-    component = np.load('./basics/U_grid_front.npy')
+    if config.threeD:
+            mean =  np.load('./basics/mean_grid_front_3d.npy')
+            component = np.load('./basics/U_grid_front_3d.npy')
+    else:
+        mean =  np.load('./basics/mean_grid_front.npy')
+        component = np.load('./basics/U_grid_front.npy')
     config.cuda1 = torch.device('cuda:0')
 
     _ , lmark = preprocess_img(config.person)
     # config.in_file = '/home/cxu-serve/p1/common/grid/audio/s22/bbic9p.wav'
     example_landmark,  chunks, diff= get_demo_batch(config.in_file, lmark)
     print  (example_landmark.shape , chunks.shape)
-    generator = SPCH2FLM2()
+    generator = A2L()
     device_ids = [int(i) for i in config.device_ids.split(',')]
     generator    = nn.DataParallel(generator, device_ids= device_ids).cuda()
     generator.load_state_dict(torch.load(config.model_name))
@@ -226,7 +240,14 @@ def test():
     fake_lmark, _ = generator(example_landmark, chunks)
     fake_lmark = fake_lmark.data.cpu().numpy()
     fake_lmark = np.dot(fake_lmark,component) + mean
-    fake_lmark = fake_lmark.reshape(fake_lmark.shape[0], 68 * 2)
+    print( fake_lmark.shape)
+    if config.threeD:
+        fake_lmark = fake_lmark.reshape(fake_lmark.shape[0]  , 68 ,3)
+    else:
+        fake_lmark = fake_lmark.reshape(fake_lmark.shape[0], 68 , 2)
+            
+
+    fake_lmark = fake_lmark[:,:,:2].reshape(fake_lmark.shape[0],   68 * 2)
     sound, _ = librosa.load(config.in_file, sr=44100)
     face_utils.write_video_wpts_wsound(fake_lmark, sound, 44100, config.sample_dir, 'fake_demo', [0.0,256.0], [0.0,256.0])
 

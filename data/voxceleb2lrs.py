@@ -239,15 +239,3 @@ def prepare_standard2():
     lmark_path = '/u/lchen63/Project/face_tracking_detection/eccv2020/basics/standard.npy'    
     np.save(lmark_path, preds)
 
-
-def tmp():
-    path = '/data/lchen63/vox_obj/vox'
-    ff = os.listdir(path)
-    for f in ff:
-        gg = f.split('__')
-        new_path = os.path.join( path , gg[0] , gg[1], gg[2], gg[3])
-        old_path = os.path.join(path , f)
-        command = 'mv ' + old_path +' ' + new_path
-        print (command)
-        # os.system(command)
-tmp()

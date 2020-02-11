@@ -16,7 +16,9 @@ def CreateDataset(opt):
     elif opt.dataname == 'grid':
         from data.dataset import GridLmark2rgbDataset
         dataset = GridLmark2rgbDataset(opt)
-
+    elif opt.dataname == 'vox':
+        from data.dataset import VoxLmark2rgbDataset
+        dataset = VoxLmark2rgbDataset(opt)
     print("dataset [%s] was created" % (dataset.name()))
     # dataset.__init__(opt)
     return dataset

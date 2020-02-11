@@ -11,7 +11,6 @@ import random
 import torch
 import torch.utils.data as data
 import torchvision.transforms as transforms
-from util.distributed import master_only_print as print
 
 import pdb
 

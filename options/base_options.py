@@ -33,6 +33,16 @@ class BaseOptions():
         self.parser.add_argument('--label_nc', type=int, default=35, help='# of input label channels')
         self.parser.add_argument('--input_nc', type=int, default=3, help='# of input image channels')
         self.parser.add_argument('--output_nc', type=int, default=3, help='# of output image channels')
+        
+        # self.parser.add_argument('--label_nc', type=int, default=0, help='# of input label channels')
+        # self.parser.add_argument('--input_nc', type=int, default=1, help='# of input image channels')
+        self.parser.add_argument('--aspect_ratio', type=float, default=1)        
+        self.parser.add_argument('--no_upper_face', action='store_true', help='do not add upper face')
+        # self.parser.add_argument('--use_ft', action='store_true')
+        self.parser.add_argument('--dataset_name', type=str, default='vox',help='face or vox')
+
+        # for reference
+        self.parser.add_argument('--ref_img_id', type=str)
 
         # for setting inputs
         self.parser.add_argument('--dataroot', type=str, default="/home/cxu-serve/p1/common/lrs3/lrs3_v0.4") 
@@ -46,6 +56,7 @@ class BaseOptions():
         self.parser.add_argument('--tf_log', action='store_true', help='if specified, use tensorboard logging. Requires tensorflow installed')
 
         # for generator
+        self.parser.add_argument('--n_frames_G', type=int, default=2, help='number of input frames to feed into generator, i.e., n_frames_G-1 is the number of frames we look into past')
         self.parser.add_argument('--netG', type=str, default='base1', help='selects model to use for netG')
         self.parser.add_argument('--num_frames', type=int, default=4, help='num of frames for embedding  ')
         self.parser.add_argument('--ngf', type=int, default=64, help='# of gen filters in first conv layer')

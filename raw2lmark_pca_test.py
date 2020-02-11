@@ -16,9 +16,9 @@ import numpy as np
 from collections import OrderedDict
 import argparse
 
-from data.dataset import  GRID_raw_pca_landmark
+from data.a2l_dataset import  GRID_raw_pca_landmark, GRID_raw_pca_3dlandmark
 
-from models.networks import  SPCH2FLM2
+from models.networks import  A2L
 
 from torch.nn import init
 from utils import util, face_utils
@@ -75,18 +75,19 @@ def parse_args():
     
     parser.add_argument("--model_name",
                         type=str,
-                        default="./checkpoints/atnet_raw_pca_with_exmaple_select/atnet_lstm_4.pth")
+                        default="./checkpoints/atnet_raw_pca_3d/atnet_lstm_28.pth")
                         # default="/mnt/disk1/dat/lchen63/lrw/model/model_gan_r2/r_generator_38.pth")
                         # default='/media/lele/DATA/lrw/data2/model')
     parser.add_argument("--sample_dir",
                         type=str,
-                        default="./sample/atnet_raw_pca_with_exmaple_select_test/")
+                        default="./sample/atnet_raw_pca_3d_test/")
                         # default="/mnt/disk1/dat/lchen63/lrw/test_result/model_gan_r2/")
                         # default='/media/lele/DATA/lrw/data2/sample/lstm_gan')
     parser.add_argument('--device_ids', type=str, default='0')
     parser.add_argument('--dataset', type=str, default='grid')
     parser.add_argument('--lstm', type=bool, default=True)
     parser.add_argument('--num_thread', type=int, default=1)
+    parser.add_argument('--threeD', action='store_true')
     # parser.add_argument('--flownet_pth', type=str, help='path of flownets model')
    
 
@@ -98,7 +99,7 @@ def test():
     # os.environ["CUDA_VISIBLE_DEVICES"] = config.device_ids
     config.cuda1 = torch.device('cuda:0')
     config.is_train = 'demo'
-    generator = SPCH2FLM2()
+    generator = A2L()
     device_ids = [int(i) for i in config.device_ids.split(',')]
     generator    = nn.DataParallel(generator, device_ids= device_ids).cuda()
     
@@ -106,8 +107,12 @@ def test():
     yLim=(0.0,256.0)
     xLab = 'x'
     yLab = 'y'
-    mean =  np.load('./basics/mean_grid_front.npy')
-    component = np.load('./basics/U_grid_front.npy')
+    if config.threeD:
+            mean =  np.load('./basics/mean_grid_front_3d.npy')
+            component = np.load('./basics/U_grid_front_3d.npy')
+    else:
+        mean =  np.load('./basics/mean_grid_front.npy')
+        component = np.load('./basics/U_grid_front.npy')
     # try:
     #     state_dict = multi2single(config.model_name, 1)
     #     generator.load_state_dict(state_dict)
@@ -116,7 +121,12 @@ def test():
     print ('load pretrained [{}]'.format(config.model_name))
 
     
-    dataset = GRID_raw_pca_landmark( train=config.is_train)
+    if config.threeD:
+        dataset = GRID_raw_pca_3dlandmark( train= 'test')
+        
+    else:
+       dataset = GRID_raw_pca_landmark( train= 'test')
+        
     data_loader = DataLoader(dataset,
                     batch_size=config.batch_size,
                     num_workers= config.num_thread,
@@ -156,8 +166,16 @@ def test():
             fake_lmark = fake_lmark.data.cpu().numpy()
             lmark = np.dot(lmark,component) + mean
             fake_lmark = np.dot(fake_lmark,component) + mean
-            lmark = lmark.reshape(config.batch_size, config.lstm_len , 68 * 2)
-            fake_lmark = fake_lmark.reshape(config.batch_size, config.lstm_len , 68 * 2)
+            if config.threeD:
+                lmark = lmark.reshape(config.batch_size, config.lstm_len , 68 ,3)
+                fake_lmark = fake_lmark.reshape(config.batch_size, config.lstm_len , 68 ,3)
+            else:
+                lmark = lmark.reshape(config.batch_size, config.lstm_len , 68 ,2)
+                fake_lmark = fake_lmark.reshape(config.batch_size, config.lstm_len , 68 , 2)
+            
+
+            lmark = lmark[:,:,:,:2].reshape(config.batch_size, config.lstm_len , 68 * 2)
+            fake_lmark = fake_lmark[:,:,:,:2].reshape(config.batch_size, config.lstm_len , 68 * 2)
             audio_path = lmark_path[0].replace('align', 'audio').replace('_front.npy', '.wav')
             sound, _ = librosa.load(audio_path, sr=44100)
             face_utils.write_video_wpts_wsound(fake_lmark[0], sound, 44100, config.sample_dir, 'fake%05d'%step, [0.0,256.0], [0.0,256.0])

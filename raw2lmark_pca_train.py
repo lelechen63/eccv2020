@@ -133,6 +133,7 @@ class Trainer():
                         print (lmark[0,2:6])
                         print("[{}/{}][{}/{}]   loss1: {:.8f}".format(epoch+1, config.max_epochs, step+1, num_steps_per_epoch, loss))
                         
+                        
                         if (epoch + 1) % 50 ==0:
                             lmark = lmark.data.cpu().numpy()
                             fake_lmark = fake_lmark.data.cpu().numpy()
