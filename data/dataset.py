@@ -168,7 +168,7 @@ class VoxLmark2rgbDataset(BaseDataset):
         reference_rt_diffs = np.mean(np.absolute(reference_rt_diffs), axis =1)
         similar_id  = np.argmin(reference_rt_diffs)
 
-        warping_ref, warping_ref_lmark = self.prepare_datas(real_video, lmarks, [similar_id])
+        warping_refs, warping_ref_lmarks = self.prepare_datas(real_video, lmarks, [similar_id])
 
         target_img_path  = [os.path.join(video_path[:-4] , '%05d.png'%t_id) for t_id in target_id]
 
@@ -176,14 +176,20 @@ class VoxLmark2rgbDataset(BaseDataset):
         ref_lmarks = torch.cat([ref_lmark.unsqueeze(0) for ref_lmark in ref_lmarks], 0)
         tgt_images = torch.cat([tgt_img.unsqueeze(0) for tgt_img in tgt_images], 0)
         tgt_lmarks = torch.cat([tgt_lmark.unsqueeze(0) for tgt_lmark in tgt_lmarks], 0)
+        warping_refs = torch.cat([warping_ref.unsqueeze(0) for warping_ref in warping_refs], 0)
+        warping_ref_lmarks = torch.cat([warping_ref_lmark.unsqueeze(0) for warping_ref_lmark in warping_ref_lmarks], 0)
+        ani_images = torch.cat([ani_image.unsqueeze(0) for ani_image in ani_images], 0)
+
+
         print (tgt_lmarks.shape)
         print (ref_images.shape)
         print (tgt_images.shape)
         print (ref_lmarks.shape)
-        print (warping_ref.shape)
-        print (warping_ref_lmark.shape)
+        print (warping_refs.shape)
+        print (warping_ref_lmarks.shape)
+        print (ani_images.shape)
         input_dic = {'v_id' : target_img_path, 'tgt_label': tgt_lmarks, 'ref_image':ref_images , 'ref_label': ref_lmarks, \
-        'tgt_image': tgt_images,  'target_id': target_id}
+        'tgt_image': tgt_images,  'target_id': target_id , 'warping_ref' : warping_refs , 'warping_ref_lmark' : warping_ref_lmarks , 'ani_image' : ani_images , }
 
         return input_dic
 

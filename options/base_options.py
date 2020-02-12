@@ -56,7 +56,7 @@ class BaseOptions():
         self.parser.add_argument('--tf_log', action='store_true', help='if specified, use tensorboard logging. Requires tensorflow installed')
 
         # for generator
-        self.parser.add_argument('--n_frames_G', type=int, default=2, help='number of input frames to feed into generator, i.e., n_frames_G-1 is the number of frames we look into past')
+        self.parser.add_argument('--n_frames_G', type=int, default=1, help='number of input frames to feed into generator, i.e., n_frames_G-1 is the number of frames we look into past')
         self.parser.add_argument('--netG', type=str, default='base1', help='selects model to use for netG')
         self.parser.add_argument('--num_frames', type=int, default=4, help='num of frames for embedding  ')
         self.parser.add_argument('--ngf', type=int, default=64, help='# of gen filters in first conv layer')

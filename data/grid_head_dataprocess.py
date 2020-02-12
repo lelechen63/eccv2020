@@ -9,6 +9,11 @@ import cv2
 from face_tracker import _crop_video
 from utils import face_utils
 from scipy.spatial.transform import Rotation 
+from scipy.io import wavfile
+import torch
+from dp2model import load_model
+from dp2dataloader import SpectrogramParser
+
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -201,6 +206,60 @@ def pca_lmark_grid():
         pkl.dump(datalist, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
 
+def interpolate_features(features, input_rate, output_rate, output_len=None):
+    num_features = features.shape[1]
+    input_len = features.shape[0]
+    seq_len = input_len / float(input_rate)
+    if output_len is None:
+        output_len = int(seq_len * output_rate)
+    input_timestamps = np.arange(input_len) / float(input_rate)
+    output_timestamps = np.arange(output_len) / float(output_rate)
+    output_features = np.zeros((output_len, num_features))
+    for feat in range(num_features):
+        output_features[:, feat] = np.interp(output_timestamps,
+                                             input_timestamps,
+                                             features[:, feat])
+    return output_features
+
+def parse_audio(audio, audio_parser, model, device):
+    audio_spect = audio_parser.parse_audio(audio).contiguous()
+    audio_spect = audio_spect.view(1, 1, audio_spect.size(0), audio_spect.size(1))
+    audio_spect = audio_spect.to(device)
+    input_sizes = torch.IntTensor([audio_spect.size(3)]).int()
+    parsed_audio, output_sizes = model(audio_spect, input_sizes)
+
+    # audio (124667, ), audio_spect (1, 1, 161, 780), parsed_audio (1, 390, 29)
+    return parsed_audio, output_sizes
+
+
+def deepspeech_grid():
+    device = 'cuda:0'
+    model = load_model(device, '/u/lchen63/voca/deepspeech_pytorch/models/deepspeech.pth', False)
+    model.eval()
+    audio_parser = SpectrogramParser(model.audio_conf, normalize=True)
+    root_path  ='/home/cxu-serve/p1/common/grid'
+    _file = open(os.path.join(root_path,  'pickle','train_audio2lmark_grid.pkl'), "rb")
+    datalist = pkl.load(_file)
+    _file.close()
+    batch_length = int( len(datalist))
+   
+    for index in tqdm(range(batch_length)):
+        audio_path = os.path.join( root_path , 'audio' ,datalist[index][0],  datalist[index][1] +'.wav' )
+        sample_rate, audio_sample = wavfile.read( audio_path)
+        audio_parser = SpectrogramParser(model.audio_conf, normalize=True)
+        parsed_audio, output_sizes = parse_audio(audio_sample, audio_parser, model, device)
+        audio_len_s = float(audio_sample.shape[0]) / sample_rate
+        num_frames = int(round(audio_len_s * 25))
+        network_output = interpolate_features(parsed_audio.data[0].cpu().numpy(), 25, 25,
+                                                    output_len=num_frames)
+        # print (network_output.shape)
+        # print  (network_output)
+        np.save(audio_path[:-4] +'_dp.npy' , network_output )
+        # break
+
+
+
+
 def pca_3dlmark_grid():  ## this time we will use standard as tempolate to be consistent with voxceleb
     root_path  ='/home/cxu-serve/p1/common/grid'
     _file = open(os.path.join(root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
@@ -249,7 +308,8 @@ def pca_3dlmark_grid():  ## this time we will use standard as tempolate to be co
         pkl.dump(datalist, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
 # pca_lmark_grid()
-pca_3dlmark_grid()
+deepspeech_grid()
+# pca_3dlmark_grid()
 # data = np.load('/home/cxu-serve/p1/common/grid/align/s1/lwae8n_front.npy')[:,:,:2]
 # data = data.reshape(data.shape[0], 136)
 # print (data.shape)

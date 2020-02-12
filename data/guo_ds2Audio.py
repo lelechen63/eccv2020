@@ -86,6 +86,13 @@ class AudioHandler:
                 parsed_audio, output_sizes = parse_audio(audio_sample, audio_parser, model, device)
                 print (parsed_audio.shape)
 
+                audio_len_s = float(audio_sample.shape[0]) / sample_rate
+                num_frames = int(round(audio_len_s * 25))
+                print (num_frames)
+                print ('+++')
+                network_output = interpolate_features(parsed_audio.data[0].cpu().numpy(), 25, 25,
+                                                          output_len=num_frames)
+                print (network_output.shape)
         return processed_audio
 
 
