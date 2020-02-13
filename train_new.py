@@ -101,14 +101,15 @@ with torch.autograd.set_detect_anomaly(False):
                 ### display output images
                         
                 tmp = []
-                tmp.extend([( 'reference1', util.tensor2im(data['reference_frames'][0,:3]))])
-                if opt.num_frames >= 4:
-                    tmp.extend([('reference2', util.tensor2im(data['reference_frames'][0, 6:9])),
-                                        ('reference3', util.tensor2im(data['reference_frames'][0, 12:15])),
-                                        ('reference4', util.tensor2im(data['reference_frames'][0, 18:21]))])
-                tmp.extend([('target_lmark', util.tensor2im(data['target_lmark'][0])),
-                                    ('synthesized_image', util.tensor2im(generated.data[0])),
-                                    ('real_image', util.tensor2im(data['target_rgb'][0]))])
+                for i in range(opt.num_frames):
+                    tmp.extend([( 'reference%d'%i, util.tensor2im(data['ref_image'][0,i]))])
+                    
+                tmp.extend([('target_lmark', util.tensor2im(data['tgt_label'][0, 0])),
+                                    ('synthesized_image', util.tensor2im(generated[0].data[0])),
+                                    ('att', util.tensor2im(generated[1].data[0])),
+                                    ('raw', util.tensor2im(generated[2].data[0])),
+                                    ('real_image', util.tensor2im(data['tgt_image'][0, 0])),
+                                    ('ani_image', util.tensor2im(data['ani_image'][0, 0]))])
                     
                
                 visuals =  OrderedDict(tmp)  

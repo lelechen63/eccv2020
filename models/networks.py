@@ -972,7 +972,7 @@ class GlobalGenerator5(nn.Module):
         ani_feature  = self.ani_encoder(ani_image)
         alpha = self.alpha_conv( torch.cat([I_feature , ani_feature], 1) )
         face_foreground = (1 - alpha) * ani_image + alpha * I_hat
-        return [face_foreground, I_hat, alpha, alpha, I_hat ]
+        return [face_foreground, I_hat, alpha ]
 
 # model = GlobalGenerator5()
 # a = torch.zeros((2,1,1,256,256))

@@ -63,7 +63,7 @@ class VoxLmark2rgbDataset(BaseDataset):
                     ]
        
         if opt.isTrain:
-            _file = open(os.path.join(self.root, 'pickle','test_lmark2img.pkl'), "rb")
+            _file = open(os.path.join(self.root, 'pickle','dev_lmark2img.pkl'), "rb")
             self.data = pkl.load(_file)
             _file.close()
         else :
@@ -72,7 +72,7 @@ class VoxLmark2rgbDataset(BaseDataset):
             _file.close()
 
         if opt.isTrain:
-            self.video_bag = 'unzip/test_video'
+            self.video_bag = 'unzip/dev_video'
         else:
             self.video_bag = 'unzip/test_video'
         print (len(self.data))
@@ -153,10 +153,10 @@ class VoxLmark2rgbDataset(BaseDataset):
         
 
         # get target
-        tgt_images, tgt_lmarks = self.prepare_datas(real_video, lmarks, target_id)
+        [tgt_images , ani_images], [tgt_lmarks,_] = self.prepare_datas([real_video, ani_video], lmarks, target_id)
 
         # get animation
-        ani_images, _ = self.prepare_datas(ani_video, lmarks, target_id)
+        # ani_images, _ = self.prepare_datas(ani_video, lmarks, target_id)
         
         # get warping reference
         reference_rt_diffs = []
@@ -285,24 +285,40 @@ class VoxLmark2rgbDataset(BaseDataset):
                         np.random.uniform(1 - scale_max, 1 + scale_max)]    
 
     # get image and landmarks
-    def prepare_datas(self, images, lmarks, choice_ids):
+    def prepare_datas(self, imagess, lmarks, choice_ids):
         # get cropped coordinates
         crop_lmark = lmarks[choice_ids[0]]
         crop_coords = self.get_crop_coords(crop_lmark)
         bw = max(1, (crop_coords[1]-crop_coords[0]) // 256)
 
         # get images and landmarks
-        result_lmarks = []
-        result_images = []
-        for choice in choice_ids:
-            image, crop_size = self.get_image(images[choice], self.transform, self.output_shape, crop_coords)
-            lmark = self.get_keypoints(lmarks[choice], self.transform_L, crop_size, crop_coords, bw)
+        # print (type(imagess[0]))
+        if type(imagess[0]) == list:
+            tmp_lmarks = []
+            tmp_images = []
+            for images in imagess:
+                result_lmarks = []
+                result_images = []
+                for choice in choice_ids:
+                    image, crop_size = self.get_image(images[choice], self.transform, self.output_shape, crop_coords)
+                    lmark = self.get_keypoints(lmarks[choice], self.transform_L, crop_size, crop_coords, bw)
 
-            result_lmarks.append(lmark)
-            result_images.append(image)
+                    result_lmarks.append(lmark)
+                    result_images.append(image)
+                tmp_images.append(result_images)
+                tmp_lmarks.append(result_lmarks)
+            return tmp_images, tmp_lmarks
+        else:
+            images = imagess
+            result_lmarks = []
+            result_images = []
+            for choice in choice_ids:
+                image, crop_size = self.get_image(images[choice], self.transform, self.output_shape, crop_coords)
+                lmark = self.get_keypoints(lmarks[choice], self.transform_L, crop_size, crop_coords, bw)
 
-        return result_images, result_lmarks
-
+                result_lmarks.append(lmark)
+                result_images.append(image)
+            return result_images, result_lmarks
     # get crop standard from one landmark
     def get_crop_coords(self, keypoints, crop_size=None):           
         min_y, max_y = int(keypoints[:,1].min()), int(keypoints[:,1].max())

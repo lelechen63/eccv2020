@@ -117,18 +117,26 @@ class Lmark2PixHDModel(BaseModel):
         reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img = self.encode_input(reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img, infer)  
 
         # Fake Generation        
-        [fake_image, I_hat, alpha, alpha, I_hat ] = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img )
+        [fake_image, I_hat, alpha ] = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img )
 
         # Fake Detection and Loss
+        # print ('++-----++') 
+        # print (target_lmark.shape, fake_image.shape)
         pred_fake_pool = self.discriminate(target_lmark, fake_image, use_pool=True)
         loss_D_fake = self.criterionGAN(pred_fake_pool, False)        
 
-        # Real Detection and Loss        
+        # Real Detection and Loss    
+        # print ('+---')     
+        # print (target_lmark.shape, real_image.shape)
         pred_real = self.discriminate(target_lmark, real_image.squeeze(1))
+        
+
         loss_D_real = self.criterionGAN(pred_real, True)
 
-        # GAN loss (Fake Passability Loss)        
-        pred_fake = self.netD.forward(torch.cat((target_lmark, fake_image), dim=1))        
+        # GAN loss (Fake Passability Loss)    
+        # print ('++++')    
+        # print (target_lmark.squeeze(1).shape, fake_image.shape)
+        pred_fake = self.netD.forward(torch.cat((target_lmark.squeeze(1), fake_image), dim=1))        
         loss_G_GAN = self.criterionGAN(pred_fake, True)               
         
         # GAN feature matching loss
@@ -144,10 +152,10 @@ class Lmark2PixHDModel(BaseModel):
         # VGG feature matching loss
         loss_G_VGG = 0
         if not self.opt.no_vgg_loss:
-            loss_G_VGG = self.criterionVGG(fake_image, real_image) * self.opt.lambda_feat
+            loss_G_VGG = self.criterionVGG(fake_image, real_image.squeeze(1)) * self.opt.lambda_feat
         
         # Only return the fake_B image if necessary to save BW
-        return [ self.loss_filter( loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake ), None if not infer else fake_image ]
+        return [ self.loss_filter( loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake ), None if not infer else [fake_image, I_hat, alpha ] ]
 
     def inference(self, reference_img, reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img):
         # Encode Inputs        
@@ -157,9 +165,9 @@ class Lmark2PixHDModel(BaseModel):
            
         if torch.__version__.startswith('0.4'):
             with torch.no_grad():
-                [fake_image, I_hat, alpha, alpha, I_hat ]  = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img)
+                [fake_image, I_hat, alpha]  = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img)
         else:
-            [fake_image, I_hat, alpha, alpha, I_hat ]  = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img)
+            [fake_image, I_hat, alpha ]  = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img)
         return fake_image
 
 

@@ -5,7 +5,7 @@
 #CUDA_VISIBLE_DEVICES=3   python base_train.py --model=base4_pretrain --gpu_ids=0 --netG=base4  --name base4_pretrain_grid_1 --dataname=grid --dataroot /home/cxu-serve/p1/common/grid  --batchSize 16 --niter 10000  --nThreads 1 --n_layers_D=3  --num_D=2 --lr=0.00005 --num_frames=1
 
 
-CUDA_VISIBLE_DEVICES=1   python train_new.py --model=base1 --gpu_ids=0 --netG=base5  --name base5_vox_8 --dataname=vox --dataroot /home/cxu-serve/p1/common/voxceleb2  --batchSize 2  --niter 10000  --nThreads 1 --n_layers_D=3  --num_D=2 --lr=0.00005 --num_frames=8 --debug
+CUDA_VISIBLE_DEVICES=2,3   python train_new.py --model=base1 --gpu_ids=0,1 --netG=base5  --name base5_vox_8 --dataname=vox --dataroot /home/cxu-serve/p1/common/voxceleb2  --batchSize 10  --niter 10000  --nThreads 10 --n_layers_D=3  --num_D=2 --lr=0.0001 --num_frames=8 # --debug
 # CUDA_VISIBLE_DEVICES=0   python base_test.py --model=base1  --gpu_ids=0 --netG=base4  --name base1_grid_32 --dataname=grid --dataroot /home/cxu-serve/p1/common/grid  --batchSize 16 --niter 10000  --nThreads 1 --num_frames=1 # --n_layers_D=3  --num_D=2 --lr=0.00005 --num_frames=32
 
 
