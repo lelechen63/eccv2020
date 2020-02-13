@@ -141,6 +141,8 @@ class Conv2dBlock(nn.Module):
             self.activation = nn.LeakyReLU(0.2, inplace=True)
         elif activation == 'tanh':
             self.activation = nn.Tanh()
+        elif activation == 'sigmoid':
+            self.activation = nn.Sigmoid()
         elif activation == 'none':
             self.activation = None
         else:
