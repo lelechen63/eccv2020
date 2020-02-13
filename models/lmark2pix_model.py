@@ -32,7 +32,7 @@ class Lmark2PixHDModel(BaseModel):
         # Discriminator network
         if self.isTrain:
             use_sigmoid = opt.no_lsgan
-            netD_input_nc = 3 + opt.output_nc
+            netD_input_nc = 1 + opt.output_nc
            
             self.netD = networks.define_D(netD_input_nc, opt.ndf, opt.n_layers_D, opt.norm, use_sigmoid, 
                                           opt.num_D, not opt.no_ganFeat_loss, gpu_ids=self.gpu_ids)
@@ -76,7 +76,7 @@ class Lmark2PixHDModel(BaseModel):
             params = list(self.netD.parameters())    
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
-    def encode_input(self, references = None, target_lmark = None, real_image = None,  infer=False):             
+    def encode_input(self, reference_img = None, reference_lmark = None, target_lmark = None, real_image = None, warping_ref_img = None, warping_ref_lmark = None, ani_img = None,  infer=False):             
         if target_lmark is not None:
             target_lmark = Variable(target_lmark.data.cuda(non_blocking=True), volatile=infer)      
 
@@ -84,33 +84,47 @@ class Lmark2PixHDModel(BaseModel):
         if real_image is not None:
             real_image = Variable(real_image.data.cuda(non_blocking=True))
             
-        if references is not None:
-            references = Variable(references.data.cuda(non_blocking=True))
-        
+        if reference_img is not None:
+            reference_img = Variable(reference_img.data.cuda(non_blocking=True))
+        if reference_lmark is not None:
+            reference_lmark = Variable(reference_lmark.data.cuda(non_blocking=True))
+        if target_lmark is not None:
+            target_lmark = Variable(target_lmark.data.cuda(non_blocking=True))
 
-        return references, target_lmark, real_image 
+        if warping_ref_img is not None:
+            warping_ref_img = Variable(warping_ref_img.data.cuda(non_blocking=True))
+        if warping_ref_lmark is not None:
+            warping_ref_lmark = Variable(warping_ref_lmark.data.cuda(non_blocking=True))
+        
+        if ani_img is not None:
+            ani_img = Variable(ani_img.data.cuda(non_blocking=True))
+
+        return reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img
 
     def discriminate(self, target_lmark, test_image, use_pool=False):
-        input_concat = torch.cat((target_lmark, test_image.detach()), dim=1)
+        # print  (target_lmark.squeeze(1).shape) 
+        # print (test_image.shape)
+        # print ('===================')
+        input_concat = torch.cat((target_lmark.squeeze(1), test_image.detach()), dim=1)
         if use_pool:            
             fake_query = self.fake_pool.query(input_concat)
             return self.netD.forward(fake_query)
         else:
             return self.netD.forward(input_concat)
 
-    def forward(self, references , target_lmark, real_image,  infer=False):
+    def forward(self, reference_img, reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img,  infer=False):
         # Encode Inputs
-        references, target_lmark, real_image = self.encode_input(references, target_lmark, real_image)  
+        reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img = self.encode_input(reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img, infer)  
 
         # Fake Generation        
-        fake_image = self.netG.forward(references , target_lmark )
+        [fake_image, I_hat, alpha, alpha, I_hat ] = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img )
 
         # Fake Detection and Loss
         pred_fake_pool = self.discriminate(target_lmark, fake_image, use_pool=True)
         loss_D_fake = self.criterionGAN(pred_fake_pool, False)        
 
         # Real Detection and Loss        
-        pred_real = self.discriminate(target_lmark, real_image)
+        pred_real = self.discriminate(target_lmark, real_image.squeeze(1))
         loss_D_real = self.criterionGAN(pred_real, True)
 
         # GAN loss (Fake Passability Loss)        
@@ -135,17 +149,17 @@ class Lmark2PixHDModel(BaseModel):
         # Only return the fake_B image if necessary to save BW
         return [ self.loss_filter( loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake ), None if not infer else fake_image ]
 
-    def inference(self, references, target_lmark,  real_image):
+    def inference(self, reference_img, reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img):
         # Encode Inputs        
         real_image = Variable(real_image) if real_image is not None else None
-        references, target_lmark, real_image = self.encode_input(references, target_lmark, real_image, infer=True) 
+        reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img= self.encode_input(reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img, infer=True) 
         # Fake Generation
            
         if torch.__version__.startswith('0.4'):
             with torch.no_grad():
-                fake_image = self.netG.forward(references , target_lmark )
+                [fake_image, I_hat, alpha, alpha, I_hat ]  = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img)
         else:
-            fake_image = self.netG.forward(references , target_lmark)
+            [fake_image, I_hat, alpha, alpha, I_hat ]  = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img)
         return fake_image
 
 
@@ -175,5 +189,5 @@ class Lmark2PixHDModel(BaseModel):
 
 class InferenceModel(Lmark2PixHDModel):
     def forward(self, inp):
-        references, target_lmark, image = inp
-        return self.inference(references, target_lmark, image)
+        reference_img, reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img= inp
+        return self.inference(reference_img, reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img)

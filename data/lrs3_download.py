@@ -113,12 +113,13 @@ def download_pretrain(config, yt_baseurl):
 
 
 def download_trainval(config, yt_baseurl):
-    # root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4'
-    root = '/mnt/Data02/lchen63/lrs/'
+    root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4'
+    # root = '/mnt/Data02/lchen63/lrs/'
     train_list = sorted(os.listdir(   os.path.join(root, 'trainval') ))
     print (len(train_list))
     batch_length = int(0.1 * len(train_list))
     for i in range(batch_length * (config.batch_id -1), batch_length * (config.batch_id)):
+        print ('==============', i)
         if os.path.exists('./tmp%05d'%config.batch_id):
             shutil.rmtree('./tmp%05d'%config.batch_id)
         os.mkdir('./tmp%05d'%config.batch_id)
@@ -177,14 +178,14 @@ def download_trainval(config, yt_baseurl):
                     counter += 1
                 frame_id = previous.split(' ')[0]
                 end_frame = float(frame_id)
-                print (start_frame, end_frame)
+                # print (start_frame, end_frame)
                 start_time =  start_frame / 25.0
                 last_time = end_frame / 25.0 - start_time
-                print (start_time, last_time)
+                # print (start_time, last_time)
 
                 #cut video by start time and end time
                 command = 'ffmpeg -i ./tmp%05d/'%config.batch_id + 'tmp.' + tilename   + ' -ss {0:.2f}'.format(start_time) +' -strict -2 -t {0:.2f} -filter:v fps=fps=25 -y '.format(last_time)+ txt_path[:-3] + 'mp4'
-                print (command)
+                # print (command)
                 os.system(command)
                 print ('================== video extracted')
 
@@ -196,7 +197,7 @@ def download_trainval(config, yt_baseurl):
 
                 # extract audio
                 command = 'ffmpeg -i ' + txt_path[:-3] + 'mp4' + ' -ar 44100 -ac 2 -y  ' + txt_path[:-3] + 'wav'
-                print (command)
+                # print (command)
                 os.system(command)
 
                 print ('================== audio extracted')

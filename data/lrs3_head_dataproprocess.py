@@ -54,12 +54,12 @@ def extract_audio():
 
 def landmark_extractor():
     fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda:0')
-
-    train_list = sorted(os.listdir('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain'))
-    batch_length = int( 0.5 *  len(train_list))
+    rootpath ='/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/trainval' 
+    train_list = sorted(os.listdir(rootpath))
+    batch_length = int( 0.1 *  len(train_list))
     for i in tqdm(range(batch_length * (config.batch_id -1), batch_length * (config.batch_id))):
         p_id = train_list[i]
-        person_path = os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain', p_id)
+        person_path = os.path.join(rootpath, p_id)
         chunk_txt = sorted(os.listdir(person_path))
         for txt in chunk_txt:
             if txt[-8:] !=  'crop.mp4':

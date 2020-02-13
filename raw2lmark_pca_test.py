@@ -16,7 +16,9 @@ import numpy as np
 from collections import OrderedDict
 import argparse
 
-from data.a2l_dataset import  GRID_raw_pca_landmark, GRID_raw_pca_3dlandmark
+from data.a2l_dataset import  GRID_raw_pca_landmark, GRID_raw_pca_3dlandmark , GRID_deepspeech_pca_landmark
+
+from models.networks import  A2L, A2L_deeps
 
 from models.networks import  A2L
 
@@ -89,6 +91,7 @@ def parse_args():
     parser.add_argument('--num_thread', type=int, default=1)
     parser.add_argument('--threeD', action='store_true')
     # parser.add_argument('--flownet_pth', type=str, help='path of flownets model')
+    parser.add_argument('--deeps', action='store_true')
    
 
     return parser.parse_args()
@@ -99,7 +102,10 @@ def test():
     # os.environ["CUDA_VISIBLE_DEVICES"] = config.device_ids
     config.cuda1 = torch.device('cuda:0')
     config.is_train = 'demo'
-    generator = A2L()
+    if config.deeps:
+        generator = A2L_deeps()
+    else:
+        generator = A2L()
     device_ids = [int(i) for i in config.device_ids.split(',')]
     generator    = nn.DataParallel(generator, device_ids= device_ids).cuda()
     

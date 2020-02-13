@@ -12,7 +12,7 @@ import numpy as np
 from collections import OrderedDict
 import argparse
 import cv2
-from models.networks import  A2L
+from models.networks import  A2L , A2L_deeps
 from scipy.io import wavfile
 import scipy.signal
 from torch.nn import init
@@ -20,6 +20,9 @@ from utils import util, face_utils
 from data import face_tracker
 import librosa
 import face_alignment
+from data.grid_head_dataprocess import *
+from data.dp2model import load_model
+from data.dp2dataloader import SpectrogramParser
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -42,6 +45,7 @@ def parse_args():
     parser.add_argument('--device_ids', type=str, default='0')
     parser.add_argument('--num_thread', type=int, default=1)   
     parser.add_argument('--threeD', action='store_true')
+    parser.add_argument('--deeps', action='store_true')
 
     return parser.parse_args()
 config = parse_args()
@@ -97,7 +101,6 @@ def mounth_open2close(lmark): # if the open rate is too large, we need to manual
     lmark[49:54,:2] +=  diffs
     lmark[55:60,:2] -=  diffs 
     return lmark
-
 
 def preprocess_img(img_path):  # get cropped image by input the reference image
     # img_path = '/home/cxu-serve/p1/lchen63/voxceleb/unzip/tmp/tmp/00001_00030.png'
@@ -181,31 +184,58 @@ def get_demo_batch(audio_path , lmark):  #lmark size should be 136
 
     command = 'ffmpeg -i ' + audio_path +' -ar 50000 -y ./tmp.wav'
     os.system(command)
-    fs, speech = wavfile.read( './tmp.wav')
-    # speech = scipy.signal.resample(speech, 50000)
-    # fs = 50000
-    print  (fs)
-    # speech, fs = librosa.load(audio_path, sr=50000)
-    chunck_size =int(fs * 0.04 )
-    length = int(speech.shape[0] / chunck_size)
-    left_append = speech[: 3 * chunck_size]
-    right_append = speech[-4 * chunck_size:]
-    speech = np.insert( speech, 0, left_append ,axis=  0)
-    speech = np.insert( speech, -1, right_append ,axis=  0)
-    
-    norm_lmark = norm_lmark.reshape(1, -1)
+    if config.deeps:
+        dp+ = wavfile.read( './tmp.wav')
+        # speech = scipy.signal.resample(speech, 50000)
+        # fs = 50000
+        print  (fs)
+        # speech, fs = librosa.load(audio_path, sr=50000)
+        chunck_size =int(fs * 0.04 )
+        length = int(speech.shape[0] / chunck_size)
+        left_append = speech[: 3 * chunck_size]
+        right_append = speech[-4 * chunck_size:]
+        speech = np.insert( speech, 0, left_append ,axis=  0)
+        speech = np.insert( speech, -1, right_append ,axis=  0)
+        
+        norm_lmark = norm_lmark.reshape(1, -1)
 
-    norm_lmark = np.dot(norm_lmark - mean, component.T)
-    norm_lmark = torch.FloatTensor(norm_lmark)
-    example_landmark = norm_lmark.repeat((length,1))
+        norm_lmark = np.dot(norm_lmark - mean, component.T)
+        norm_lmark = torch.FloatTensor(norm_lmark)
+        example_landmark = norm_lmark.repeat((length,1))
 
-    chunks = []
-    for r in range(length):
-        t_chunk =speech[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
-        t_chunk = torch.FloatTensor(t_chunk)
-        chunks.append(t_chunk)
-    chunks = torch.stack(chunks, 0)
-    print (chunks.shape, example_landmark.shape)
+        chunks = []
+        for r in range(length):
+            t_chunk =speech[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
+            t_chunk = torch.FloatTensor(t_chunk)
+            chunks.append(t_chunk)
+        chunks = torch.stack(chunks, 0)
+        print (chunks.shape, example_landmark.shape)
+    else:
+        fs, speech = wavfile.read( './tmp.wav')
+        # speech = scipy.signal.resample(speech, 50000)
+        # fs = 50000
+        print  (fs)
+        # speech, fs = librosa.load(audio_path, sr=50000)
+        chunck_size =int(fs * 0.04 )
+        length = int(speech.shape[0] / chunck_size)
+        left_append = speech[: 3 * chunck_size]
+        right_append = speech[-4 * chunck_size:]
+        speech = np.insert( speech, 0, left_append ,axis=  0)
+        speech = np.insert( speech, -1, right_append ,axis=  0)
+        
+        norm_lmark = norm_lmark.reshape(1, -1)
+
+        norm_lmark = np.dot(norm_lmark - mean, component.T)
+        norm_lmark = torch.FloatTensor(norm_lmark)
+        example_landmark = norm_lmark.repeat((length,1))
+
+        chunks = []
+        for r in range(length):
+            t_chunk =speech[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
+            t_chunk = torch.FloatTensor(t_chunk)
+            chunks.append(t_chunk)
+        chunks = torch.stack(chunks, 0)
+        print (chunks.shape, example_landmark.shape)
     return example_landmark,  chunks, diff
  
 # a,b = get_demo_batch('/home/cxu-serve/p1/common/grid/audio/s1/bbaf3s.wav' , np.load('./basics/mean_grid_front.npy'))
@@ -224,7 +254,11 @@ def test():
     # config.in_file = '/home/cxu-serve/p1/common/grid/audio/s22/bbic9p.wav'
     example_landmark,  chunks, diff= get_demo_batch(config.in_file, lmark)
     print  (example_landmark.shape , chunks.shape)
-    generator = A2L()
+
+    if config.deeps:
+        generator = A2L_deeps()
+    else:
+        generator = A2L()
     device_ids = [int(i) for i in config.device_ids.split(',')]
     generator    = nn.DataParallel(generator, device_ids= device_ids).cuda()
     generator.load_state_dict(torch.load(config.model_name))

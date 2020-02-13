@@ -238,7 +238,7 @@ def deepspeech_grid():
     model.eval()
     audio_parser = SpectrogramParser(model.audio_conf, normalize=True)
     root_path  ='/home/cxu-serve/p1/common/grid'
-    _file = open(os.path.join(root_path,  'pickle','train_audio2lmark_grid.pkl'), "rb")
+    _file = open(os.path.join(root_path,  'pickle','test_audio2lmark_grid.pkl'), "rb")
     datalist = pkl.load(_file)
     _file.close()
     batch_length = int( len(datalist))

@@ -149,12 +149,10 @@ class VoxLmark2rgbDataset(BaseDataset):
         self.define_scale()
 
         # get reference
-        print ('++++', input_indexs)
         ref_images, ref_lmarks = self.prepare_datas(real_video, lmarks, input_indexs)
         
 
         # get target
-        print ('-------', target_id)
         tgt_images, tgt_lmarks = self.prepare_datas(real_video, lmarks, target_id)
 
         # get animation
@@ -181,15 +179,15 @@ class VoxLmark2rgbDataset(BaseDataset):
         ani_images = torch.cat([ani_image.unsqueeze(0) for ani_image in ani_images], 0)
 
 
-        print (tgt_lmarks.shape)
-        print (ref_images.shape)
-        print (tgt_images.shape)
-        print (ref_lmarks.shape)
-        print (warping_refs.shape)
-        print (warping_ref_lmarks.shape)
-        print (ani_images.shape)
+        # print (tgt_lmarks.shape)   # 1, 1 , 256,256
+        # print (ref_images.shape) # 8, 3 , 256,256
+        # print (tgt_images.shape) ## 1, 3 , 256,256
+        # print (ref_lmarks.shape)  # 8, 1 , 256,256
+        # print (warping_refs.shape) # 1, 3 , 256,256
+        # print (warping_ref_lmarks.shape)   # 1, 1 , 256,256
+        # print (ani_images.shape)  # 1, 3, 256,256
         input_dic = {'v_id' : target_img_path, 'tgt_label': tgt_lmarks, 'ref_image':ref_images , 'ref_label': ref_lmarks, \
-        'tgt_image': tgt_images,  'target_id': target_id , 'warping_ref' : warping_refs , 'warping_ref_lmark' : warping_ref_lmarks , 'ani_image' : ani_images , }
+        'tgt_image': tgt_images,  'target_id': target_id , 'warping_ref' : warping_refs , 'warping_ref_lmark' : warping_ref_lmarks , 'ani_image' : ani_images }
 
         return input_dic
 

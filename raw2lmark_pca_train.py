@@ -13,9 +13,9 @@ import numpy as np
 from collections import OrderedDict
 import argparse
 
-from data.a2l_dataset import  GRID_raw_pca_landmark, GRID_raw_pca_3dlandmark
+from data.a2l_dataset import  GRID_raw_pca_landmark, GRID_raw_pca_3dlandmark , GRID_deepspeech_pca_landmark
 
-from models.networks import  A2L
+from models.networks import  A2L, A2L_deeps
 
 from torch.nn import init
 from utils import util
@@ -56,7 +56,10 @@ def initialize_weights( net, init_type='normal', gain=0.02):
 
 class Trainer():
     def __init__(self, config):
-        self.generator = A2L()
+        if config.deeps:
+            self.generator = A2L_deeps()
+        else:
+            self.generator = A2L()
         
         self.l1_loss_fn =  nn.L1Loss()
         self.mse_loss_fn = nn.MSELoss()
@@ -78,6 +81,10 @@ class Trainer():
 
             self.test_dataset = GRID_raw_pca_3dlandmark( train= 'test')
         
+        elif config.deeps:
+            self.train_dataset = GRID_deepspeech_pca_landmark( train=config.is_train)
+
+            self.test_dataset = GRID_deepspeech_pca_landmark( train= 'test')
         else:
             self.train_dataset = GRID_raw_pca_landmark( train=config.is_train)
 
@@ -133,7 +140,7 @@ class Trainer():
                         print (lmark[0,2:6])
                         print("[{}/{}][{}/{}]   loss1: {:.8f}".format(epoch+1, config.max_epochs, step+1, num_steps_per_epoch, loss))
                         
-                        
+
                         if (epoch + 1) % 50 ==0:
                             lmark = lmark.data.cpu().numpy()
                             fake_lmark = fake_lmark.data.cpu().numpy()
@@ -242,12 +249,12 @@ def parse_args():
                         # default = '/media/lele/DATA/lrw/data2/pickle')
     parser.add_argument("--model_dir",
                         type=str,
-                        default="./checkpoints/atnet_raw_pca/")
+                        default="./checkpoints/atnet_deeps_pca/")
                         # default="/mnt/disk1/dat/lchen63/grid/model/model_gan_r")
                         # default='/media/lele/DATA/lrw/data2/model')
     parser.add_argument("--sample_dir",
                         type=str,
-                        default="./sample/atnet_raw_pca/")
+                        default="./sample/atnet_deeps_pca/")
                         # default="/mnt/disk1/dat/lchen63/grid/sample/model_gan_r/")
                         # default='/media/lele/DATA/lrw/data2/sample/lstm_gan')
     parser.add_argument('--device_ids', type=str, default='0')
@@ -258,6 +265,7 @@ def parse_args():
     parser.add_argument('--load_model', action='store_true')
     parser.add_argument('--model_name', type=str, default = './checkpoints/atnet_raw_pca_with_exmaple/atnet_lstm_7.pth')
     parser.add_argument('--threeD', action='store_true')
+    parser.add_argument('--deeps', action='store_true')
 
     return parser.parse_args()
 

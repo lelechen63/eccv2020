@@ -6,8 +6,8 @@ import numpy as np
 from torch.nn import functional as F
 import os
 import imp
-from vgg import Cropped_VGG19
-from blocks import LinearBlock, Conv2dBlock, ResBlocks, ActFirstResBlock
+from .vgg import Cropped_VGG19
+from .blocks import LinearBlock, Conv2dBlock, ResBlocks, ActFirstResBlock
 from torch import autograd
 
 
@@ -139,7 +139,8 @@ def define_G(input_nc, output_nc, ngf, netG , n_downsample_global=3, n_blocks_gl
              n_blocks_local=3, norm='instance', gpu_ids=[]):    
     norm_layer = get_norm_layer(norm_type=norm) 
 
-    if netG == 'base1':
+    if netG == 'base1': 
+
         netG = GlobalGenerator1( input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, norm_layer) 
     elif netG == 'base2':
         netG = GlobalGenerator2( input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, norm_layer) 
@@ -148,7 +149,8 @@ def define_G(input_nc, output_nc, ngf, netG , n_downsample_global=3, n_blocks_gl
         netG = GlobalGenerator3( input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, norm_layer) 
     elif netG == 'base4':
         netG = GlobalGenerator4( input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, norm_layer) 
-
+    elif netG == 'base5':
+        netG = GlobalGenerator5( input_nc, output_nc, ngf, n_downsample_global, n_blocks_global, norm_layer)	
     else:
         raise('generator not implemented!')
     print(netG)
@@ -709,8 +711,8 @@ class GlobalGenerator4(nn.Module):
 
 
 
-class GlobalGenerator5(nn.Module):  # few shot, without beta
-    def __init__(self,input_nc  =1 , output_nc = 1, pad_type='reflect', norm_layer=nn.BatchNorm2d, ngf = 64, opt = None):
+class GlobalGenerator5(nn.Module): 
+    def __init__(self,input_nc = 1, output_nc =1 , ngf = 64, n_downsampling=3, n_blocks=9, norm_layer=nn.BatchNorm2d,  pad_type='reflect'):
         super(GlobalGenerator5, self).__init__()        
         activ = 'relu'    
         model = [nn.ReflectionPad2d(3), nn.Conv2d(3 , 32, kernel_size=7, padding=0), nn.InstanceNorm2d(32), nn.ReLU(True) ]
@@ -851,7 +853,7 @@ class GlobalGenerator5(nn.Module):  # few shot, without beta
 
         model = []
         ###  adain resnet blocks
-        model += [ResBlocks(2, 512, norm  = 'adain', activation=activ, pad_type='reflect')]
+        model += [ResBlocks(5 , 512, norm  = 'adain', activation=activ, pad_type='reflect')]
 
         ### upsample         
         model += [nn.Upsample(scale_factor=2),
@@ -912,7 +914,7 @@ class GlobalGenerator5(nn.Module):  # few shot, without beta
         self.mlp = MLP(1024,
                        get_num_adain_params(self.decoder),
                        256,
-                       3,
+                       6,
                        norm='none',
                        activ='relu')
         
@@ -947,11 +949,9 @@ class GlobalGenerator5(nn.Module):  # few shot, without beta
            
         conv_prod = (ref_img_fea_final.view(b, c2, 1, h2*w2) * ref_lmark_fea_final.view(b, 1, c2, h2*w2)).sum(3)
 
-        print (conv_prod.shape)
         conv_prod = nn.AdaptiveAvgPool2d((32, 32))(conv_prod)
 
         e_hat = conv_prod.view(b ,  -1 )
-        print (e_hat.shape)
 
 
         # references = references.reshape( dims[0] * dims[1], dims[2], dims[3], dims[4]  )
@@ -974,23 +974,23 @@ class GlobalGenerator5(nn.Module):  # few shot, without beta
         face_foreground = (1 - alpha) * ani_image + alpha * I_hat
         return [face_foreground, I_hat, alpha, alpha, I_hat ]
 
-model = GlobalGenerator5()
-a = torch.zeros((2,1,1,256,256))
-b = torch.zeros((2,8,1,256,256))
+# model = GlobalGenerator5()
+# a = torch.zeros((2,1,1,256,256))
+# b = torch.zeros((2,8,1,256,256))
 
-c = torch.zeros((2, 1,3,256,256))
+# c = torch.zeros((2, 1,3,256,256))
 
-d = torch.zeros((2,8,3,256,256))
+# d = torch.zeros((2,8,3,256,256))
 
-e = torch.zeros((2,1,3,256,256))
+# e = torch.zeros((2,1,3,256,256))
 
-a = Variable(a)
-b = Variable(b)
-c = Variable(c)
-d = Variable(d)
-e = Variable(e)
-print (a.shape)
-gg = model(b, d, a, e, a, c)
+# a = Variable(a)
+# b = Variable(b)
+# c = Variable(c)
+# d = Variable(d)
+# e = Variable(e)
+# print (a.shape)
+# gg = model(b, d, a, e, a, c)
 
 class MultiscaleDiscriminator(nn.Module):
     def __init__(self, input_nc, ndf=64,   n_layers=3, norm_layer=nn.BatchNorm2d, 
