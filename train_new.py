@@ -35,7 +35,7 @@ print('#training images = %d' % dataset_size)
 
 model = create_model(opt)
 visualizer = Visualizer(opt)
-
+print ('=================')
 total_steps = (start_epoch-1) * dataset_size + epoch_iter
 optimizer_G, optimizer_D = model.module.optimizer_G, model.module.optimizer_D
 display_delta = total_steps % opt.display_freq
@@ -47,7 +47,10 @@ with torch.autograd.set_detect_anomaly(False):
         epoch_start_time = time.time()
         if epoch != start_epoch:
             epoch_iter = epoch_iter % dataset_size
+        # print ('++++')
+
         for i, data in enumerate(dataset, start=epoch_iter):
+            # print ('++---++') 
             iter_start_time = time.time()
             total_steps += opt.batchSize
             epoch_iter += opt.batchSize
@@ -61,7 +64,7 @@ with torch.autograd.set_detect_anomaly(False):
             #      mis_img=  Variable(data['mis_img']), infer=save_fake)  
             # # reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img
             losses, generated = model(reference_img =Variable(data['ref_image']),reference_lmark= Variable(data['ref_label']), target_lmark  =  Variable(data['tgt_label']) ,  \
-            real_image=  Variable(data['tgt_image']), warping_ref_img =  Variable(data['warping_ref']),  warping_ref_lmark =  Variable(data['warping_ref_lmark']) ,  ani_img =  Variable(data['ani_image']) , infer=save_fake)
+            real_image=  Variable(data['tgt_image']), warping_ref_img =  Variable(data['warping_ref']),  warping_ref_lmark =  Variable(data['warping_ref_lmark']) ,  ani_img =  Variable(data['ani_image']) ,  ani_lmark =  Variable(data['ani_lmark']), infer=save_fake)
             # sum per device losses
             # sum per device losses
             losses = [ torch.mean(x) if not isinstance(x, int) else x for x in losses ]
@@ -106,10 +109,11 @@ with torch.autograd.set_detect_anomaly(False):
                     
                 tmp.extend([('target_lmark', util.tensor2im(data['tgt_label'][0, 0])),
                                     ('synthesized_image', util.tensor2im(generated[0].data[0])),
-                                    ('att', util.tensor2im(generated[1].data[0])),
-                                    ('raw', util.tensor2im(generated[2].data[0])),
+                                    ('raw', util.tensor2im(generated[1].data[0])),
+                                    ('att', util.tensor2im(generated[2].data[0])),
                                     ('real_image', util.tensor2im(data['tgt_image'][0, 0])),
-                                    ('ani_image', util.tensor2im(data['ani_image'][0, 0]))])
+                                    ('ani_image', util.tensor2im(data['ani_image'][0, 0])),
+                                     ('ani_lmark', util.tensor2im(data['ani_lmark'][0, 0]))])
                     
                
                 visuals =  OrderedDict(tmp)  

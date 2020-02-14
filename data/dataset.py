@@ -20,7 +20,7 @@ from io import BytesIO
 from PIL import Image
 import sys
 # sys.path.insert(1, '../utils')
-# from .. import utils
+# import utils
 from utils import util
 from utils import face_utils
 from torch.utils.data import DataLoader
@@ -29,7 +29,6 @@ from scipy.io import wavfile
 from data.base_dataset import BaseDataset, get_transform
 from data.keypoint2img import interpPoints, drawEdge
 from PIL import Image
-
 
 
 class VoxLmark2rgbDataset(BaseDataset):
@@ -133,16 +132,20 @@ class VoxLmark2rgbDataset(BaseDataset):
             paths = self.data[index]
             video_path = os.path.join(self.root, self.video_bag, paths[0], paths[1], paths[2]+"_aligned.mp4")
             lmark_path = os.path.join(self.root, self.video_bag, paths[0], paths[1], paths[2]+"_aligned.npy")
+            front_path = os.path.join(self.root, self.video_bag, paths[0], paths[1], paths[2]+"_aligned_front.npy")
             ani_path = os.path.join(self.root, self.video_bag, paths[0], paths[1], paths[2]+"_aligned_ani.mp4")
             rt_path = os.path.join(self.root, self.video_bag, paths[0], paths[1], paths[2]+"_aligned_rt.npy")
+
         ani_id = paths[3]
+        rt = np.load(rt_path)
         # read in data
         lmarks = np.load(lmark_path)#[:,:,:-1]
+        front = np.load(front_path)
         real_video = self.read_videos(video_path)
         v_length = len(real_video)
         ani_video = self.read_videos(ani_path)
         # print ('+++++++++', len(ani_video))
-        rt = np.load(rt_path)[:,:3]
+        
         # sample index of frames for embedding network
         input_indexs, target_id = self.get_image_index(self.n_frames_total, v_length)
 
@@ -152,19 +155,19 @@ class VoxLmark2rgbDataset(BaseDataset):
         # get reference
         ref_images, ref_lmarks = self.prepare_datas(real_video, lmarks, input_indexs)
         
-
-        # get target
-        [tgt_images , ani_images], [tgt_lmarks,_] = self.prepare_datas([real_video, ani_video], lmarks, target_id)
-        
-        # get animation
-        # ani_images, _ = self.prepare_datas(ani_video, lmarks, target_id)
-        
         # get rotated ani lmark
         ani_lmark = [] 
         for gg in target_id:
-            ani_lmark.append(utils.reverse_rt(lmarks[ani_id], rt[gg]))
+            ani_lmark.append(util.reverse_rt(front[int(ani_id)], rt[gg]))
+        # get target     
+        tgt_images, tgt_lmarks , ani_images,ani_lmarks = self.prepare_datas_ani(real_video,  lmarks, target_id,  ani_video, ani_lmark  )
+        # get animation
+        # ani_images, _ = self.prepare_datas(ani_video, lmarks, target_id)
+        
+        
 
         # get warping reference
+        rt = rt[:,:3]
         reference_rt_diffs = []
         target_rt = rt[target_id]
         for t in input_indexs:
@@ -174,7 +177,7 @@ class VoxLmark2rgbDataset(BaseDataset):
 
         warping_refs, warping_ref_lmarks = self.prepare_datas(real_video, lmarks, [similar_id])
 
-        target_img_path  = [os.path.join(video_path[:-4] , '%05d.png'%t_id) for t_id in target_id]
+        target_img_path  = os.path.join(video_path[:-4] , '%05d.png'%target_id[0])
 
         ref_images = torch.cat([ref_img.unsqueeze(0) for ref_img in ref_images], 0)
         ref_lmarks = torch.cat([ref_lmark.unsqueeze(0) for ref_lmark in ref_lmarks], 0)
@@ -183,6 +186,7 @@ class VoxLmark2rgbDataset(BaseDataset):
         warping_refs = torch.cat([warping_ref.unsqueeze(0) for warping_ref in warping_refs], 0)
         warping_ref_lmarks = torch.cat([warping_ref_lmark.unsqueeze(0) for warping_ref_lmark in warping_ref_lmarks], 0)
         ani_images = torch.cat([ani_image.unsqueeze(0) for ani_image in ani_images], 0)
+        ani_lmarks = torch.cat([ani_lmark.unsqueeze(0) for ani_lmark in ani_lmarks], 0)
 
 
         # print (tgt_lmarks.shape)   # 1, 1 , 256,256
@@ -192,8 +196,11 @@ class VoxLmark2rgbDataset(BaseDataset):
         # print (warping_refs.shape) # 1, 3 , 256,256
         # print (warping_ref_lmarks.shape)   # 1, 1 , 256,256
         # print (ani_images.shape)  # 1, 3, 256,256
+        # print (ani_lmarks.shape)  # 1, 3, 256,256
+
         input_dic = {'v_id' : target_img_path, 'tgt_label': tgt_lmarks, 'ref_image':ref_images , 'ref_label': ref_lmarks, \
-        'tgt_image': tgt_images,  'target_id': target_id , 'warping_ref' : warping_refs , 'warping_ref_lmark' : warping_ref_lmarks , 'ani_image' : ani_images }
+        'tgt_image': tgt_images,  'target_id': target_id , 'warping_ref' : warping_refs , 'warping_ref_lmark' : warping_ref_lmarks , 'ani_image' : ani_images , 'ani_lmark' : ani_lmarks }
+
 
         return input_dic
 
@@ -291,7 +298,7 @@ class VoxLmark2rgbDataset(BaseDataset):
                         np.random.uniform(1 - scale_max, 1 + scale_max)]    
 
     # get image and landmarks
-    def prepare_datas(self, imagess, lmarks, choice_ids):
+    def prepare_datas(self, images, lmarks, choice_ids):
         # get cropped coordinates
         crop_lmark = lmarks[choice_ids[0]]
         crop_coords = self.get_crop_coords(crop_lmark)
@@ -299,33 +306,57 @@ class VoxLmark2rgbDataset(BaseDataset):
 
         # get images and landmarks
         # print (type(imagess[0]))
-        if type(imagess[0]) == list:
-            tmp_lmarks = []
-            tmp_images = []
-            for images in imagess:
-                result_lmarks = []
-                result_images = []
-                for choice in choice_ids:
-                    image, crop_size = self.get_image(images[choice], self.transform, self.output_shape, crop_coords)
-                    lmark = self.get_keypoints(lmarks[choice], self.transform_L, crop_size, crop_coords, bw)
+    
+        result_lmarks = []
+        result_images = []
+        for choice in choice_ids:
+            image, crop_size = self.get_image(images[choice], self.transform, self.output_shape, crop_coords)
+            lmark = self.get_keypoints(lmarks[choice], self.transform_L, crop_size, crop_coords, bw)
 
-                    result_lmarks.append(lmark)
-                    result_images.append(image)
-                tmp_images.append(result_images)
-                tmp_lmarks.append(result_lmarks)
-            return tmp_images, tmp_lmarks
-        else:
-            images = imagess
-            result_lmarks = []
-            result_images = []
-            for choice in choice_ids:
-                image, crop_size = self.get_image(images[choice], self.transform, self.output_shape, crop_coords)
-                lmark = self.get_keypoints(lmarks[choice], self.transform_L, crop_size, crop_coords, bw)
-
-                result_lmarks.append(lmark)
-                result_images.append(image)
-            return result_images, result_lmarks
+            result_lmarks.append(lmark)
+            result_images.append(image)
+        return result_images, result_lmarks
     # get crop standard from one landmark
+
+    # get image and landmarks
+    def prepare_datas_ani(self, images, lmarks, choice_ids, ani_images, ani_lmarks):
+        # get cropped coordinates
+        
+        crop_lmark = lmarks[choice_ids[0]]
+        crop_coords = self.get_crop_coords(crop_lmark)
+        bw = max(1, (crop_coords[1]-crop_coords[0]) // 256)
+
+        # get images and landmarks
+        # print (type(imagess[0]))
+    
+        result_lmarks = []
+        result_images = []
+        res_ani_lmarks = []
+        res_ani_images = []
+        for  i in range(len(choice_ids)):
+            choice = choice_ids[i]
+            # print (choice)
+            # print (i)
+            image, crop_size = self.get_image(images[choice], self.transform, self.output_shape, crop_coords)
+            # print  ('ppppp')
+            # print (lmarks[choice].shape)
+            # print (type(lmarks[choice]))
+            lmark = self.get_keypoints(lmarks[choice], self.transform_L, crop_size, crop_coords, bw)
+            # print  ('pppppppppyyy')
+            ani_img, crop_size = self.get_image(ani_images[choice], self.transform, self.output_shape, crop_coords)
+            # print  ('pppppppxx')
+            # print (ani_lmarks[i].shape)
+            # print  (type(ani_lmarks[i]))
+            ani_lmark = self.get_keypoints(np.asarray( ani_lmarks[i]), self.transform_L, crop_size, crop_coords, bw)
+            # print  ('ppppppppp')
+            result_lmarks.append(lmark)
+            result_images.append(image)
+            res_ani_lmarks.append(ani_lmark)
+            res_ani_images.append(ani_img)
+        # print ('hahhh')
+        return result_images, result_lmarks, res_ani_images , res_ani_lmarks
+
+
     def get_crop_coords(self, keypoints, crop_size=None):           
         min_y, max_y = int(keypoints[:,1].min()), int(keypoints[:,1].max())
         min_x, max_x = int(keypoints[:,0].min()), int(keypoints[:,0].max())

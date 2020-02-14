@@ -260,7 +260,7 @@ class GlobalGenerator1(nn.Module):
     def __init__(self,input_nc, output_nc, ngf = 64, n_downsampling=3, n_blocks=9, norm_layer=nn.BatchNorm2d,  pad_type='reflect'):
         super(GlobalGenerator1, self).__init__()        
         activation = nn.ReLU(True)     
-        model = [nn.ReflectionPad2d(3), nn.Conv2d(input_nc, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation ]
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(5, ngf, kernel_size=7, padding=0), norm_layer(ngf), activation ]
         ### downsample
         model += [nn.Conv2d(ngf , ngf  * 2, kernel_size=3, stride=2, padding=1),   # 128, 128, 128 
                       norm_layer(ngf  * 2), activation]
@@ -709,8 +709,6 @@ class GlobalGenerator4(nn.Module):
         return self.decoder(feature)
 
 
-
-
 class GlobalGenerator5(nn.Module): 
     def __init__(self,input_nc = 1, output_nc =1 , ngf = 64, n_downsampling=3, n_blocks=9, norm_layer=nn.BatchNorm2d,  pad_type='reflect'):
         super(GlobalGenerator5, self).__init__()        
@@ -749,7 +747,7 @@ class GlobalGenerator5(nn.Module):
         self.image_encoder = nn.Sequential(*model)
 
 
-        model = [nn.ReflectionPad2d(3), nn.Conv2d(4 , 32, kernel_size=7, padding=0), nn.InstanceNorm2d(32), nn.ReLU(True) ]
+        model = [nn.ReflectionPad2d(3), nn.Conv2d(5 , 32, kernel_size=7, padding=0), nn.InstanceNorm2d(32), nn.ReLU(True) ]
         ### downsample
         model += [Conv2dBlock(32, 32, 4, 2, 1,           # 32, 128, 128 
                                        norm= 'in',
@@ -911,7 +909,7 @@ class GlobalGenerator5(nn.Module):
                                    pad_type=pad_type)
     
         # self.embedder = Embedder()
-        self.mlp = MLP(1024,
+        self.mlp = MLP(4096,
                        get_num_adain_params(self.decoder),
                        256,
                        6,
@@ -920,17 +918,17 @@ class GlobalGenerator5(nn.Module):
         
         
 
-    def forward(self, ref_lmark, ref_img, target_lmark, warpref_img, warpref_lmark, ani_image):
+    def forward(self, ref_lmark, ref_img, target_lmark, warpref_img, warpref_lmark, ani_image, ani_lmark):
         (b,n,c,h,w) = ref_img.shape
         ref_img = ref_img.view( b * n , c, h, w)
         ref_img_fea = self.image_encoder(ref_img) # [b * n , 256, 4, 4])
         
         ref_lmark = ref_lmark.view(b * n , 1, h, w)
 
-        ref_lmark_fea = self.lmark_encoder(ref_lmark)   # [b * n , 256, 4, 4])
+        # ref_lmark_fea = self.lmark_encoder(ref_lmark)   # [b * n , 256, 4, 4])
         
         (_,c2,h2,w2 ) = ref_img_fea.shape
-        ref_lmark_fea = ref_lmark_fea.view(b, n, c2 , -1 )
+        # ref_lmark_fea = ref_lmark_fea.view(b, n, c2 , -1 )
         ref_img_fea = ref_img_fea.view(b, n, c2 , -1 )
         target_lmark = target_lmark.view(b , 1, h, w)
         
@@ -942,23 +940,27 @@ class GlobalGenerator5(nn.Module):
         ref_img_fea_final = torch.sum(ref_img_fea * attention.unsqueeze(2).expand_as(ref_img_fea), dim=1)
         ref_img_fea_final = ref_img_fea_final.view(b, c2, h2, w2 )   #b, 256, 4, 4
 
-        ref_lmark_fea_final = torch.sum(ref_lmark_fea * attention.unsqueeze(2).expand_as(ref_lmark_fea), dim=1)
-        ref_lmark_fea_final = ref_lmark_fea_final.view(b, c2, h2, w2 )   #b, 256, 4, 4
-        ref_lmark_fea = nn.Softmax(dim=1)(ref_lmark_fea) 
+        # ref_lmark_fea_final = torch.sum(ref_lmark_fea * attention.unsqueeze(2).expand_as(ref_lmark_fea), dim=1)
+        # ref_lmark_fea_final = ref_lmark_fea_final.view(b, c2, h2, w2 )   #b, 256, 4, 4
+
+        
+        # ref_lmark_fea = nn.Softmax(dim=1)(ref_lmark_fea) 
 
            
-        conv_prod = (ref_img_fea_final.view(b, c2, 1, h2*w2) * ref_lmark_fea_final.view(b, 1, c2, h2*w2)).sum(3)
+        # conv_prod = (ref_img_fea_final.view(b, c2, 1, h2*w2) * ref_lmark_fea_final.view(b, 1, c2, h2*w2)).sum(3)
 
-        conv_prod = nn.AdaptiveAvgPool2d((32, 32))(conv_prod)
+        # conv_prod = nn.AdaptiveAvgPool2d((32, 32))(conv_prod)
 
-        e_hat = conv_prod.view(b ,  -1 )
+        e_hat = ref_img_fea_final.view(b ,  -1 )
 
 
         # references = references.reshape( dims[0] * dims[1], dims[2], dims[3], dims[4]  )
         # e_vectors = self.embedder(references).reshape(dims[0] , dims[1], -1)        
         # e_hat = e_vectors.mean(dim = 1)
         ani_image = ani_image.view(b , 3, h, w)
-        g_in = torch.cat([ani_image, target_lmark], 1)
+
+        ani_lmark = ani_lmark.view(b , 1, h, w)
+        g_in = torch.cat([ani_image, ani_lmark, target_lmark], 1)
         feature = self.g_encoder( g_in)
         # # Decode
         adain_params = self.mlp(e_hat)

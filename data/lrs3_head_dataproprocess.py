@@ -96,7 +96,8 @@ def landmark_extractor():
 
 def RT_compute():
     consider_key = [1,2,3,4,5,11,12,13,14,15,27,28,29,30,31,32,33,34,35,39,42,36,45,17,21,22,26]
-    train_list = sorted(os.listdir('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain'))
+    root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain'
+    train_list = sorted(os.listdir(root))
     batch_length = int( len(train_list))
     source = np.zeros((len(consider_key),3))
     ff = np.load('../basics/standard.npy')
@@ -105,7 +106,7 @@ def RT_compute():
     source = np.mat(source)
     for i in tqdm(range(batch_length)):
         p_id = train_list[i]
-        person_path = os.path.join('/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain', p_id)
+        person_path = os.path.join(root, p_id)
         videos = sorted(os.listdir(person_path))
         for vid in videos:
             if vid[-12:] !=  'original.npy':
@@ -207,6 +208,6 @@ def pca_lmark_lrs():
     np.save('../basics/mean_grid_front.npy', pca.mean_)
     np.save('../basics/U_grid_front.npy',  pca.components_)
 
-# RT_compute()
-landmark_extractor()
+RT_compute()
+# landmark_extractor()
 # extract_audio()

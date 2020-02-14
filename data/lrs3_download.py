@@ -115,9 +115,9 @@ def download_pretrain(config, yt_baseurl):
 def download_trainval(config, yt_baseurl):
     root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4'
     # root = '/mnt/Data02/lchen63/lrs/'
-    train_list = sorted(os.listdir(   os.path.join(root, 'trainval') ))
+    train_list = sorted(os.listdir(   os.path.join(root, 'test') ))
     print (len(train_list))
-    batch_length = int(0.1 * len(train_list))
+    batch_length = int(0.5 * len(train_list))
     for i in range(batch_length * (config.batch_id -1), batch_length * (config.batch_id)):
         print ('==============', i)
         if os.path.exists('./tmp%05d'%config.batch_id):
@@ -126,7 +126,7 @@ def download_trainval(config, yt_baseurl):
         p_id = train_list[i]
         # p_id = '1G8dQQrlbbA'
         # extract audio from video 
-        person_path = os.path.join(root, 'trainval', p_id)
+        person_path = os.path.join(root, 'test', p_id)
         chunk_txt = sorted(os.listdir(person_path))
         if len(chunk_txt) == 0:
             continue

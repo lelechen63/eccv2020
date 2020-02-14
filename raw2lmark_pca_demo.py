@@ -36,11 +36,11 @@ def parse_args():
 
     parser.add_argument("--model_name",
                         type=str,
-                        default="./checkpoints/atnet_raw_pca_3d/atnet_lstm_28.pth")
+                        default="./checkpoints/atnet_raw_pca_with_exmaple_select/atnet_lstm_23.pth")
     parser.add_argument( "--sample_dir",
                     type=str,
                     default="./results")
-    parser.add_argument('-i','--in_file', type=str, default='./audio/obama.wav')
+    parser.add_argument('-i','--in_file', type=str, default='./audio/f_f.wav')
     parser.add_argument('-p','--person', type=str, default='./image/musk1.jpg')
     parser.add_argument('--device_ids', type=str, default='0')
     parser.add_argument('--num_thread', type=int, default=1)   
@@ -180,12 +180,13 @@ def get_demo_batch(audio_path , lmark):  #lmark size should be 136
         print ( '+++', openrate(norm_lmark))
 
     norm_lmark = norm_lmark.reshape(-1)
+
     diff =  lmark - norm_lmark
 
     command = 'ffmpeg -i ' + audio_path +' -ar 50000 -y ./tmp.wav'
     os.system(command)
     if config.deeps:
-        dp+ = wavfile.read( './tmp.wav')
+        dp += wavfile.read( './tmp.wav')
         # speech = scipy.signal.resample(speech, 50000)
         # fs = 50000
         print  (fs)
@@ -211,10 +212,11 @@ def get_demo_batch(audio_path , lmark):  #lmark size should be 136
         chunks = torch.stack(chunks, 0)
         print (chunks.shape, example_landmark.shape)
     else:
+
         fs, speech = wavfile.read( './tmp.wav')
         # speech = scipy.signal.resample(speech, 50000)
         # fs = 50000
-        print  (fs)
+        print  ('============================================================')
         # speech, fs = librosa.load(audio_path, sr=50000)
         chunck_size =int(fs * 0.04 )
         length = int(speech.shape[0] / chunck_size)
@@ -274,16 +276,26 @@ def test():
     fake_lmark, _ = generator(example_landmark, chunks)
     fake_lmark = fake_lmark.data.cpu().numpy()
     fake_lmark = np.dot(fake_lmark,component) + mean
+
+    example_landmark = example_landmark.data.cpu().numpy()
+    example_landmark = np.dot(example_landmark,component) + mean
     print( fake_lmark.shape)
     if config.threeD:
         fake_lmark = fake_lmark.reshape(fake_lmark.shape[0]  , 68 ,3)
     else:
         fake_lmark = fake_lmark.reshape(fake_lmark.shape[0], 68 , 2)
+
+        example_landmark = example_landmark.reshape(example_landmark.shape[0], 68 , 2)
             
 
     fake_lmark = fake_lmark[:,:,:2].reshape(fake_lmark.shape[0],   68 * 2)
     sound, _ = librosa.load(config.in_file, sr=44100)
     face_utils.write_video_wpts_wsound(fake_lmark, sound, 44100, config.sample_dir, 'fake_demo', [0.0,256.0], [0.0,256.0])
+
+
+    example_landmark = example_landmark[:,:,:2].reshape(example_landmark.shape[0],   68 * 2)
+    sound, _ = librosa.load(config.in_file, sr=44100)
+    face_utils.write_video_wpts_wsound(example_landmark, sound, 44100, config.sample_dir, 'ex_demo', [0.0,256.0], [0.0,256.0])
 
 
         

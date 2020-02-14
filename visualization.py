@@ -100,8 +100,9 @@ def get_face_image(keypoints):
 def vis():
     # v_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/00j9bKdiOjk/00001_crop.mp4'
     # lmark_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/00j9bKdiOjk/00001_original.npy'
-    lmark_path = '/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/lZf1RB6l5Gs/00152_aligned.npy'
-    norm_lmark = np.load('./basics/standard.npy')
+    lmark_path = '/home/cxu-serve/p1/common/grid/align/s1/pgbk6n_front.npy'
+    # norm_lmark = np.load('./basics/s1_pgbk6n_01.npy')
+    norm_lmark = np.load(lmark_path)[1]
     # print (norm_lmark.shape)
     xLim=(0.0, 256.0)
     yLim=(0.0, 256.0)
@@ -110,7 +111,7 @@ def vis():
     norm_lmark = mounth_open2close(norm_lmark)
     print (norm_lmark.shape)
     np.save('./basics/s1_pgbk6n_01.npy', norm_lmark)
-    lmark = np.load(lmark_path)#[:,:,:2]
+    lmark = np.load(lmark_path)[:,:,:2]
     # audio_path = lmark_path.replace('align', 'audio').replace('_front.npy', '.wav')
     # sound, _ = librosa.load(audio_path, sr=44100)
     # face_utils.write_video_wpts_wsound(lmark, sound, 44100, './', 'front', [0.0,256.0], [0.0,256.0])
@@ -130,14 +131,14 @@ def vis():
     # openrates = np.asarray(openrates)
     # min_index = np.argmin(np.absolute(openrates))
         
-    # diff = lmark[min_index] - norm_lmark
-
-    # lmark = lmark - diff
+    diff = np.load( '/home/cxu-serve/p1/common/grid/align/s1/bbal9a_00063_diff.npy')
+    lmark = lmark - diff
     # face_utils.write_video_wpts_wsound(lmark, sound, 44100, './', 'dif', [0.0,256.0], [0.0,256.0])
 
-    # mean =  np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/mean_grid_front.npy')
-    # component = np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/U_grid_front.npy')
-    # data = np.dot(lmark.reshape(lmark.shape[0], -1) - mean, component.T)
+    mean =  np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/mean_grid_front.npy')
+    component = np.load('/u/lchen63/Project/face_tracking_detection/eccv2020/basics/U_grid_front.npy')
+    data = np.dot(lmark.reshape(lmark.shape[0], -1) - mean, component.T)
+    print (data.shape)
     # fake_lmark = np.dot(data,component) + mean
     # fake_lmark = fake_lmark.reshape(75, 68, 2)
     # face_utils.write_video_wpts_wsound(fake_lmark, sound, 44100, './', 'fake', [0.0,256.0], [0.0,256.0])
@@ -145,7 +146,7 @@ def vis():
     # lmark2 = np.load(gg_path)
     # lmark2 = lmark2.reshape( 68 , 2)
     # lmark_path ='/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/0MMSpsvqiG8/00004_original.npy'
-    v_path = '/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/lZf1RB6l5Gs/00152_aligned.mp4'
+    v_path = '/home/cxu-serve/p1/common/grid/align/s1/bbal9a_crop.mp4'
     # v_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/0MMSpsvqiG8/00004_crop.mp4'
     cap  =  cv2.VideoCapture(v_path)
     
@@ -157,13 +158,13 @@ def vis():
         #     break
         print  (count)
         if ret == True:
-            if count < 127 or count > 130:
-                count += 1
-                continue
+            # if count < 127 or count > 130:
+            #     count += 1
+            #     continue
             print (count)
             frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
             preds =  lmark[count]
-            get_face_image(preds)
+            # get_face_image(preds)
             
             fig = plt.figure(figsize=plt.figaspect(.5))
             ax = fig.add_subplot(1, 3, 1)
@@ -177,7 +178,8 @@ def vis():
             ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
             ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
             ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='w',lw=1) 
-            preds = gg
+            preds  = np.dot(data[count],component) + mean
+            preds = preds.reshape(68,2)
             ax.plot(preds[0:17,0],preds[0:17,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
             ax.plot(preds[17:22,0],preds[17:22,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
             ax.plot(preds[22:27,0],preds[22:27,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
@@ -190,18 +192,18 @@ def vis():
             ax.axis('off') 
             count += 1
             
-            # preds = mounth_open2close(preds)
+            preds = norm_lmark
             ax = fig.add_subplot(1, 3, 2)
             ax.imshow(frame)
-            # ax.plot(preds[0:17,0],preds[0:17,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-            # ax.plot(preds[17:22,0],preds[17:22,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-            # ax.plot(preds[22:27,0],preds[22:27,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-            # ax.plot(preds[27:31,0],preds[27:31,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-            # ax.plot(preds[31:36,0],preds[31:36,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-            # ax.plot(preds[36:42,0],preds[36:42,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-            # ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-            # ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-            # ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='g',lw=1) 
+            ax.plot(preds[0:17,0],preds[0:17,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[17:22,0],preds[17:22,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[22:27,0],preds[22:27,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[27:31,0],preds[27:31,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[31:36,0],preds[31:36,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[36:42,0],preds[36:42,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+            ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='g',lw=1) 
             ax.axis('off')
 
             # ax = fig.add_subplot(1, 3, 3)

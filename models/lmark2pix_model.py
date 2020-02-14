@@ -76,7 +76,7 @@ class Lmark2PixHDModel(BaseModel):
             params = list(self.netD.parameters())    
             self.optimizer_D = torch.optim.Adam(params, lr=opt.lr, betas=(opt.beta1, 0.999))
 
-    def encode_input(self, reference_img = None, reference_lmark = None, target_lmark = None, real_image = None, warping_ref_img = None, warping_ref_lmark = None, ani_img = None,  infer=False):             
+    def encode_input(self, reference_img = None, reference_lmark = None, target_lmark = None, real_image = None, warping_ref_img = None, warping_ref_lmark = None, ani_img= None, ani_lmark = None,  infer=False):             
         if target_lmark is not None:
             target_lmark = Variable(target_lmark.data.cuda(non_blocking=True), volatile=infer)      
 
@@ -98,8 +98,10 @@ class Lmark2PixHDModel(BaseModel):
         
         if ani_img is not None:
             ani_img = Variable(ani_img.data.cuda(non_blocking=True))
+        if ani_lmark is not None:
+            ani_lmark = Variable(ani_lmark.data.cuda(non_blocking=True))
 
-        return reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img
+        return reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img, ani_lmark
 
     def discriminate(self, target_lmark, test_image, use_pool=False):
         # print  (target_lmark.squeeze(1).shape) 
@@ -112,12 +114,12 @@ class Lmark2PixHDModel(BaseModel):
         else:
             return self.netD.forward(input_concat)
 
-    def forward(self, reference_img, reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img,  infer=False):
+    def forward(self, reference_img, reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img, ani_lmark,  infer=False):
         # Encode Inputs
-        reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img = self.encode_input(reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img, infer)  
+        reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img, ani_lmark = self.encode_input(reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img, ani_lmark, infer)  
 
         # Fake Generation        
-        [fake_image, I_hat, alpha ] = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img )
+        [fake_image, I_hat, alpha ] = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img, ani_lmark )
 
         # Fake Detection and Loss
         # print ('++-----++') 
@@ -157,17 +159,17 @@ class Lmark2PixHDModel(BaseModel):
         # Only return the fake_B image if necessary to save BW
         return [ self.loss_filter( loss_G_GAN, loss_G_GAN_Feat, loss_G_VGG, loss_D_real, loss_D_fake ), None if not infer else [fake_image, I_hat, alpha ] ]
 
-    def inference(self, reference_img, reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img):
+    def inference(self, reference_img, reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img, ani_lmark):
         # Encode Inputs        
         real_image = Variable(real_image) if real_image is not None else None
-        reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img= self.encode_input(reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img, infer=True) 
+        reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img, ani_lmark= self.encode_input(reference_img , reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img,ani_lmark,  infer=True) 
         # Fake Generation
            
         if torch.__version__.startswith('0.4'):
             with torch.no_grad():
-                [fake_image, I_hat, alpha]  = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img)
+                [fake_image, I_hat, alpha]  = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img, ani_lmark)
         else:
-            [fake_image, I_hat, alpha ]  = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img)
+            [fake_image, I_hat, alpha ]  = self.netG.forward(reference_lmark , reference_img, target_lmark, warping_ref_img, warping_ref_lmark ,ani_img, ani_lmark)
         return fake_image
 
 
@@ -197,5 +199,5 @@ class Lmark2PixHDModel(BaseModel):
 
 class InferenceModel(Lmark2PixHDModel):
     def forward(self, inp):
-        reference_img, reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img= inp
-        return self.inference(reference_img, reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img)
+        reference_img, reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img, ani_lmark= inp
+        return self.inference(reference_img, reference_lmark, target_lmark , real_image, warping_ref_img, warping_ref_lmark , ani_img, ani_lmark)
