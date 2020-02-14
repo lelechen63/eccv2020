@@ -124,6 +124,51 @@ def prepare_data_vox2():
         pkl.dump(dataset, handle, protocol=pkl.HIGHEST_PROTOCOL)
   
 
+def vox_check():
+    root_path  = '/home/cxu-serve/p1/common/voxceleb2'
+    _file = open(os.path.join(root_path,  'pickle','dev_lmark2img.pkl'), "rb")
+    testset = pkl.load(_file)
+    _file.close()
+
+    # _file = open(os.path.join(root_path,  'pickle','dev_audio2lmark_grid.pkl'), "rb")
+    # trainset = pkl.load(_file)
+    # _file.close()
+    datalist = testset # + trainset
+    # train_list  = []
+    # test_list  = []
+    for index in range(len(datalist)):
+        print (datalist[index])
+        v_path = os.path.join(root_path , 'unzip/dev_video' , datalist[index][0] , datalist[index][1])
+        ffs = os.listdir(v_path )
+        for d in ffs:
+            if d[:5] == datalist[index][2] and  d[-3:]=='png':
+                iid = d.split('_')[1][:5]
+                print(iid)
+                break
+        datalist[index].append(iid)
+        # break
+        # lmark_path = os.path.join(root_path ,  'align' , datalist[index][0] , datalist[index][1] + '_front.npy') 
+        # lmark = np.load( lmark_path )
+        # start_openrate = openrate(lmark[0])
+        # print (lmark_path)
+        # if start_openrate < 1.1:
+        #     datalist[index].append(True)    
+        #     print ('++++++++++++++++' , start_openrate )
+        # else:
+        #     datalist[index].append(False)
+        #     print ('------', start_openrate )
+        # end_openrate = openrate(lmark[-1])
+
+        # if end_openrate < 1.1:
+        #     print ('++-------++' , end_openrate )
+        #     datalist[index].append(True)
+        # else:
+        #     print ('++-========++' , end_openrate )
+        #     datalist[index].append(False)
+    with open(os.path.join(root_path, 'pickle','dev_lmark2img.pkl'), 'wb') as handle:
+        pkl.dump(datalist, handle, protocol=pkl.HIGHEST_PROTOCOL)
+vox_check()
+
 def unzip_video():
     path = '/home/cxu-serve/p1/common/grid/zip'
     # zipfiles = os.listdir(path)
@@ -288,9 +333,7 @@ def grid_check():
 
 
     
-# prepare_standard2()
-# grid_check()
-prepare_data_vox2()
+# prep_data_vox2()
 # prepare_data_grid() 
 # prepare_data_faceforencs_oppo()
 # prepare_data_lrs()

@@ -6,13 +6,13 @@ import glob, os
 import face_alignment
 import numpy as np
 import cv2
-from face_tracker import _crop_video
+from .face_tracker import _crop_video
 from utils import face_utils
 from scipy.spatial.transform import Rotation 
 from scipy.io import wavfile
 import torch
-from dp2model import load_model
-from dp2dataloader import SpectrogramParser
+from .dp2model import load_model
+from .dp2dataloader import SpectrogramParser
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -308,7 +308,7 @@ def pca_3dlmark_grid():  ## this time we will use standard as tempolate to be co
         pkl.dump(datalist, handle, protocol=pkl.HIGHEST_PROTOCOL)
 
 # pca_lmark_grid()
-deepspeech_grid()
+# deepspeech_grid()
 # pca_3dlmark_grid()
 # data = np.load('/home/cxu-serve/p1/common/grid/align/s1/lwae8n_front.npy')[:,:,:2]
 # data = data.reshape(data.shape[0], 136)

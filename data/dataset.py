@@ -135,6 +135,7 @@ class VoxLmark2rgbDataset(BaseDataset):
             lmark_path = os.path.join(self.root, self.video_bag, paths[0], paths[1], paths[2]+"_aligned.npy")
             ani_path = os.path.join(self.root, self.video_bag, paths[0], paths[1], paths[2]+"_aligned_ani.mp4")
             rt_path = os.path.join(self.root, self.video_bag, paths[0], paths[1], paths[2]+"_aligned_rt.npy")
+        ani_id = paths[3]
         # read in data
         lmarks = np.load(lmark_path)#[:,:,:-1]
         real_video = self.read_videos(video_path)
@@ -154,10 +155,15 @@ class VoxLmark2rgbDataset(BaseDataset):
 
         # get target
         [tgt_images , ani_images], [tgt_lmarks,_] = self.prepare_datas([real_video, ani_video], lmarks, target_id)
-
+        
         # get animation
         # ani_images, _ = self.prepare_datas(ani_video, lmarks, target_id)
         
+        # get rotated ani lmark
+        ani_lmark = [] 
+        for gg in target_id:
+            ani_lmark.append(utils.reverse_rt(lmarks[ani_id], rt[gg]))
+
         # get warping reference
         reference_rt_diffs = []
         target_rt = rt[target_id]
