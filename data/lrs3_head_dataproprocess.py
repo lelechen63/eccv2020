@@ -7,7 +7,7 @@ import face_alignment
 import numpy as np
 import cv2
 from scipy.spatial.transform import Rotation 
-from utils import face_utils
+from utils import face_utils, util
 def parse_args():
     parser = argparse.ArgumentParser()
 
@@ -54,7 +54,7 @@ def extract_audio():
 
 def landmark_extractor():
     fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda:0')
-    rootpath ='/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/trainval' 
+    rootpath ='/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/test' 
     train_list = sorted(os.listdir(rootpath))
     batch_length = int( 0.1 *  len(train_list))
     for i in tqdm(range(batch_length * (config.batch_id -1), batch_length * (config.batch_id))):
@@ -96,7 +96,7 @@ def landmark_extractor():
 
 def RT_compute():
     consider_key = [1,2,3,4,5,11,12,13,14,15,27,28,29,30,31,32,33,34,35,39,42,36,45,17,21,22,26]
-    root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain'
+    root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/test'
     train_list = sorted(os.listdir(root))
     batch_length = int( len(train_list))
     source = np.zeros((len(consider_key),3))
@@ -208,6 +208,38 @@ def pca_lmark_lrs():
     np.save('../basics/mean_grid_front.npy', pca.mean_)
     np.save('../basics/U_grid_front.npy',  pca.components_)
 
-RT_compute()
+import pickle as pkl
+def get_front():
+    root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4'
+    _file = open(os.path.join(root, 'pickle','test_lmark2img.pkl'), "rb")
+    data = pkl.load(_file)
+    _file.close()
+    new_data = []
+    for index in tqdm(range(len(data))):
+        v_id = data[index]
+        video_path = os.path.join(root, 'test', v_id[0] , v_id[1][:5] + '_crop.mp4'  )
+            # mis_video_path = os.path.join(self.root, 'pretrain', mis_vid[0] , mis_vid[1][:5] + '_crop.mp4'  )
+        v_frames = util.read_videos(video_path)
+        lmark_path = os.path.join(root, 'test', v_id[0] , v_id[1][:5] +'_rt.npy'  )
+        rt = np.load(lmark_path)
+        lmark_length = rt.shape[0]
+        find_rt = []
+        for t in range(0, lmark_length):
+            find_rt.append(sum(np.absolute(rt[t,:3])))
+        find_rt = np.asarray(find_rt)
+
+        min_index = np.argmin(find_rt)
+        
+        img_path =  os.path.join(root, 'test', v_id[0] , v_id[1][:5] + '_%05d.png'%min_index  )
+        cv2.imwrite(img_path, v_frames[min_index])
+        data[index].append(min_index)
+        new_data.append(data[index])
+    print (len(new_data))
+    print (new_data[10])
+    with open(os.path.join( root, 'pickle','test2_lmark2img.pkl'), 'wb') as handle:
+        pkl.dump(new_data, handle, protocol=pkl.HIGHEST_PROTOCOL)
+get_front()
+# RT_compute()
 # landmark_extractor()
+# RT_compute()
 # extract_audio()

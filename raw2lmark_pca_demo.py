@@ -40,9 +40,9 @@ def parse_args():
     parser.add_argument( "--sample_dir",
                     type=str,
                     default="./results")
-    parser.add_argument('-i','--in_file', type=str, default='./audio/f_f.wav')
-    parser.add_argument('-p','--person', type=str, default='./image/musk1.jpg')
-    parser.add_argument('--device_ids', type=str, default='0')
+    parser.add_argument('-i','--in_file', type=str, default='/home/cxu-serve/p1/common/demo/demo.wav')
+    parser.add_argument('-p','--person', type=str, default='/home/cxu-serve/p1/common/Obama/video/2_3__00405_2.png')
+    parser.add_argument('--device_ids', type=str, default='0,1')
     parser.add_argument('--num_thread', type=int, default=1)   
     parser.add_argument('--threeD', action='store_true')
     parser.add_argument('--deeps', action='store_true')
@@ -158,16 +158,11 @@ def preprocess_img(img_path):  # get cropped image by input the reference image
     return roi, preds
  
 def get_demo_batch(audio_path , lmark):  #lmark size should be 136
-    if config.threeD:
-        if len(lmark.shape) > 1:
-            lmark = lmark.reshape(-1)
-        mean =  np.load('./basics/mean_grid_front_3d.npy')
-        component = np.load('./basics/U_grid_front_3d.npy')
-    else:
-        if len(lmark.shape) > 1:
-            lmark = lmark[:,:2].reshape(-1)
-        mean =  np.load('./basics/mean_grid_front.npy')
-        component = np.load('./basics/U_grid_front.npy')
+   
+    if len(lmark.shape) > 1:
+        lmark = lmark[:,:2].reshape(-1)
+    mean =  np.load('./basics/mean_grid_front.npy')
+    component = np.load('./basics/U_grid_front.npy')
     norm_lmark = np.load('./basics/s1_pgbk6n_01.npy')
     if not config.threeD:
         norm_lmark = norm_lmark[:,:2]
@@ -185,78 +180,46 @@ def get_demo_batch(audio_path , lmark):  #lmark size should be 136
 
     command = 'ffmpeg -i ' + audio_path +' -ar 50000 -y ./tmp.wav'
     os.system(command)
-    if config.deeps:
-        dp += wavfile.read( './tmp.wav')
-        # speech = scipy.signal.resample(speech, 50000)
-        # fs = 50000
-        print  (fs)
-        # speech, fs = librosa.load(audio_path, sr=50000)
-        chunck_size =int(fs * 0.04 )
-        length = int(speech.shape[0] / chunck_size)
-        left_append = speech[: 3 * chunck_size]
-        right_append = speech[-4 * chunck_size:]
-        speech = np.insert( speech, 0, left_append ,axis=  0)
-        speech = np.insert( speech, -1, right_append ,axis=  0)
-        
-        norm_lmark = norm_lmark.reshape(1, -1)
+    fs, speech = wavfile.read( './tmp.wav')
+    # speech = speech[:int(0.8 * speech.shape[0])]
+    print  ('============================================================')
+    # speech, fs = librosa.load(audio_path, sr=50000)
+    chunck_size =int(fs * 0.04 )
+    length = int(speech.shape[0] / chunck_size)
+    left_append = speech[: 3 * chunck_size]
+    right_append = speech[-4 * chunck_size:]
+    speech = np.insert( speech, 0, left_append ,axis=  0)
+    speech = np.insert( speech, -1, right_append ,axis=  0)
+    
+    norm_lmark = norm_lmark.reshape(1, -1)
 
-        norm_lmark = np.dot(norm_lmark - mean, component.T)
-        norm_lmark = torch.FloatTensor(norm_lmark)
-        example_landmark = norm_lmark.repeat((length,1))
+    norm_lmark = np.dot(norm_lmark - mean, component.T)
+    norm_lmark = torch.FloatTensor(norm_lmark)
+    example_landmark = norm_lmark.repeat((length,1))
 
-        chunks = []
-        for r in range(length):
-            t_chunk =speech[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
-            t_chunk = torch.FloatTensor(t_chunk)
-            chunks.append(t_chunk)
-        chunks = torch.stack(chunks, 0)
-        print (chunks.shape, example_landmark.shape)
-    else:
-
-        fs, speech = wavfile.read( './tmp.wav')
-        # speech = scipy.signal.resample(speech, 50000)
-        # fs = 50000
-        print  ('============================================================')
-        # speech, fs = librosa.load(audio_path, sr=50000)
-        chunck_size =int(fs * 0.04 )
-        length = int(speech.shape[0] / chunck_size)
-        left_append = speech[: 3 * chunck_size]
-        right_append = speech[-4 * chunck_size:]
-        speech = np.insert( speech, 0, left_append ,axis=  0)
-        speech = np.insert( speech, -1, right_append ,axis=  0)
-        
-        norm_lmark = norm_lmark.reshape(1, -1)
-
-        norm_lmark = np.dot(norm_lmark - mean, component.T)
-        norm_lmark = torch.FloatTensor(norm_lmark)
-        example_landmark = norm_lmark.repeat((length,1))
-
-        chunks = []
-        for r in range(length):
-            t_chunk =speech[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
-            t_chunk = torch.FloatTensor(t_chunk)
-            chunks.append(t_chunk)
-        chunks = torch.stack(chunks, 0)
-        print (chunks.shape, example_landmark.shape)
-    return example_landmark,  chunks, diff
+    chunks = []
+    for r in range(length):
+        t_chunk =speech[r * chunck_size : (r + 7)* chunck_size].reshape(1, -1)
+        t_chunk = torch.FloatTensor(t_chunk)
+        chunks.append(t_chunk)
+    chunks = torch.stack(chunks, 0)
+    print (chunks.shape, example_landmark.shape)
+    return example_landmark,  chunks, diff.reshape(68,2)
  
 # a,b = get_demo_batch('/home/cxu-serve/p1/common/grid/audio/s1/bbaf3s.wav' , np.load('./basics/mean_grid_front.npy'))
 
 
 def test():
-    if config.threeD:
-            mean =  np.load('./basics/mean_grid_front_3d.npy')
-            component = np.load('./basics/U_grid_front_3d.npy')
-    else:
-        mean =  np.load('./basics/mean_grid_front.npy')
-        component = np.load('./basics/U_grid_front.npy')
+    
+    mean =  np.load('./basics/mean_grid_front.npy')
+    component = np.load('./basics/U_grid_front.npy')
     config.cuda1 = torch.device('cuda:0')
-
-    _ , lmark = preprocess_img(config.person)
+    lmark = np.load('/home/cxu-serve/p1/common/demo/lisa2_original.npy')
+    # _ , lmark = preprocess_img(config.person)
     # config.in_file = '/home/cxu-serve/p1/common/grid/audio/s22/bbic9p.wav'
-    example_landmark,  chunks, diff= get_demo_batch(config.in_file, lmark)
+    example_landmark,  chunks, diff = get_demo_batch(config.in_file, lmark)
     print  (example_landmark.shape , chunks.shape)
-
+    norm_lmark = np.load('./basics/standard.npy')[:,-1].reshape(1,68,1)
     if config.deeps:
         generator = A2L_deeps()
     else:
@@ -273,9 +236,20 @@ def test():
     if config.cuda:
         chunks = Variable(chunks.float()).cuda(config.cuda1)
         example_landmark = Variable(example_landmark.float()).cuda(config.cuda1) 
-    fake_lmark, _ = generator(example_landmark, chunks)
+    with torch.no_grad():
+        fake_lmark, _ = generator(example_landmark, chunks)
     fake_lmark = fake_lmark.data.cpu().numpy()
     fake_lmark = np.dot(fake_lmark,component) + mean
+
+    gg = fake_lmark.copy()
+    gg = gg.reshape(gg.shape[0], 68, 2)
+    # gg = gg + diff
+    norm_lmark = np.repeat(norm_lmark,gg.shape[0],  axis = 0)
+    print (norm_lmark.shape)
+    print (gg.shape, norm_lmark.shape)
+    gg = np.concatenate((gg,norm_lmark),2 )
+    np.save( '/home/cxu-serve/p1/common/demo/demo.npy',gg )
+
 
     example_landmark = example_landmark.data.cpu().numpy()
     example_landmark = np.dot(example_landmark,component) + mean
@@ -289,15 +263,14 @@ def test():
             
 
     fake_lmark = fake_lmark[:,:,:2].reshape(fake_lmark.shape[0],   68 * 2)
-    sound, _ = librosa.load(config.in_file, sr=44100)
-    face_utils.write_video_wpts_wsound(fake_lmark, sound, 44100, config.sample_dir, 'fake_demo', [0.0,256.0], [0.0,256.0])
+    face_utils.write_video_wpts_wsound(fake_lmark, config.in_file, config.sample_dir, 'fake_demo', [0.0,256.0], [0.0,256.0])
 
 
-    example_landmark = example_landmark[:,:,:2].reshape(example_landmark.shape[0],   68 * 2)
-    sound, _ = librosa.load(config.in_file, sr=44100)
-    face_utils.write_video_wpts_wsound(example_landmark, sound, 44100, config.sample_dir, 'ex_demo', [0.0,256.0], [0.0,256.0])
+    example_landmark = gg[:,:,:2].reshape(example_landmark.shape[0],   68 * 2)
+    face_utils.write_video_wpts_wsound(example_landmark, config.in_file, config.sample_dir, 'ex_demo', [0.0,256.0], [0.0,256.0])
 
 
         
+# os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
 test()

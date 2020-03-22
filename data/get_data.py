@@ -13,11 +13,11 @@ import mmcv
 def prepare_data_lrs():
     # root = '/mnt/Data02/lchen63/lrs/'
     root = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4'
-    path = os.path.join( root , 'pretrain')
+    path = os.path.join( root , 'test')
     trainset = []
     testset = []
     train_list = sorted(os.listdir(path))
-    batch_length = int(0.1 * len(train_list))
+    batch_length = int( len(train_list))
     # train_list = train_list[ 4 * batch_length:5 * batch_length ]
     for i in tqdm(range(len(train_list))):
         p_id = train_list[i]
@@ -27,16 +27,91 @@ def prepare_data_lrs():
             if txt[-9:] !=  'front.npy':
                 continue
             if np.load(os.path.join(path, p_id, txt)).shape[0]> 65:
-                if i >  4 * batch_length and i < 5 * batch_length :
-                    testset.append( [p_id, txt])
-                else:
-                    trainset.append( [p_id, txt])
+                # if i >  4 * batch_length and i < 5 * batch_length :
+                #     testset.append( [p_id, txt])
+                # else:
+                trainset.append( [p_id, txt])
     print (len(trainset))
-    print (len(testset))
+    with open(os.path.join(root, 'pickle','test_lmark2img.pkl'), 'wb') as handle:
+        pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+    # with open(os.path.join(root, 'pickle','test_lmark2img.pkl'), 'wb') as handle:
+    #     pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+
+
+def prepare_data_lrw():
+    # root = '/mnt/Data02/lchen63/lrs/'
+    root = '/home/cxu-serve/p1/common/lrw'
+    path = os.path.join( root , 'video')
+    trainset = []
+    testset = []
+    train_list = sorted(os.listdir(path))
+    batch_length = int(0.1 * len(train_list))
+    # train_list = train_list[ 4 * batch_length:5 * batch_length ]
+    for i in tqdm(range(len(train_list))):
+        p_id = train_list[i]
+        for jj in range(1,21):
+            original_video_path = os.path.join(root,  'video',  p_id, 'test', p_id +'_%05d'%jj)    
+            
+            trainset.append( [original_video_path])
+    print (len(trainset))
+    with open(os.path.join(root, 'pickle','test_lmark2img.pkl'), 'wb') as handle:
+        pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+    # with open(os.path.join(root, 'pickle','test_lmark2img.pkl'), 'wb') as handle:
+    #     pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+
+
+def prepare_data_crema():
+    # root = '/mnt/Data02/lchen63/lrs/'
+    root = '/home/cxu-serve/p1/common/CREMA'
+    path = os.path.join( root , 'VideoFlash')
+    trainset = []
+    testset = []
+    train_list = sorted(os.listdir(path))
+    batch_length = int(0.1 * len(train_list))
+    # train_list = train_list[ 4 * batch_length:5 * batch_length ]
+    for i in tqdm(range(len(train_list))):
+        p_id = train_list[i]
+        txt = os.path.join(path, p_id)
+        
+        if txt[-9:] !=  'front.npy':
+            continue
+        if np.load(os.path.join(path, p_id, txt)).shape[0]> 65:
+            # if i >  4 * batch_length and i < 5 * batch_length :
+            #     testset.append( [p_id, txt])
+            # else:
+            trainset.append( [p_id])
+    print (len(trainset))
     with open(os.path.join(root, 'pickle','train_lmark2img.pkl'), 'wb') as handle:
         pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
-    with open(os.path.join(root, 'pickle','test_lmark2img.pkl'), 'wb') as handle:
-        pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+    # with open(os.path.join(root, 'pickle','test_lmark2img.pkl'), 'wb') as handle:
+    #     pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+
+
+
+def prepare_data_obama():
+    # root = '/mnt/Data02/lchen63/lrs/'
+    root = '/home/cxu-serve/p1/common/Obama'
+    path = os.path.join( root , 'video')
+    trainset = []
+    train_list = sorted(os.listdir(path))
+    # train_list = train_list[ 4 * batch_length:5 * batch_length ]
+    for i in tqdm(range(len(train_list))):
+        p_id = train_list[i]
+        txt = os.path.join(path, p_id)
+        
+        if txt[-10:] !=  'front2.npy':
+            continue
+        if np.load(os.path.join(path, p_id, txt)).shape[0]> 65:
+            # if i >  4 * batch_length and i < 5 * batch_length :
+            #     testset.append( [p_id, txt])
+            # else:
+            trainset.append( [p_id])
+    print (len(trainset))
+    with open(os.path.join(root, 'pickle','train_lmark2img.pkl'), 'wb') as handle:
+        pkl.dump(trainset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+    # with open(os.path.join(root, 'pickle','test_lmark2img.pkl'), 'wb') as handle:
+    #     pkl.dump(testset, handle, protocol=pkl.HIGHEST_PROTOCOL)
+
 
 def prepare_data_faceforencs_xu():
     path = '/home/cxu-serve/p1/common/faceforensics/original_sequences/youtube/cropped'
@@ -167,7 +242,7 @@ def vox_check():
         #     datalist[index].append(False)
     with open(os.path.join(root_path, 'pickle','dev_lmark2img.pkl'), 'wb') as handle:
         pkl.dump(datalist, handle, protocol=pkl.HIGHEST_PROTOCOL)
-vox_check()
+# vox_check()
 
 def unzip_video():
     path = '/home/cxu-serve/p1/common/grid/zip'
@@ -336,5 +411,7 @@ def grid_check():
 # prep_data_vox2()
 # prepare_data_grid() 
 # prepare_data_faceforencs_oppo()
-# prepare_data_lrs()
+prepare_data_obama()
 # unzip_video()
+# prepare_data_crema()
+# prepare_data_lrw()

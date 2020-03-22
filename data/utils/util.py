@@ -42,6 +42,17 @@ def tensor2im(image_tensor, imtype=np.uint8, normalize=True):
         image_numpy = image_numpy[:,:,0]
     return image_numpy.astype(imtype)
 
+def read_videos( video_path):
+    cap = cv2.VideoCapture(video_path)
+    real_video = []
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        if ret == True:
+            real_video.append(frame)
+        else:
+            break
+
+    return real_video
 # Converts a one-hot tensor into a colorful label map
 def tensor2label(label_tensor, n_label, imtype=np.uint8):
     if n_label == 0:
@@ -586,37 +597,6 @@ def labelcolormap(N):
     return cmap
 
 
-
-def crop_image(image_path, detector, shape, predictor):
-    
-
-  
-    image = cv2.imread(image_path)
-
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
- 
-    rects = detector(gray, 1)
-    for (i, rect) in enumerate(rects):
-
-        shape = predictor(gray, rect)
-        shape = shape_to_np(shape)
-      
-        (x, y, w, h) = rect_to_bb(rect)
-        center_x = x + int(0.5 * w)
-        center_y = y + int(0.5 * h)
-
-        r = int(0.64 * h)
-        new_x = center_x - r
-        new_y = center_y - r
-        roi = image[new_y:new_y + 2 * r, new_x:new_x + 2 * r]
-        
-        roi = cv2.resize(roi, (163,163), interpolation = cv2.INTER_AREA)
-        scale =  163. / (2 * r)
-       
-        shape = ((shape - np.array([new_x,new_y])) * scale)
-    
-        return roi, shape 
 
       
 def image_to_video(sample_dir = None, video_name = None):

@@ -189,10 +189,10 @@ def smooth(x,window_len=11,window='hanning'):
 
     y=np.convolve(w/w.sum(),s,mode='valid')
     return y
-def write_video_wpts_wsound_unnorm(frames, sound, fs, path, fname, xLim, yLim):
+def write_video_wpts_wsound_unnorm(frames, audio_path, path, fname, xLim, yLim):
     try:
         os.remove(os.path.join(path, fname+'.mp4'))
-        os.remove(os.path.join(path, fname+'.wav'))
+        # os.remove(os.path.join(path, fname+'.wav'))
         os.remove(os.path.join(path, fname+'_ws.mp4'))
     except:
         print ('Exp')
@@ -213,7 +213,7 @@ def write_video_wpts_wsound_unnorm(frames, sound, fs, path, fname, xLim, yLim):
     plt.xlim(xLim)
     plt.ylim(yLim)
 
-    librosa.output.write_wav(os.path.join(path, fname+'.wav'), sound, fs)
+    # librosa.output.write_wav(os.path.join(path, fname+'.wav'), sound, fs)
 
     lines = [plt.plot([], [], 'k')[0] for _ in range(3*len(dt))]
 
@@ -227,17 +227,17 @@ def write_video_wpts_wsound_unnorm(frames, sound, fs, path, fname, xLim, yLim):
                 cnt+=1
             writer.grab_frame()
 
-    cmd = 'ffmpeg -i '+os.path.join(path, fname)+'.mp4 -i '+os.path.join(path, fname)+'.wav -c:v copy -c:a aac -strict experimental '+os.path.join(path, fname)+'_ws.mp4'
+    cmd = 'ffmpeg -i '+os.path.join(path, fname)+'.mp4 -i '+ audio_path + ' -c:v copy -c:a aac -strict experimental '+os.path.join(path, fname)+'_ws.mp4'
     subprocess.call(cmd, shell=True) 
     print('Muxing Done')
 
     os.remove(os.path.join(path, fname+'.mp4'))
-    os.remove(os.path.join(path, fname+'.wav'))
+    # os.remove(os.path.join(path, fname+'.wav'))
 
-def write_video_wpts_wsound(frames, sound, fs, path, fname, xLim, yLim):
+def write_video_wpts_wsound(frames, audio_path, path, fname, xLim, yLim):
     try:
         os.remove(os.path.join(path, fname+'.mp4'))
-        os.remove(os.path.join(path, fname+'.wav'))
+        # os.remove(os.path.join(path, fname+'.wav'))
         os.remove(os.path.join(path, fname+'_ws.mp4'))
     except:
         print ('Exp')
@@ -258,7 +258,7 @@ def write_video_wpts_wsound(frames, sound, fs, path, fname, xLim, yLim):
     plt.xlim(xLim)
     plt.ylim(yLim)
 
-    librosa.output.write_wav(os.path.join(path, fname+'.wav'), sound, fs)
+    # librosa.output.write_wav(os.path.join(path, fname+'.wav'), sound, fs)
 
     
     if frames.shape[1] == 20:
@@ -279,12 +279,12 @@ def write_video_wpts_wsound(frames, sound, fs, path, fname, xLim, yLim):
                 cnt+=1
             writer.grab_frame()
 
-    cmd = 'ffmpeg -y -i '+os.path.join(path, fname)+'.mp4 -i '+os.path.join(path, fname)+'.wav -c:v copy -c:a aac -strict experimental '+os.path.join(path, fname)+'_ws.mp4'
+    cmd = 'ffmpeg -y -i '+os.path.join(path, fname)+'.mp4 -i '+ audio_path+ ' -c:v copy -c:a aac -strict experimental '+os.path.join(path, fname)+'_ws.mp4'
     subprocess.call(cmd, shell=True) 
     print('Muxing Done')
 
     os.remove(os.path.join(path, fname+'.mp4'))
-    os.remove(os.path.join(path, fname+'.wav'))
+    # os.remove(os.path.join(path, fname+'.wav'))
 
 
 def plot_flmarks(pts, lab, xLim, yLim, xLab, yLab, figsize=(10, 10)):

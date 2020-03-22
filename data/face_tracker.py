@@ -23,7 +23,7 @@ import  utils.visualizer as Visualizer
 import pickle
 fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._2D, flip_input=False)#,  device='cpu' )
 
-def crop_image(frame_file, count, x_list = [], y_list = [], dis_list = [], videos = [],multi_face_times = 0, lStart=36, lEnd=41, rStart=42, rEnd=47):
+def crop_image(frame_file, count =0, x_list = [], y_list = [], dis_list = [], videos = [],multi_face_times = 0, lStart=36, lEnd=41, rStart=42, rEnd=47):
 	image = cv2.imread(frame_file) if isinstance(frame_file, str) else frame_file
 	
 	videos.append(image)
@@ -112,7 +112,7 @@ def _crop_face_region_video(video):
 	for i in tqdm(range(x_list.shape[0])):
 		if top_left_x[i] < 0 or top_left_y[i] < 0:
 			img_size = videos[i].shape
-			tempolate = np.ones((img_size[0] * 2, img_size[1]* 2 , 3), np.uint8) * 255
+			tempolate = np.zeros((img_size[0] * 2, img_size[1]* 2 , 3), np.uint8) 
 			tempolate_middle  = [int(tempolate.shape[0]/2), int(tempolate.shape[1]/2)]
 			middle = [int(img_size[0]/2), int(img_size[1]/2)]
 			tempolate[tempolate_middle[0]  -middle[0]:tempolate_middle[0]+middle[0], tempolate_middle[1]-middle[1]:tempolate_middle[1]+middle[1], :] = videos[i]
@@ -134,8 +134,7 @@ def _crop_face_region_video(video):
 
 # _crop_face_region_video('/home/cxu-serve/p1/common/faceforensics/original_sequences/youtube/cropped/videos/000.mp4')
 
-def _crop_video(video, pid = 0):
-	
+def _crop_video(video, pid = 0, mode = 0):
 	count = 0
 	x_list =  np.array([])
 	y_list = np.array([])
@@ -143,6 +142,9 @@ def _crop_video(video, pid = 0):
 	videos = []
 	cap  =  cv2.VideoCapture(video)
 	multi_face_times = 0
+	if os.path.exists('./temp%05d'%pid):
+		shutil.rmtree('./temp%05d'%pid)
+	os.mkdir('./temp%05d'%pid)
 	while(cap.isOpened()):
 		ret, frame = cap.read()
 		# if count == 20:
@@ -154,18 +156,31 @@ def _crop_video(video, pid = 0):
 			break
 	dis = np.mean(dis_list)
 	print (dis)
-	top_left_x = x_list - (80 * dis / 90)
-	top_left_y = y_list - (100* dis / 90)
-	top_left_x = util.oned_smooth(top_left_x )
-	top_left_y = util.oned_smooth(top_left_y)	
 	side_length = int((205 * dis / 90))
-	if os.path.exists('./temp%05d'%pid):
-		shutil.rmtree('./temp%05d'%pid)
-	os.mkdir('./temp%05d'%pid)
+	print (side_length)
+	if mode ==0 :
+		top_left_x = x_list - (80 * dis / 90)
+		top_left_y = y_list - (100* dis / 90)
+		top_left_x = util.oned_smooth(top_left_x )
+		top_left_y = util.oned_smooth(top_left_y)	
+		
+	else:
+		top_left_x = x_list - (80 * dis / 90)
+		top_left_y = y_list - (100* dis / 90)
+		top_left_x_mean = np.mean(top_left_x)
+
+		top_left_y_mean = np.mean(top_left_y)
+		print (top_left_x_mean, top_left_y_mean)
+		for g in range(len(top_left_x)):
+			top_left_x[g] = top_left_x_mean
+
+			top_left_y[g] = top_left_y_mean
+
+
 	for i in tqdm(range(x_list.shape[0])):
 		if top_left_x[i] < 0 or top_left_y[i] < 0:
 			img_size = videos[i].shape
-			tempolate = np.ones((img_size[0] * 2, img_size[1]* 2 , 3), np.uint8) * 255
+			tempolate = np.zeros((img_size[0] * 2, img_size[1]* 2 , 3), np.uint8)
 			tempolate_middle  = [int(tempolate.shape[0]/2), int(tempolate.shape[1]/2)]
 			middle = [int(img_size[0]/2), int(img_size[1]/2)]
 			tempolate[tempolate_middle[0]  -middle[0]:tempolate_middle[0]+middle[0], tempolate_middle[1]-middle[1]:tempolate_middle[1]+middle[1], :] = videos[i]
