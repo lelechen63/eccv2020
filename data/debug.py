@@ -7,10 +7,10 @@ from utils import face_utils, util
 # face_utils.get_roi(lmark)
 import numpy as np
 from utils import util
-ani_lmarks = []
-lmark = np.load('/home/cxu-serve/p1/common/demo/lisa2_video_original.npy')
-rt  =  np.load('/home/cxu-serve/p1/common/demo/00003_aligned_rt.npy')
-print (rt.shape,lmark.shape)
+# ani_lmarks = []
+# lmark = np.load('/home/cxu-serve/p1/common/demo/lisa2_video_original.npy')
+rt  =  np.load('/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/OLguY5ofUrY⁩/00044_aligned_rt.npy')
+print (rt.shape)
 for gg in range(rt.shape[0]):
     ani_lmarks.append(util.reverse_rt(lmark[gg], rt[gg]))
 np.save('/home/cxu-serve/p1/common/demo/lisa2_crop_video_original.npy', ani_lmarks)

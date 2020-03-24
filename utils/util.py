@@ -42,6 +42,31 @@ def tensor2im(image_tensor, imtype=np.uint8, normalize=True):
         image_numpy = image_numpy[:,:,0]
     return image_numpy.astype(imtype)
 
+
+
+def read_videos( video_path):
+    cap = cv2.VideoCapture(video_path)
+    real_video = []
+    while(cap.isOpened()):
+        ret, frame = cap.read()
+        if ret == True:
+            real_video.append(frame)
+        else:
+            break
+
+    return real_video
+
+def rt_to_degree(  RT):
+    #   RT (6,)
+    RT = np.mat(RT)
+    # recover the transformation
+    rec = RT[0,:3]
+    r = R.from_rotvec(rec)
+    print (r)
+    ret_R = r.as_dcm()
+    print (ret_R)
+ 
+
 # Converts a one-hot tensor into a colorful label map
 def tensor2label(label_tensor, n_label, imtype=np.uint8):
     if n_label == 0:
@@ -60,27 +85,6 @@ def save_image(image_numpy, image_path):
 
 def plot_landmarks( landmarks):
     # landmarks = np.int32(landmarks)
-    """
-    Creates an RGB image with the landmarks. The generated image will be of the same size as the frame where the face
-    matching the landmarks.
-    The image is created by plotting the coordinates of the landmarks using matplotlib, and then converting the
-    plot to an image.
-    Things to watch out for:
-    * The figure where the landmarks will be plotted must have the same size as the image to create, but matplotlib
-    only accepts the size in inches, so it must be converted to pixels using the DPI of the screen.
-    * A white background is printed on the image (an array of ones) in order to keep the figure from being flipped.
-    * The axis must be turned off and the subplot must be adjusted to remove the space where the axis would normally be.
-    :param frame: Image with a face matching the landmarks.
-    :param landmarks: Landmarks of the provided frame,
-    :return: RGB image with the landmarks as a Pillow Image.
-    """
-    # print (landmarks[0:17].shape)
-    # print(type(landmarks))
-
-    # points = np.array([[1, 4], [5, 6], [7, 8], [4, 4]])
-    # print (points.shape)
-
-
     blank_image = np.zeros((256,256,3), np.uint8) 
 
     # cv2.polylines(blank_image, np.int32([points]), True, (0,255,255), 1)
@@ -260,21 +264,6 @@ def oned_smooth(x,window_len=11,window='hanning'):
 
 
 
-def smooth(kps, ALPHA1=0.2, ALPHA2=0.7):
-    
-    n = kps.shape[0]
-
-    kps_new = np.zeros_like(kps)
-
-    for i in range(n):
-        if i==0:
-            kps_new[i,:,:] = kps[i,:,:]
-        else:
-            kps_new[i,:48,:] = ALPHA1 * kps[i,:48,:] + (1-ALPHA1) * kps_new[i-1,:48,:]
-            kps_new[i,48:,:] = ALPHA2 * kps[i,48:,:] + (1-ALPHA2) * kps_new[i-1,48:,:]
-
-    # np.save(out_file, kps_new)
-    return kps_new
 
 def crop_mouth(img, lmark):
     (x, y, w, h) = cv2.boundingRect(lmark[48:68,:-1].astype(int))
@@ -568,62 +557,8 @@ def PIL2array(img):
     return np.array(img.getdata(),
                     np.uint8).reshape(img.size[1], img.size[0], 1)
 
-# Converts a one-hot tensor into a colorful label map
-def tensor2label(label_tensor, n_label, imtype=np.uint8):
-    if n_label == 0:
-        return tensor2im(label_tensor, imtype)
-    label_tensor = label_tensor.cpu().float()    
-    if label_tensor.size()[0] > 1:
-        label_tensor = label_tensor.max(0, keepdim=True)[1]
-    label_tensor = Colorize(n_label)(label_tensor)
-    label_numpy = np.transpose(label_tensor.numpy(), (1, 2, 0))
-    return label_numpy.astype(imtype)
-
-def save_image(image_numpy, image_path):
-    image_pil = Image.fromarray(image_numpy)
-    image_pil.save(image_path)
-
-def mkdirs(paths):
-    if isinstance(paths, list) and not isinstance(paths, str):
-        for path in paths:
-            mkdir(path)
-    else:
-        mkdir(paths)
-
-def mkdir(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
 
 ###############################################################################
-
-def uint82bin(n, count=8):
-    """returns the binary of integer n, count refers to amount of bits"""
-    return ''.join([str((n >> y) & 1) for y in range(count-1, -1, -1)])
-
-def labelcolormap(N):
-    if N == 35: # cityscape
-        cmap = np.array([(  0,  0,  0), (  0,  0,  0), (  0,  0,  0), (  0,  0,  0), (  0,  0,  0), (111, 74,  0), ( 81,  0, 81),
-                     (128, 64,128), (244, 35,232), (250,170,160), (230,150,140), ( 70, 70, 70), (102,102,156), (190,153,153),
-                     (180,165,180), (150,100,100), (150,120, 90), (153,153,153), (153,153,153), (250,170, 30), (220,220,  0),
-                     (107,142, 35), (152,251,152), ( 70,130,180), (220, 20, 60), (255,  0,  0), (  0,  0,142), (  0,  0, 70),
-                     (  0, 60,100), (  0,  0, 90), (  0,  0,110), (  0, 80,100), (  0,  0,230), (119, 11, 32), (  0,  0,142)], 
-                     dtype=np.uint8)
-    else:
-        cmap = np.zeros((N, 3), dtype=np.uint8)
-        for i in range(N):
-            r, g, b = 0, 0, 0
-            id = i
-            for j in range(7):
-                str_id = uint82bin(id)
-                r = r ^ (np.uint8(str_id[-1]) << (7-j))
-                g = g ^ (np.uint8(str_id[-2]) << (7-j))
-                b = b ^ (np.uint8(str_id[-3]) << (7-j))
-                id = id >> 3
-            cmap[i, 0] = r
-            cmap[i, 1] = g
-            cmap[i, 2] = b
-    return cmap
-
 
 
 def crop_image(image_path, detector, shape, predictor):

@@ -37,6 +37,104 @@ other = [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], \
 
 faceLmarkLookup = Mouth + Nose + leftBrow + rightBrow + leftEye + rightEye + other
 
+def mounth_open2close(lmark): # if the open rate is too large, we need to manually make the mounth to be closed.
+    # the input lamrk need to be (68,2 ) or (68,3)
+    open_pair = []
+    for i in range(3):
+        open_pair.append([i + 61, 67 - i])
+    upper_part = [49,50,51,52,53]
+    lower_part = [59,58,57,56,55]
+    diffs = []
+
+    for k in range(3):
+        mean = (lmark[open_pair[k][0],:2] + lmark[open_pair[k][1],:2] )/ 2
+        print (mean)
+        tmp = lmark[open_pair[k][0],:2]
+        diffs.append((mean - lmark[open_pair[k][0],:2]).copy())
+        lmark[open_pair[k][0],:2] = mean - (mean - lmark[open_pair[k][0],:2]) * 0.3
+        lmark[open_pair[k][1],:2] = mean + (mean - lmark[open_pair[k][0],:2]) * 0.3
+    diffs.insert(0, 0.6 * diffs[2])
+    diffs.append( 0.6 * diffs[2])
+    print (diffs)
+    diffs = np.asarray(diffs)
+    lmark[49:54,:2] +=  diffs
+    lmark[55:60,:2] -=  diffs 
+    return lmark
+
+
+
+def get_roi(lmark):
+    tempolate = np.zeros((256, 256 , 3), np.uint8)
+    eyes =[17, 20 , 21, 22, 24,  26, 36, 39,42, 45]
+    eyes_x = []
+    eyes_y = []
+    for i in eyes:
+        eyes_x.append(lmark[i,0])
+        eyes_y.append(lmark[i,1])
+    min_x = lmark[eyes[np.argmin(eyes_x)], 0] 
+    max_x = lmark[eyes[np.argmax(eyes_x)], 0] 
+    min_y = lmark[eyes[np.argmin(eyes_y)], 1]
+    
+    max_y = lmark[eyes[np.argmax(eyes_y)], 1]
+    min_x = max(0, int(min_x-10) )
+    max_x = min(255, int(max_x+10) )
+    min_y = max(0, int(min_y-10) )
+    max_y = min(255, int(max_y+10) )
+
+    tempolate[ int(min_y): int(max_y), int(min_x):int(max_x)] = 1 
+    mouth = [48, 50, 51, 54, 57]
+    mouth_x = []
+    mouth_y = []
+    for i in mouth:
+        mouth_x.append(lmark[i,0])
+        mouth_y.append(lmark[i,1])
+    min_x2 = lmark[mouth[np.argmin(mouth_x)], 0] 
+    max_x2 = lmark[mouth[np.argmax(mouth_x)], 0] 
+    min_y2 = lmark[mouth[np.argmin(mouth_y)], 1]
+    max_y2 = lmark[mouth[np.argmax(mouth_y)], 1] 
+
+    min_x2 = max(0, int(min_x2-10) )
+    max_x2 = min(255, int(max_x2+10) )
+    min_y2 = max(0, int(min_y2-10) )
+    max_y2 = min(255, int(max_y2+10) )
+
+    
+    tempolate[int(min_y2):int(max_y2), int(min_x2):int(max_x2)] = 1
+    return  tempolate
+
+
+def eye_blinking(lmark, rate = 40): #lmark shape (k, 68,2) or (k,68,3) , tempolate shape(256, 256, 1)
+    length = lmark.shape[0]
+    bink_time = math.floor(length / float(rate) )
+    
+    eys =[[37,41],[38,40] ,[43,47],[44,46]]  # [upper, lower] , [left1,left2, right1, right1]
+    
+    for i in range(bink_time):
+
+        print ('+++++')
+        for e in eys:
+            dis =  (np.abs(lmark[0, e[0],:2] -  lmark[0, e[1],:2] ) / 2)
+            print ('--------')
+            # -2 
+            
+            lmark[rate * (i + 1)-2, e[0],:2] += 0.45 * (dis)
+            lmark[rate * (i + 1)-2, e[1],:2] -= 0.45 * (dis)
+            # +2
+            lmark[rate * (i + 1)+2, e[0], :2] += 0.45 * (dis)
+            lmark[rate * (i + 1)+2, e[1], :2] -= 0.45 * (dis)
+
+            # -1
+            lmark[rate * (i + 1)-1, e[0], :2] += 0.85 * (dis)
+            lmark[rate * (i + 1)-1, e[1], :2] -= 0.85 * (dis)
+            # +1
+            lmark[rate * (i + 1)+1, e[0], :2] += 0.8 * (dis)
+            lmark[rate * (i + 1)+1, e[1], :2] -= 0.8 * (dis)
+
+            # 0
+            lmark[rate * (i + 1), e[0], :2] += 0.95 * (dis)
+            lmark[rate * (i + 1), e[1], :2] -= 0.95 * (dis)
+    return lmark
+
 def rigid_transform_3D(A, B):
     assert len(A) == len(B)
 
@@ -189,10 +287,10 @@ def smooth(x,window_len=11,window='hanning'):
 
     y=np.convolve(w/w.sum(),s,mode='valid')
     return y
-def write_video_wpts_wsound_unnorm(frames, audio_path, path, fname, xLim, yLim):
+def write_video_wpts_wsound_unnorm(frames, sound, fs, path, fname, xLim, yLim):
     try:
         os.remove(os.path.join(path, fname+'.mp4'))
-        # os.remove(os.path.join(path, fname+'.wav'))
+        os.remove(os.path.join(path, fname+'.wav'))
         os.remove(os.path.join(path, fname+'_ws.mp4'))
     except:
         print ('Exp')
@@ -213,7 +311,7 @@ def write_video_wpts_wsound_unnorm(frames, audio_path, path, fname, xLim, yLim):
     plt.xlim(xLim)
     plt.ylim(yLim)
 
-    # librosa.output.write_wav(os.path.join(path, fname+'.wav'), sound, fs)
+    librosa.output.write_wav(os.path.join(path, fname+'.wav'), sound, fs)
 
     lines = [plt.plot([], [], 'k')[0] for _ in range(3*len(dt))]
 
@@ -227,23 +325,23 @@ def write_video_wpts_wsound_unnorm(frames, audio_path, path, fname, xLim, yLim):
                 cnt+=1
             writer.grab_frame()
 
-    cmd = 'ffmpeg -i '+os.path.join(path, fname)+'.mp4 -i '+ audio_path + ' -c:v copy -c:a aac -strict experimental '+os.path.join(path, fname)+'_ws.mp4'
+    cmd = 'ffmpeg -i '+os.path.join(path, fname)+'.mp4 -i '+os.path.join(path, fname)+'.wav -c:v copy -c:a aac -strict experimental '+os.path.join(path, fname)+'_ws.mp4'
     subprocess.call(cmd, shell=True) 
     print('Muxing Done')
 
     os.remove(os.path.join(path, fname+'.mp4'))
-    # os.remove(os.path.join(path, fname+'.wav'))
+    os.remove(os.path.join(path, fname+'.wav'))
 
-def write_video_wpts_wsound(frames, audio_path, path, fname, xLim, yLim):
+def write_video_wpts_wsound(frames, sound, fs, path, fname, xLim, yLim):
     try:
         os.remove(os.path.join(path, fname+'.mp4'))
-        # os.remove(os.path.join(path, fname+'.wav'))
+        os.remove(os.path.join(path, fname+'.wav'))
         os.remove(os.path.join(path, fname+'_ws.mp4'))
     except:
         print ('Exp')
 
     if len(frames.shape) < 3:
-        frames = np.reshape(frames, (frames.shape[0], 68, 2))
+        frames = np.reshape(frames, (frames.shape[0], frames.shape[1]/2, 2))
     print (frames.shape)
 
     FFMpegWriter = manimation.writers['ffmpeg']
@@ -258,8 +356,9 @@ def write_video_wpts_wsound(frames, audio_path, path, fname, xLim, yLim):
     plt.xlim(xLim)
     plt.ylim(yLim)
 
-    # librosa.output.write_wav(os.path.join(path, fname+'.wav'), sound, fs)
+    librosa.output.write_wav(os.path.join(path, fname+'.wav'), sound, fs)
 
+    rect = (0, 0, 600, 600)
     
     if frames.shape[1] == 20:
         lookup = [[x[0] - 48, x[1] - 48] for x in Mouth]
@@ -279,12 +378,12 @@ def write_video_wpts_wsound(frames, audio_path, path, fname, xLim, yLim):
                 cnt+=1
             writer.grab_frame()
 
-    cmd = 'ffmpeg -y -i '+os.path.join(path, fname)+'.mp4 -i '+ audio_path+ ' -c:v copy -c:a aac -strict experimental '+os.path.join(path, fname)+'_ws.mp4'
+    cmd = 'ffmpeg -y -i '+os.path.join(path, fname)+'.mp4 -i '+os.path.join(path, fname)+'.wav -c:v copy -c:a aac -strict experimental '+os.path.join(path, fname)+'_ws.mp4'
     subprocess.call(cmd, shell=True) 
     print('Muxing Done')
 
     os.remove(os.path.join(path, fname+'.mp4'))
-    # os.remove(os.path.join(path, fname+'.wav'))
+    os.remove(os.path.join(path, fname+'.wav'))
 
 
 def plot_flmarks(pts, lab, xLim, yLim, xLab, yLab, figsize=(10, 10)):
