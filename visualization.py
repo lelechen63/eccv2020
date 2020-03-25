@@ -193,7 +193,7 @@ def vis():
 
         # image = cv2.putText(frame, text, org, font, fontScale,  
         #          color, thickness, cv2.LINE_AA, False) 
-        cv2.imwrite('./data/temp00001/%05d.png'%count, image)
+        cv2.imwrite('./data/temp00001/%05d.png'%count, frame)
         # frame = cv2.imread('/home/cxu-serve/p1/common/demo/picasso1_crop.png')
         # frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
         # preds =  tar_lmark[count]
