@@ -187,6 +187,9 @@ def vis():
         print (rt[count])
         degree = util.rt_to_degree(rt[count])
         print (degree)
+        print (type(degree))
+        degree = [ '%.3f' % elem for elem in degree ]
+
         text = str(degree)
 
         frame = frames[count]
