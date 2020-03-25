@@ -188,7 +188,7 @@ def vis():
         degree = util.rt_to_degree(rt[count])
         print (degree)
         print (type(degree))
-        degree = [ '%.3f' % elem for elem in degree ]
+        degree = np.round(degree, 3)
 
         text = str(degree)
 
