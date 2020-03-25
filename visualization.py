@@ -133,7 +133,7 @@ def vis():
     # norm_lmark = np.load('./basics/s1_pgbk6n_01.npy')
     # norm_lmark = np.load(lmark_path)[1]
     # print (norm_lmark.shape)
-    rt  =  np.load('/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/iJOjkDq6rW8/00126_aligned_rt.npy')
+    rt  =  np.load('/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/lZf1RB6l5Gs/00149_aligned_rt.npy')
     # print (rt.shape)
     # lmark_length = rt.shape[0]
     # src_lmark = np.load(src_lmark_path)[:,:,:2]
@@ -159,7 +159,7 @@ def vis():
     # openrates = np.asarray(openrates)
     # min_index = np.argmin(openrates)
 
-    v_path ='/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/iJOjkDq6rW8/00126_aligned.mp4'
+    v_path ='/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/lZf1RB6l5Gs/00149_aligned.mp4'
     # v_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/0MMSpsvqiG8/00004_crop.mp4'
     
     count = 0
@@ -182,7 +182,7 @@ def vis():
     # Line thickness of 2 px 
     thickness = 1
 
-    for count in range(0,len(frames),10):
+    for count in range(0,len(frames),2):
         print (count)
         print (rt[count])
         degree = util.rt_to_degree(rt[count])
@@ -196,7 +196,7 @@ def vis():
 
         image = cv2.putText(frame, text, org, font, fontScale,  
                  color, thickness, cv2.LINE_AA, False) 
-        cv2.imwrite('./data/temp00002/%05d.png'%count, image)
+        cv2.imwrite('./data/temp00003/%05d.png'%count, image)
         # frame = cv2.imread('/home/cxu-serve/p1/common/demo/picasso1_crop.png')
         # frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
         # preds =  tar_lmark[count]
