@@ -186,9 +186,12 @@ def vis():
         print (count)
         print (rt[count])
         lists = util.rt_to_degree(rt[count])
-        lists.append(count, rt[count])
+        lists.append(count)
+        lists.append('----')
+        lists.append(rt[count])
 
         text = str(lists)
+        print ('text')
 
         frame = frames[count]
 
