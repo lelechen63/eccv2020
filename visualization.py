@@ -174,13 +174,13 @@ def vis():
     org = (00, 185) 
       
     # fontScale 
-    fontScale = 1
+    fontScale = 0.5
        
     # Red color in BGR 
     color = (0, 0, 255) 
       
     # Line thickness of 2 px 
-    thickness = 1
+    thickness = 0.5
 
     for count in range(0,len(frames),10):
         print (count)
@@ -191,9 +191,9 @@ def vis():
 
         frame = frames[count]
 
-        # image = cv2.putText(frame, text, org, font, fontScale,  
-        #          color, thickness, cv2.LINE_AA, False) 
-        cv2.imwrite('./data/temp00001/%05d.png'%count, frame)
+        image = cv2.putText(frame, text, org, font, fontScale,  
+                 color, thickness, cv2.LINE_AA, False) 
+        cv2.imwrite('./data/temp00001/%05d.png'%count, text)
         # frame = cv2.imread('/home/cxu-serve/p1/common/demo/picasso1_crop.png')
         # frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
         # preds =  tar_lmark[count]
