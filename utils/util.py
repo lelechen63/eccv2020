@@ -59,16 +59,13 @@ def read_videos( video_path):
 def rt_to_degree( RT ):
     #   RT (6,)
     RT = np.mat(RT)
-    print (RT.shape)
-    print (RT.shape)
     # recover the transformation
     rec = RT[0, :3]
-    print (rec.shape)
     r = R.from_rotvec(rec)
     # print (r)
-    ret_R = r.as_dcm()
+    ret_R =  r.as_euler('zyx', degrees=True)
     # print (ret_R)
-    return [r, '-', ret_R]
+    return ret_R
  
 
 # Converts a one-hot tensor into a colorful label map

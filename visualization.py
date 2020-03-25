@@ -185,19 +185,14 @@ def vis():
     for count in range(0,len(frames),10):
         print (count)
         print (rt[count])
-        print (rt[count].shape)
-        lists = util.rt_to_degree(rt[count])
-        lists.append(count)
-        lists.append('-')
-        lists.append(rt[count])
-
-        text = str(lists)
-        print ('text')
+        degree = util.rt_to_degree(rt[count])
+        print (degree)
+        text = str(degree)
 
         frame = frames[count]
 
-        image = cv2.putText(frame, text, org, font, fontScale,  
-                 color, thickness, cv2.LINE_AA, False) 
+        # image = cv2.putText(frame, text, org, font, fontScale,  
+        #          color, thickness, cv2.LINE_AA, False) 
         cv2.imwrite('./data/temp00001/%05d.png'%count, image)
         # frame = cv2.imread('/home/cxu-serve/p1/common/demo/picasso1_crop.png')
         # frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
