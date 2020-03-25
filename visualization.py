@@ -134,7 +134,6 @@ def vis():
     # norm_lmark = np.load(lmark_path)[1]
     # print (norm_lmark.shape)
     rt  =  np.load('/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/OLguY5ofUrY/00044_aligned_rt.npy')
-    rt = np.load(rt)
     # print (rt.shape)
     # lmark_length = rt.shape[0]
     # src_lmark = np.load(src_lmark_path)[:,:,:2]
