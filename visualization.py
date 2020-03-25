@@ -133,7 +133,7 @@ def vis():
     # norm_lmark = np.load('./basics/s1_pgbk6n_01.npy')
     # norm_lmark = np.load(lmark_path)[1]
     # print (norm_lmark.shape)
-    rt  =  np.load('/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/iJOjkDq6rW8/00125_aligned_rt.npy')
+    rt  =  np.load('/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/iJOjkDq6rW8/00124_aligned_rt.npy')
     # print (rt.shape)
     # lmark_length = rt.shape[0]
     # src_lmark = np.load(src_lmark_path)[:,:,:2]
@@ -159,7 +159,7 @@ def vis():
     # openrates = np.asarray(openrates)
     # min_index = np.argmin(openrates)
 
-    v_path ='/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/iJOjkDq6rW8/00125_aligned.mp4'
+    v_path ='/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/iJOjkDq6rW8/00124_aligned.mp4'
     # v_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/0MMSpsvqiG8/00004_crop.mp4'
     
     count = 0
