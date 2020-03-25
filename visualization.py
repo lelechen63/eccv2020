@@ -133,34 +133,34 @@ def vis():
     # norm_lmark = np.load('./basics/s1_pgbk6n_01.npy')
     # norm_lmark = np.load(lmark_path)[1]
     # print (norm_lmark.shape)
-    rt  =  np.load('/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/OLguY5ofUrY⁩/00044_aligned_rt.npy')
+    rt  =  np.load('/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/OLguY5ofUrY/00044_aligned_rt.npy')
     rt = np.load(rt)
-    print (rt.shape)
-    lmark_length = rt.shape[0]
-    src_lmark = np.load(src_lmark_path)[:,:,:2]
+    # print (rt.shape)
+    # lmark_length = rt.shape[0]
+    # src_lmark = np.load(src_lmark_path)[:,:,:2]
     
-    tar_lmark = np.load(tar_lmark_path)[:,:,:2]
-    lmark2 = np.load(tar_lmark_path)[:,:2]
+    # tar_lmark = np.load(tar_lmark_path)[:,:,:2]
+    # lmark2 = np.load(tar_lmark_path)[:,:2]
 
 
-    find_rt = []
-    for t in range(0, lmark_length):
-        find_rt.append(sum(np.absolute(rt[t,:3])))
-    find_rt = np.asarray(find_rt)
+    # find_rt = []
+    # for t in range(0, lmark_length):
+    #     find_rt.append(sum(np.absolute(rt[t,:3])))
+    # find_rt = np.asarray(find_rt)
 
-    min_indexs =  np.argsort(find_rt)[:50]
+    # min_indexs =  np.argsort(find_rt)[:50]
 
-    for indx in min_indexs:
-        print 
+    # for indx in min_indexs:
+    #     print 
 
 
-    openrates = []
-    for  i in range(src_lmark.shape[0]):
-        openrates.append(openrate(src_lmark[i]))
-    openrates = np.asarray(openrates)
-    min_index = np.argmin(openrates)
+    # openrates = []
+    # for  i in range(src_lmark.shape[0]):
+    #     openrates.append(openrate(src_lmark[i]))
+    # openrates = np.asarray(openrates)
+    # min_index = np.argmin(openrates)
 
-    v_path ='/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/OLguY5ofUrY⁩/00044_aligned.mp4'
+    v_path ='/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/OLguY5ofUrY/00044_aligned.mp4'
     # v_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/0MMSpsvqiG8/00004_crop.mp4'
     
     count = 0
