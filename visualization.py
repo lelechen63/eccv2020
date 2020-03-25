@@ -23,7 +23,7 @@ from skimage import io
 import cv2
 import os
 import sys
-# from utils import face_utils
+from utils import util
 import librosa
 from PIL import Image  
 from data.keypoint2img import *
@@ -133,16 +133,8 @@ def vis():
     # norm_lmark = np.load('./basics/s1_pgbk6n_01.npy')
     # norm_lmark = np.load(lmark_path)[1]
     # print (norm_lmark.shape)
-    src_lmark_path = '/home/cxu-serve/p1/common/demo/demo_00025_aligned__rotated.npy' 
-
-    # tar_lmark_path =  '/home/cxu-serve/p1/common/demo/'  +  id + '_original_front.npy'
-    tar_lmark_path = '/home/cxu-serve/p1/common/Obama/video/3_3__original2.npy'
-
-    tar_frsont_lmark_path = '/home/cxu-serve/p1/common/Obama/video/3_3__front2.npy'
-    id = 2433
-    srt_rt_path = '/home/cxu-serve/p1/common/Obama/video/' + '3_3' + '__rt2.npy'
-    print (srt_rt_path)
-    rt = np.load(srt_rt_path)
+    rt  =  np.load('/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/OLguY5ofUrY⁩/00044_aligned_rt.npy')
+    rt = np.load(rt)
     print (rt.shape)
     lmark_length = rt.shape[0]
     src_lmark = np.load(src_lmark_path)[:,:,:2]
@@ -168,77 +160,67 @@ def vis():
     openrates = np.asarray(openrates)
     min_index = np.argmin(openrates)
 
-    v_path ='/home/cxu-serve/p1/common/Obama/video/3_3__crop2.mp4'
+    v_path ='/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00017/OLguY5ofUrY⁩/00044_aligned.mp4'
     # v_path = '/home/cxu-serve/p1/common/lrs3/lrs3_v0.4/pretrain/0MMSpsvqiG8/00004_crop.mp4'
     
     count = 0
     frames = read_videos(v_path)
-    for count in range(0,len(frames),5):
+
+        # text 
+      
+    # font 
+    font = cv2.FONT_HERSHEY_SIMPLEX 
+      
+    # org 
+    org = (00, 185) 
+      
+    # fontScale 
+    fontScale = 1
+       
+    # Red color in BGR 
+    color = (0, 0, 255) 
+      
+    # Line thickness of 2 px 
+    thickness = 1
+
+    for count in range(0,len(frames),10):
         print (count)
-        print (len(frames))
+        print (rt[count])
+        lists = util.rt_to_degree(rt[count])
+        lists.append(count, rt[count])
+
+        text = str(lists)
+
         frame = frames[count]
-        
-        
+
+        image = cv2.putText(frame, text, org, font, fontScale,  
+                 color, thickness, cv2.LINE_AA, False) 
+        cv2.imwrite('./data/temp00001/%05d.png'%count, image)
         # frame = cv2.imread('/home/cxu-serve/p1/common/demo/picasso1_crop.png')
-        frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
-        preds =  tar_lmark[count]
+        # frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
+        # preds =  tar_lmark[count]
         # get_face_image(preds)
         
-        fig = plt.figure(figsize=plt.figaspect(.5))
-        ax = fig.add_subplot(1, 3, 1)
+        # fig = plt.figure(figsize=plt.figaspect(.5))
+        # ax = fig.add_subplot(1, 1, 1)
         
-        ax.imshow(frame)
-        ax.plot(preds[0:17,0],preds[0:17,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[17:22,0],preds[17:22,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[22:27,0],preds[22:27,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[27:31,0],preds[27:31,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[31:36,0],preds[31:36,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[36:42,0],preds[36:42,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='w',lw=1) 
-        preds  = src_lmark[count]
-        ax.plot(preds[0:17,0],preds[0:17,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[17:22,0],preds[17:22,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[22:27,0],preds[22:27,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[27:31,0],preds[27:31,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[31:36,0],preds[31:36,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[36:42,0],preds[36:42,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.axis('off') 
-        count += 1
+        # ax.imshow(frame)
+        # ax.plot(preds[0:17,0],preds[0:17,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[17:22,0],preds[17:22,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[22:27,0],preds[22:27,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[27:31,0],preds[27:31,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[31:36,0],preds[31:36,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[36:42,0],preds[36:42,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='w',lw=1) 
+        # count += 1
         
-        # preds = norm_lmark
-        ax = fig.add_subplot(1, 3, 2)
-        ax.imshow(frame)
-        preds =  tar_lmark[count]
-        preds = preds.reshape(68,2)
-        ax.plot(preds[0:17,0],preds[0:17,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[17:22,0],preds[17:22,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[22:27,0],preds[22:27,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[27:31,0],preds[27:31,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[31:36,0],preds[31:36,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[36:42,0],preds[36:42,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
-        ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='g',lw=1) 
-        ax.axis('off')
-
-        ax = fig.add_subplot(1, 3, 3)
-        ax.imshow(frame)
-        preds  = src_lmark[count]
-        ax.plot(preds[0:17,0],preds[0:17,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[17:22,0],preds[17:22,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[22:27,0],preds[22:27,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[27:31,0],preds[27:31,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[31:36,0],preds[31:36,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[36:42,0],preds[36:42,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
-        # preds = norm_lmark  + motions[count] + diff
+        # # preds = norm_lmark
+        # ax = fig.add_subplot(1, 3, 2)
+        # ax.imshow(frame)
+        # preds =  tar_lmark[count]
+        # preds = preds.reshape(68,2)
         # ax.plot(preds[0:17,0],preds[0:17,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
         # ax.plot(preds[17:22,0],preds[17:22,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
         # ax.plot(preds[22:27,0],preds[22:27,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
@@ -248,7 +230,31 @@ def vis():
         # ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
         # ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
         # ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='g',lw=1) 
-        ax.axis('off') 
+        # ax.axis('off')
+
+        # ax = fig.add_subplot(1, 3, 3)
+        # ax.imshow(frame)
+        # preds  = src_lmark[count]
+        # ax.plot(preds[0:17,0],preds[0:17,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[17:22,0],preds[17:22,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[22:27,0],preds[22:27,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[27:31,0],preds[27:31,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[31:36,0],preds[31:36,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[36:42,0],preds[36:42,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='w',lw=1)
+        # # preds = norm_lmark  + motions[count] + diff
+        # # ax.plot(preds[0:17,0],preds[0:17,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+        # # ax.plot(preds[17:22,0],preds[17:22,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+        # # ax.plot(preds[22:27,0],preds[22:27,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+        # # ax.plot(preds[27:31,0],preds[27:31,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+        # # ax.plot(preds[31:36,0],preds[31:36,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+        # # ax.plot(preds[36:42,0],preds[36:42,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+        # # ax.plot(preds[42:48,0],preds[42:48,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+        # # ax.plot(preds[48:60,0],preds[48:60,1],marker='o',markersize=1,linestyle='-',color='g',lw=1)
+        # # ax.plot(preds[60:68,0],preds[60:68,1],marker='o',markersize=1,linestyle='-',color='g',lw=1) 
+        # ax.axis('off') 
 
         # lmark_rgb = util.plot_landmarks( preds)
         # ax = fig.add_subplot(1, 3, 2)
@@ -277,10 +283,10 @@ def vis():
         # mpl.use('tkAgg')
 
 
-        plt.show()
+        # plt.show()
         # plt.savefig('./gg.png')
-
-        print ('=======')
+# 
+        # print ('=======')
     
 
 vis()

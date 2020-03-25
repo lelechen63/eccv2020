@@ -56,15 +56,16 @@ def read_videos( video_path):
 
     return real_video
 
-def rt_to_degree(  RT):
+def rt_to_degree( RT ):
     #   RT (6,)
     RT = np.mat(RT)
     # recover the transformation
-    rec = RT[0,:3]
+    rec = RT[:3]
     r = R.from_rotvec(rec)
-    print (r)
+    # print (r)
     ret_R = r.as_dcm()
-    print (ret_R)
+    # print (ret_R)
+    return [r, ret_R]
  
 
 # Converts a one-hot tensor into a colorful label map
