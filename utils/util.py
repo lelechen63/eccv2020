@@ -60,7 +60,8 @@ def rt_to_degree( RT ):
     #   RT (6,)
     RT = np.mat(RT)
     print (RT.shape)
-    RT = RT.reshape(-1)
+    RT = RT[0]
+    print (RT.shape)
     # recover the transformation
     rec = RT[:3]
     print (rec.shape)
