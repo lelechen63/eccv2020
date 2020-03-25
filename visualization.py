@@ -168,19 +168,19 @@ def vis():
         # text 
       
     # font 
-    font = cv2.FONT_HERSHEY_SIMPLEX 
+    font = cv2.FONT_HERSHEY_PLAIN 
       
     # org 
     org = (00, 185) 
       
     # fontScale 
-    fontScale = 0.5
+    fontScale = 1
        
     # Red color in BGR 
     color = (0, 0, 255) 
       
     # Line thickness of 2 px 
-    thickness = 0.5
+    thickness = 1
 
     for count in range(0,len(frames),10):
         print (count)
