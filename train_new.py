@@ -47,10 +47,8 @@ with torch.autograd.set_detect_anomaly(False):
         epoch_start_time = time.time()
         if epoch != start_epoch:
             epoch_iter = epoch_iter % dataset_size
-        # print ('++++')
 
         for i, data in enumerate(dataset, start=epoch_iter):
-            # print ('++---++') 
             iter_start_time = time.time()
             total_steps += opt.batchSize
             epoch_iter += opt.batchSize

@@ -185,7 +185,8 @@ def vis():
     for count in range(0,len(frames),10):
         print (count)
         print (rt[count])
-        lists = util.rt_to_degree(rt[count].reshape(-1))
+        print (rt[count].shape)
+        lists = util.rt_to_degree(rt[count])
         lists.append(count)
         lists.append('-')
         lists.append(rt[count])
