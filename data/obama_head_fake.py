@@ -70,43 +70,35 @@ def landmark_extractor():
     lmark_path = cropped_video_path[:-3] + 'npy'           
     print (original_video_path)
     
-    frames = read_videos(original_video_path)
-    print (len(frames))
-    for i in range(len(frames)):
-        fake_frame = frames[i][ :, 256 *2 :256 *3 ]
-        gt_frame = frames[i][ :,256 * 1:256 *2 ]
-        cv2.imwrite(os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  method , 'tmp', '%05d.jpg'%i),fake_frame)
+    # frames = read_videos(original_video_path)
+    # print (len(frames))
+    # for i in range(len(frames)):
+    #     fake_frame = frames[i][ :, 256 *2 :256 *3 ]
+    #     cv2.imwrite(os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  method , 'tmp', '%05d.jpg'%i),fake_frame)
 
-        cv2.imwrite(os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  'gt' , 'tmp', '%05d.jpg'%i),gt_frame)
 
-    # if os.path.exists(lmark_path):
-        # continue
-        
-        # _crop_video(original_video_path, config.batch_id,  1)
         
     command1 = 'ffmpeg -framerate 25  -i '    + os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  method , 'tmp', '%05d.jpg' )+'  -vcodec libx264  -vf format=yuv420p -y ' +  cropped_video_path
-    command2 = 'ffmpeg -framerate 25  -i '    + os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  'gt' , 'tmp', '%05d.jpg' )+'  -vcodec libx264  -vf format=yuv420p -y ' +   os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  'gt',  'test_crop.mp4')
+    # command2 = 'ffmpeg -framerate 25  -i '    + os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  'gt' , 'tmp', '%05d.jpg' )+'  -vcodec libx264  -vf format=yuv420p -y ' +   os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  'gt',  'test_crop.mp4')
     print (command1)
-    print (command2)
-    os.system(command1)
-    os.system(command2)
-    # cap = cv2.VideoCapture(cropped_video_path)
-    # lmark = []
-    # while(cap.isOpened()):
-    #     # counter += 1 
-    #     # if counter == 5:
-    #     #     break
-    #     ret, frame = cap.read()
-    #     if ret == True:
-    #         frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
+    # os.system(command1)
+    cap = cv2.VideoCapture(cropped_video_path)
+    lmark = []
+    while(cap.isOpened()):
+        # counter += 1 
+        # if counter == 5:
+        #     break
+        ret, frame = cap.read()
+        if ret == True:
+            frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
 
-    #         preds = fa.get_landmarks(frame)[0]
-    #         lmark.append(preds)
-    #     else:
-    #         break
+            preds = fa.get_landmarks(frame)[0]
+            lmark.append(preds)
+        else:
+            break
             
-    # lmark = np.asarray(lmark)
-    # np.save(lmark_path, lmark)
+    lmark = np.asarray(lmark)
+    np.save(lmark_path, lmark)
 
 
 def RT_compute():
