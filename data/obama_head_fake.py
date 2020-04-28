@@ -70,18 +70,18 @@ def landmark_extractor(method = 'baseline'):
     lmark_path = cropped_video_path[:-3] + 'npy'           
     print (original_video_path)
     
-    # frames = read_videos(original_video_path)
-    # print (len(frames))
-    # for i in range(len(frames)):
-    #     fake_frame = frames[i][ :, 256 *2 :256 *3 ]
-    #     cv2.imwrite(os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  method , 'tmp', '%05d.jpg'%i),fake_frame)
+    frames = read_videos(original_video_path)
+    print (len(frames))
+    for i in range(len(frames)):
+        fake_frame = frames[i][ :, 256 *2 :256 *3 ]
+        cv2.imwrite(os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  method , 'tmp', '%05d.jpg'%i),fake_frame)
 
 
         
     command1 = 'ffmpeg -framerate 25  -i '    + os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  method , 'tmp', '%05d.jpg' )+'  -vcodec libx264  -vf format=yuv420p -y ' +  cropped_video_path
     # command2 = 'ffmpeg -framerate 25  -i '    + os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  'gt' , 'tmp', '%05d.jpg' )+'  -vcodec libx264  -vf format=yuv420p -y ' +   os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  'gt',  'test_crop.mp4')
     print (command1)
-    # os.system(command1)
+    os.system(command1)
     cap = cv2.VideoCapture(cropped_video_path)
     lmark = []
     while(cap.isOpened()):
@@ -295,8 +295,8 @@ def get_front():
 # data_original = np.dot(data_reduced,component) + mean
 # np.save( 'gg.npy', data_original )
 # print (data - data_original)
-method = 'baseline'
-# landmark_extractor(method )
+method = 'wang'
+landmark_extractor(method )
 # 
 RT_compute(method)
 # diff()
