@@ -73,9 +73,8 @@ def landmark_extractor():
     frames = read_videos(original_video_path)
     print (len(frames))
     for i in range(len(frames)):
-        fake_frame = frames[i]
-        print (fake_frame.shape)#[ 256 *2 :256 *3 ]
-        gt_frame = frames[i][ 256 * 1:256 *2 ]
+        fake_frame = frames[i][ :, 256 *2 :256 *3 ]
+        gt_frame = frames[i][ :,256 * 1:256 *2 ]
         cv2.imwrite(os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  method , 'tmp', '%05d.jpg'%i),fake_frame)
 
         cv2.imwrite(os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  'gt' , 'tmp', '%05d.jpg'%i),gt_frame)
@@ -89,7 +88,8 @@ def landmark_extractor():
     command2 = 'ffmpeg -framerate 25  -i '    + os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  'gt' , 'tmp', '%05d.jpg' )+'  -vcodec libx264  -vf format=yuv420p -y ' +   os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  'gt',  'test_crop.mp4')
     print (command1)
     print (command2)
-    # os.system(command)
+    os.system(command1)
+    os.system(command2)
     # cap = cv2.VideoCapture(cropped_video_path)
     # lmark = []
     # while(cap.isOpened()):
