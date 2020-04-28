@@ -100,7 +100,34 @@ def landmark_extractor(method = 'baseline'):
     lmark = np.asarray(lmark)
     np.save(lmark_path, lmark)
 
+def rigid_transform_3D(A, B):
+    assert len(A) == len(B)
 
+    N = A.shape[0]; # total points
+
+    centroid_A = np.mean(A, axis=0)
+    centroid_B = np.mean(B, axis=0)
+    
+    # centre the points
+    AA = A - np.tile(centroid_A, (N, 1))
+    BB = B - np.tile(centroid_B, (N, 1))
+
+    # dot is matrix multiplication for array
+    H = np.transpose(AA) * BB
+
+    U, S, Vt = np.linalg.svd(H)
+
+    R = Vt.T * U.T
+
+    # special reflection case
+    if np.linalg.det(R) < 0:
+        print("Reflection detected")
+        Vt[2,:] *= -1
+        R = Vt.T * U.T
+    
+    t = -R*centroid_A.T + centroid_B.T
+
+    return R, t
 def RT_compute(method = 'baseline'):
     consider_key = [1,2,3,4,5,11,12,13,14,15,27,28,29,30,31,32,33,34,35,39,42,36,45,17,21,22,26]
     
@@ -126,7 +153,7 @@ def RT_compute(method = 'baseline'):
             lmark_part[:,m] = lmark[:,consider_key[m]] 
 
         target = np.mat(lmark_part[j])
-        ret_R, ret_t = face_utils.rigid_transform_3D( target, source)
+        ret_R, ret_t = rigid_transform_3D( target, source)
 
         source_lmark  = np.mat(lmark[j])
 
