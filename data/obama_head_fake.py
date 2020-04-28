@@ -49,7 +49,7 @@ def read_videos( video_path):
 
     return real_video
 
-def landmark_extractor():
+def landmark_extractor(method = 'baseline'):
     fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda:0')
     # root_path = '/home/cxu-serve/p1/common/Obama'
     # train_list = sorted(os.listdir(os.path.join(root_path, 'video')))
@@ -58,7 +58,7 @@ def landmark_extractor():
     #     p_id = train_list[i]
     #     if 'crop' in p_id or p_id[-3:] == 'npy':
     #         continue
-    method = 'baseline'
+    
     if not os.path.exists(os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  method , 'tmp')):
         os.mkdir(os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  method , 'tmp'))
 
@@ -101,58 +101,45 @@ def landmark_extractor():
     np.save(lmark_path, lmark)
 
 
-def RT_compute():
+def RT_compute(method = 'baseline'):
     consider_key = [1,2,3,4,5,11,12,13,14,15,27,28,29,30,31,32,33,34,35,39,42,36,45,17,21,22,26]
-    root_path = '/home/cxu-serve/p1/common/Obama'
-    train_list = sorted(os.listdir( os.path.join(root_path,  'video' ) ))
-    batch_length = int( len(train_list))
+    
     source = np.zeros((len(consider_key),3))
     ff = np.load('../basics/standard.npy')
     for m in range(len(consider_key)):
         source[m] = ff[consider_key[m]]  
     source = np.mat(source)
-    for i in tqdm(range(batch_length)):
-        p_id = train_list[i]
-        if p_id[-3:] !=  'mp4':
-            continue
-            
-        if 'crop' in p_id:
-            continue
-        lmark_path = os.path.join(root_path,  'video',  p_id[:-4] + '__original2.npy')  
-        
-        rt_path = os.path.join( root_path,"video" , p_id[:-4] +'__rt2.npy')
-        front_path = os.path.join(  root_path, "video" , p_id[:-4] +'__front2.npy')
-        # normed_path  = os.path.join( person_path,vid[:-12] +'normed.npy')
-        if os.path.exists(front_path):
-            continue
-        if not os.path.exists(lmark_path):
-            continue
-        lmark = np.load(lmark_path)
-        ############################################## smooth the landmark
-      
-        length = lmark.shape[0] 
-        lmark_part = np.zeros((length,len(consider_key),3))
-        RTs =  np.zeros((length,6))
-        frontlized =  np.zeros((length,68,3))
-        for j in range(length ):
-            for m in range(len(consider_key)):
-                lmark_part[:,m] = lmark[:,consider_key[m]] 
+    lmark_path = os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  method,  'test_crop.npy')  
+    
+    rt_path = lmark_path[:-4] +'_rt.npy'
+    front_path lmark_path[:-4] +'_front.npy'
+   
+    lmark = np.load(lmark_path)
+    ############################################## smooth the landmark
+  
+    length = lmark.shape[0] 
+    lmark_part = np.zeros((length,len(consider_key),3))
+    RTs =  np.zeros((length,6))
+    frontlized =  np.zeros((length,68,3))
+    for j in range(length ):
+        for m in range(len(consider_key)):
+            lmark_part[:,m] = lmark[:,consider_key[m]] 
 
-            target = np.mat(lmark_part[j])
-            ret_R, ret_t = face_utils.rigid_transform_3D( target, source)
+        target = np.mat(lmark_part[j])
+        ret_R, ret_t = face_utils.rigid_transform_3D( target, source)
 
-            source_lmark  = np.mat(lmark[j])
+        source_lmark  = np.mat(lmark[j])
 
-            A2 = ret_R*source_lmark.T
-            A2+= np.tile(ret_t, (1, 68))
-            A2 = A2.T
-            frontlized[j] = A2
-            r = Rotation.from_dcm(ret_R)
-            vec = r.as_rotvec()             
-            RTs[j,:3] = vec
-            RTs[j,3:] =  np.squeeze(np.asarray(ret_t))            
-        np.save(rt_path, RTs)
-        np.save(front_path, frontlized)
+        A2 = ret_R*source_lmark.T
+        A2+= np.tile(ret_t, (1, 68))
+        A2 = A2.T
+        frontlized[j] = A2
+        r = Rotation.from_dcm(ret_R)
+        vec = r.as_rotvec()             
+        RTs[j,:3] = vec
+        RTs[j,3:] =  np.squeeze(np.asarray(ret_t))            
+    np.save(rt_path, RTs)
+    np.save(front_path, frontlized)
     print (front_path)
             # break
         # break
@@ -281,8 +268,9 @@ def get_front():
 # data_original = np.dot(data_reduced,component) + mean
 # np.save( 'gg.npy', data_original )
 # print (data - data_original)
-landmark_extractor()
+method = 'baseline'
+# landmark_extractor(method )
 # 
-# RT_compute()
+RT_compute(method)
 # diff()
 # landmark_extractor()
