@@ -295,7 +295,7 @@ def get_front():
 # data_original = np.dot(data_reduced,component) + mean
 # np.save( 'gg.npy', data_original )
 # print (data - data_original)
-method = 'iccv'
+method = 'x2face'
 landmark_extractor(method )
 # 
 RT_compute(method)
