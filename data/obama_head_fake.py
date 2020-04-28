@@ -112,7 +112,7 @@ def RT_compute(method = 'baseline'):
     lmark_path = os.path.join('/home/cxu-serve/p1/common/other/obama_fake',  method,  'test_crop.npy')  
     
     rt_path = lmark_path[:-4] +'_rt.npy'
-    front_path lmark_path[:-4] +'_front.npy'
+    front_path = lmark_path[:-4] +'_front.npy'
    
     lmark = np.load(lmark_path)
     ############################################## smooth the landmark
