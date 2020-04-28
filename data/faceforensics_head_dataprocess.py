@@ -290,7 +290,7 @@ def pca_3dlmark_grid():  ## this time we will use standard as tempolate to be co
 # data_original = np.dot(data_reduced,component) + mean
 # np.save( 'gg.npy', data_original )
 # print (data - data_original)
-landmark_extractor()
+#landmark_extractor()
 # 
 RT_compute()
 # landmark_extractor()
