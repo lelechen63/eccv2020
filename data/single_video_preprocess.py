@@ -78,7 +78,6 @@ def landmark_extractor( video_path = None, path = None):
 			np.save(lmark_path, lmark)
 		except:
 			print (cropped_video_path)
-			# continue
 	else:
 		train_list = sorted(os.listdir(path))
 		batch_length =   len(train_list)
@@ -96,7 +95,7 @@ def landmark_extractor( video_path = None, path = None):
 		        # continue
 		        
 		    try:
-		        _crop_video(original_video_path, config.batch_id,  1)
+		        # _crop_video(original_video_path, config.batch_id,  1)
 		        
 		        command = 'ffmpeg -framerate 25  -i ./temp%05d'%config.batch_id + '/%05d.png  -vcodec libx264  -vf format=yuv420p -y ' +  cropped_video_path
 		        os.system(command)
