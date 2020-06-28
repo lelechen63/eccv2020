@@ -415,7 +415,7 @@ def diff():
 # data_original = np.dot(data_reduced,component) + mean
 # np.save( 'gg.npy', data_original )
 # print (data - data_original)
-landmark_extractor(paath = '/home/cxu-serve/p1/common/demo/oppo_demo')
+landmark_extractor(path = '/home/cxu-serve/p1/common/demo/oppo_demo')
 # 
 # RT_compute()
 # diff()
