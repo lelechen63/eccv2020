@@ -39,60 +39,59 @@ def read_videos( video_path):
     return real_video
 
 def landmark_extractor( video_path = None, path = None):
-    fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda:0')
-    root_path = '/home/cxu-serve/p1/common/Obama'
-    
-    train_list = sorted(os.listdir(os.path.join(root_path, 'video')))
-    
+	fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda:0')
+	root_path = '/home/cxu-serve/p1/common/Obama'
 
-    
-    
-    if video_path != None:
+	train_list = sorted(os.listdir(os.path.join(root_path, 'video')))
 
-    	pass
-    else:
-    	train_list = sorted(os.listdir(path))
-    	batch_length =   len(train_list)
 
-	    for i in tqdm(range(batch_length)):
-	        p_id = train_list[i]
-	        if 'crop' in p_id or p_id[-3:] == 'npy':
-	            continue
 
-	        original_video_path = os.path.join( path,  p_id)
-	        lmark_path = os.path.join(path,   p_id[:-4] + '__original.npy')            
-	        print (original_video_path)
-	        cropped_video_path = os.path.join(path,   p_id[:-4] + '_crop.mp4')
-	        
-	        # if os.path.exists(lmark_path):
-	            # continue
-	            
-	        try:
-	            _crop_video(original_video_path, config.batch_id,  1)
-	            
-	            command = 'ffmpeg -framerate 25  -i ./temp%05d'%config.batch_id + '/%05d.png  -vcodec libx264  -vf format=yuv420p -y ' +  cropped_video_path
-	            os.system(command)
-	            cap = cv2.VideoCapture(cropped_video_path)
-	            lmark = []
-	            while(cap.isOpened()):
-	                # counter += 1 
-	                # if counter == 5:
-	                #     break
-	                ret, frame = cap.read()
-	                if ret == True:
-	                    frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
 
-	                    preds = fa.get_landmarks(frame)[0]
-	                    lmark.append(preds)
-	                else:
-	                    break
-	                    
-	            lmark = np.asarray(lmark)
-	            np.save(lmark_path, lmark)
-	        except:
-	            print (cropped_video_path)
+	if video_path != None:
 
-	            continue
+		pass
+	else:
+		train_list = sorted(os.listdir(path))
+		batch_length =   len(train_list)
+		for i in tqdm(range(batch_length)):
+		    p_id = train_list[i]
+		    if 'crop' in p_id or p_id[-3:] == 'npy':
+		        continue
+
+		    original_video_path = os.path.join( path,  p_id)
+		    lmark_path = os.path.join(path,   p_id[:-4] + '__original.npy')            
+		    print (original_video_path)
+		    cropped_video_path = os.path.join(path,   p_id[:-4] + '_crop.mp4')
+		    
+		    # if os.path.exists(lmark_path):
+		        # continue
+		        
+		    try:
+		        _crop_video(original_video_path, config.batch_id,  1)
+		        
+		        command = 'ffmpeg -framerate 25  -i ./temp%05d'%config.batch_id + '/%05d.png  -vcodec libx264  -vf format=yuv420p -y ' +  cropped_video_path
+		        os.system(command)
+		        cap = cv2.VideoCapture(cropped_video_path)
+		        lmark = []
+		        while(cap.isOpened()):
+		            # counter += 1 
+		            # if counter == 5:
+		            #     break
+		            ret, frame = cap.read()
+		            if ret == True:
+		                frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
+
+		                preds = fa.get_landmarks(frame)[0]
+		                lmark.append(preds)
+		            else:
+		                break
+		                
+		        lmark = np.asarray(lmark)
+		        np.save(lmark_path, lmark)
+		    except:
+		        print (cropped_video_path)
+
+		        continue
 
 def RT_compute():
     consider_key = [1,2,3,4,5,11,12,13,14,15,27,28,29,30,31,32,33,34,35,39,42,36,45,17,21,22,26]
