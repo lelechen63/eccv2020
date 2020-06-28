@@ -422,6 +422,6 @@ def diff():
 # print (data - data_original)
 # landmark_extractor(path = '/home/cxu-serve/p1/common/demo/oppo_demo')
 # 
-RT_compute()
+RT_compute(path  = '/home/cxu-serve/p1/common/demo/oppo_demo')
 # diff()
 # landmark_extractor()
