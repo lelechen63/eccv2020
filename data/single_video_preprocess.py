@@ -57,12 +57,13 @@ def landmark_extractor( video_path = None, path = None):
 		print (original_video_path)
 		cropped_video_path = os.path.join(path,   p_id[:-4] + '_crop.mp4')
 		try:
-			_crop_video(original_video_path, config.batch_id,  1)
+			# _crop_video(original_video_path, config.batch_id,  1)
 
 			command = 'ffmpeg -framerate 25  -i ./temp%05d'%config.batch_id + '/%05d.png  -vcodec libx264  -vf format=yuv420p -y ' +  cropped_video_path
 			os.system(command)
 			cap = cv2.VideoCapture(cropped_video_path)
 			lmark = []
+			print ('-------')
 			while(cap.isOpened()):
 				# counter += 1 
 				# if counter == 5:
