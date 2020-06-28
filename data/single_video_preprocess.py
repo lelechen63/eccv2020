@@ -49,7 +49,40 @@ def landmark_extractor( video_path = None, path = None):
 
 	if video_path != None:
 
-		pass
+		tmp = video_path.split('/')
+		path = os.path.join( *tmp[:-1] )
+		p_id = tmp[-1]
+		original_video_path =video_path
+	    lmark_path = os.path.join(path,   p_id[:-4] + '__original.npy')            
+	    print (original_video_path)
+	    cropped_video_path = os.path.join(path,   p_id[:-4] + '_crop.mp4')
+	    try:
+	        _crop_video(original_video_path, config.batch_id,  1)
+	        
+	        command = 'ffmpeg -framerate 25  -i ./temp%05d'%config.batch_id + '/%05d.png  -vcodec libx264  -vf format=yuv420p -y ' +  cropped_video_path
+	        os.system(command)
+	        cap = cv2.VideoCapture(cropped_video_path)
+	        lmark = []
+	        while(cap.isOpened()):
+	            # counter += 1 
+	            # if counter == 5:
+	            #     break
+	            ret, frame = cap.read()
+	            if ret == True:
+	                frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
+
+	                preds = fa.get_landmarks(frame)[0]
+	                lmark.append(preds)
+	            else:
+	                break
+	                
+	        lmark = np.asarray(lmark)
+	        np.save(lmark_path, lmark)
+	    except:
+	        print (cropped_video_path)
+
+	        continue
+
 	else:
 		train_list = sorted(os.listdir(path))
 		batch_length =   len(train_list)
@@ -113,8 +146,8 @@ def RT_compute(video_path = None, path  = None):
 	        if p_id[-3:] !=  'mp4':
 	            continue
 	            
-	        if 'crop' in p_id:
-	            continue
+	        # if 'crop' in p_id:
+	        #     continue
 	        lmark_path = os.path.join( path,   p_id[:-4] + '__original.npy')  
 	        
 	        rt_path = os.path.join( path , p_id[:-4] +'__rt.npy')
@@ -421,7 +454,7 @@ def diff():
 # np.save( 'gg.npy', data_original )
 # print (data - data_original)
 # landmark_extractor(path = '/home/cxu-serve/p1/common/demo/oppo_demo')
-# 
+landmark_extractor(video_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang.mp4')
 RT_compute(path  = '/home/cxu-serve/p1/common/demo/oppo_demo')
 # diff()
 # landmark_extractor()
