@@ -130,7 +130,7 @@ def RT_compute(video_path = None, path  = None):  #video  path should be the ori
 	ff = np.load('../basics/standard.npy')
 	for m in range(len(consider_key)):
 		source[m] = ff[consider_key[m]]  
-	 source = np.mat(source)
+	source = np.mat(source)
 	if video_path != None:
 		lmark_path = video_path[:-4] + '__original.npy'
 		rt_path = video_path[:-4] +'__rt.npy'
