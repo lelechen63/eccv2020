@@ -25,7 +25,8 @@ import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from scipy.spatial.transform import Rotation as R
 import os
-root  = '/mnt/Data/lchen63/voxceleb/'
+
+
 def get_3d(bbb):
    
     # ---- init PRN
@@ -312,6 +313,66 @@ def get_3d_pkl_obama(pkl , root ,bbb = 0): # the first cell is video path the la
     data = data[int(gg * 0.2 *( bbb) ): int(gg * 0.2 * (bbb + 1) ) ]
     for kk ,item in enumerate(data) :
         print (kk)
+        print (item)
+        target_id = item[-1]
+
+        img_path =  os.path.join(root, 'video',  item[0][:-11] + '_%05d_2.png'%target_id  )
+        print (img_path)
+        target_frame = cv2.imread(img_path)
+        target_frame = cv2.cvtColor(target_frame, cv2.COLOR_BGR2RGB)
+
+        image = target_frame
+        # read image
+        [h, w, c] = image.shape
+        
+        pos = prn.process(image) # use dlib to detect face
+        
+        image = image/255.
+        if pos is None:
+            continue
+        
+
+        # landmark
+        kpt = prn.get_landmarks(pos)
+        kpt[:,1] = h - kpt[:,1]
+
+        np.save(os.path.join(root, 'video', item[0][:-11] + '_prnet2.npy'), kpt)
+        # 3D vertices
+        vertices = prn.get_vertices(pos)
+    
+        save_vertices = vertices.copy()
+        save_vertices[:,1] = h - 1 - save_vertices[:,1]
+
+        
+        # corresponding colors
+        colors = prn.get_colors(image, vertices)
+        
+        # print (colors.shape)
+        # print ('=========')
+        # cv2.imwrite('./mask.png', colors * 255)
+        write_obj_with_colors(os.path.join(root, 'video', item[0][:-11]  + '_original2.obj'), save_vertices, prn.triangles, colors) #save 3d face(can open with meshlab)
+
+        
+        # print (video_path)
+        # break
+
+
+
+def get_3d_single_video(  video_path  ,bbb = 0): # the first cell is video path the last cell is the key frame nnuumber
+    # root = 
+    # ---- init PRN
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '0' # GPU number, -1 for CPU
+    prn = PRN(is_dlib = True)
+    # _file = open(pkl, "rb")
+    # data = pickle.load(_file)
+    # _file.close()
+    # gg = len(data)
+    
+    # data = data[int(gg * 0.2 *( bbb) ): int(gg * 0.2 * (bbb + 1) ) ]
+    # for kk ,item in enumerate(data) :
+        tmp = video_path.split('/')
+        root = os.path.join('/', *tmp[:-1])
+        item = tmp[-1]
         print (item)
         target_id = item[-1]
 
