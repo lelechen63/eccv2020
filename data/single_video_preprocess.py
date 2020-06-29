@@ -56,32 +56,32 @@ def landmark_extractor( video_path = None, path = None):
 		lmark_path = os.path.join(path,   p_id[:-4] + '__original.npy')            
 		print (original_video_path)
 		cropped_video_path = os.path.join(path,   p_id[:-4] + '_crop.mp4')
-		try:
+		# try:
 			# try:
 			# 	_crop_video(original_video_path, config.batch_id,  1)
 			# except:
 
 			# 	print('some error when crop images.')
-			command = 'ffmpeg -framerate 25  -i ./temp%05d'%config.batch_id + '/%05d.png  -vcodec libx264  -vf format=yuv420p -y ' +  cropped_video_path
-			os.system(command)
-			cap = cv2.VideoCapture(cropped_video_path)
-			lmark = []
-			print ('-------')
-			while(cap.isOpened()):
-				# counter += 1 
-				# if counter == 5:
-				#     break
-				ret, frame = cap.read()
-				if ret == True:
-					frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
-					preds = fa.get_landmarks(frame)[0]
-					lmark.append(preds)
-				else:
-					break
-			lmark = np.asarray(lmark)
-			np.save(lmark_path, lmark)
-		except:
-			print (cropped_video_path)
+		command = 'ffmpeg -framerate 25  -i ./temp%05d'%config.batch_id + '/%05d.png  -vcodec libx264  -vf format=yuv420p -y ' +  cropped_video_path
+		os.system(command)
+		cap = cv2.VideoCapture(cropped_video_path)
+		lmark = []
+		print ('-------')
+		while(cap.isOpened()):
+			# counter += 1 
+			# if counter == 5:
+			#     break
+			ret, frame = cap.read()
+			if ret == True:
+				frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB )
+				preds = fa.get_landmarks(frame)[0]
+				lmark.append(preds)
+			else:
+				break
+		lmark = np.asarray(lmark)
+		np.save(lmark_path, lmark)
+		# except:
+		# 	print (cropped_video_path)
 	else:
 		train_list = sorted(os.listdir(path))
 		batch_length =   len(train_list)
