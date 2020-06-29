@@ -86,6 +86,69 @@ def get_np_uint8_image(mesh, renderer):
     return image
 
 
+
+
+def demo_single_video(front_lmark_path = None ,  key_id = None):
+    itvl = 1000.0/25.0 # 25fps
+    overlay = False
+    
+    # extract the frontal facial landmarks for key frame'
+
+    lmk3d_all = np.load(front_lmark_path)
+    lmk3d_target = lmk3d_all[key_id]
+
+    # load the 3D facial landmarks on the PRNet 3D reconstructed face
+    lmk3d_origin = np.load(front_lmark_path[:-9] +'prnet.npy')
+
+    # load RTs for all frame
+    rots, trans = recover(np.load( front_lmark_path[:-9] + "rt.npy"))
+
+    # calculate the affine transformation between PRNet 3D face and the frotal face landmarks
+    lmk3d_origin_homo = np.hstack((lmk3d_origin, np.ones([lmk3d_origin.shape[0],1]))) # 68x4
+    p_affine = np.linalg.lstsq(lmk3d_origin_homo, lmk3d_target, rcond=1)[0].T # Affine matrix. 3 x 4
+    pr = p_affine[:,:3] # 3x3
+    pt = p_affine[:,3:] # 3x1
+
+    # load the original 3D face mesh then transform it to align frontal face landmarks
+    vertices_org, triangles, colors = load_obj(front_lmark_path[:-3] +"obj") # get unfrontalized vertices position
+    vertices_origin_affine = (pr @ (vertices_org.T) + pt).T # aligned vertices
+
+    # set up the renderer
+    renderer = setup_renderer()
+    ani_path =front_lmark_path[:-9] +'ani.mp4'
+    if overlay:
+        real_video = mmcv.VideoReader('/home/cxu-serve/p1/common/voxceleb2/unzip/test_video/id00419/S8fiWqrZEew/00216_aligned.mp4')
+
+    fig = plt.figure()
+    ims = []
+    temp_path = './tempp_00005'
+    if os.path.exists(temp_path):
+        shutil.rmtree(temp_path)
+    os.mkdir(temp_path)
+    face_mesh = sr.Mesh(vertices_org, triangles, colors, texture_type="vertex")
+    image_render = get_np_uint8_image(face_mesh, renderer) # RGBA, (224,224,3), np.uint8
+    
+    # #####save rgba image as bgr in cv2
+    # rgb_frame =  (image_render).astype(int)[:,:,:-1][...,::-1]
+    # # flipBoth = cv2.flip(rgb_frame, 1)
+    # flipBoth = cv2.flip(rgb_frame, 0)
+    # cv2.imwrite( temp_path +  "/" + id + "_original.png", flipBoth) 
+
+    for i in range(rots.shape[0]):
+        if i == 510:
+            break
+        # get rendered frame
+        vertices = (rots[i].T @ (vertices_origin_affine.T - trans[i])).T
+        face_mesh = sr.Mesh(vertices, triangles, colors, texture_type="vertex")
+        image_render = get_np_uint8_image(face_mesh, renderer) # RGBA, (224,224,3), np.uint8
+        #save rgba image as bgr in cv2
+        rgb_frame =  (image_render).astype(int)[:,:,:-1][...,::-1]
+        cv2.imwrite( temp_path +  "/%05d.png"%i, rgb_frame)  
+    command = 'ffmpeg -framerate 25 -i '  + temp_path + '/%5d.png  -c:v libx264 -y -vf format=yuv420p ' +  ani_path
+    os.system(command)
+    print (command)
+
+
 def demo(id = 'lisa2'):
     key_id = 2433 # index of the frame used to do the 3D face reconstruction (key frame)
     itvl = 1000.0/25.0 # 25fps
@@ -685,7 +748,9 @@ def gg():
         # vis_single(video_path, key_id, save_name)
         # if k == 10:
         #     break
-demo('vincent2')
+# demo('vincent2')
+
+demo_single_video(front_lmark_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang__front.npy' , key_id =11174)
 # demo_obama()
 # gg()
 # demo('vincent2')
