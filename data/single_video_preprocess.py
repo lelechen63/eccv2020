@@ -448,7 +448,13 @@ def diff():
 # landmark_extractor(path = '/home/cxu-serve/p1/common/demo/oppo_demo')
 # landmark_extractor(video_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang.mp4')
 # RT_compute(video_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang.mp4')
-get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/957_crop.mp4')
+# get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/957_crop.mp4')
+get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/958_crop.mp4')
+
+get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/959_crop.mp4')
+get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang_crop.mp4')
+
+
 # diff()
 # landmark_extractor()
 
