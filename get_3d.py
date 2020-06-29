@@ -358,7 +358,7 @@ def get_3d_pkl_obama(pkl , root ,bbb = 0): # the first cell is video path the la
 
 
 
-def get_3d_single_video(  video_path  ,bbb = 0): # the first cell is video path the last cell is the key frame nnuumber
+def get_3d_single_video(   img_path, bbb = 0): # you need the image path of the most visible frame.
     # root = 
     # ---- init PRN
     # os.environ['CUDA_VISIBLE_DEVICES'] = '0' # GPU number, -1 for CPU
@@ -370,47 +370,42 @@ def get_3d_single_video(  video_path  ,bbb = 0): # the first cell is video path 
     
     # data = data[int(gg * 0.2 *( bbb) ): int(gg * 0.2 * (bbb + 1) ) ]
     # for kk ,item in enumerate(data) :
-        tmp = video_path.split('/')
-        root = os.path.join('/', *tmp[:-1])
-        item = tmp[-1]
-        print (item)
-        target_id = item[-1]
+       
+       
+    print (img_path)
+    target_frame = cv2.imread(img_path)
+    target_frame = cv2.cvtColor(target_frame, cv2.COLOR_BGR2RGB)
 
-        img_path =  os.path.join(root, 'video',  item[0][:-11] + '_%05d_2.png'%target_id  )
-        print (img_path)
-        target_frame = cv2.imread(img_path)
-        target_frame = cv2.cvtColor(target_frame, cv2.COLOR_BGR2RGB)
-
-        image = target_frame
-        # read image
-        [h, w, c] = image.shape
-        
-        pos = prn.process(image) # use dlib to detect face
-        
-        image = image/255.
-        if pos is None:
-            continue
-        
-
-        # landmark
-        kpt = prn.get_landmarks(pos)
-        kpt[:,1] = h - kpt[:,1]
-
-        np.save(os.path.join(root, 'video', item[0][:-11] + '_prnet2.npy'), kpt)
-        # 3D vertices
-        vertices = prn.get_vertices(pos)
+    image = target_frame
+    # read image
+    [h, w, c] = image.shape
     
-        save_vertices = vertices.copy()
-        save_vertices[:,1] = h - 1 - save_vertices[:,1]
+    pos = prn.process(image) # use dlib to detect face
+    
+    image = image/255.
+    if pos is None:
+        continue
+    
 
-        
-        # corresponding colors
-        colors = prn.get_colors(image, vertices)
-        
-        # print (colors.shape)
-        # print ('=========')
-        # cv2.imwrite('./mask.png', colors * 255)
-        write_obj_with_colors(os.path.join(root, 'video', item[0][:-11]  + '_original2.obj'), save_vertices, prn.triangles, colors) #save 3d face(can open with meshlab)
+    # landmark
+    kpt = prn.get_landmarks(pos)
+    kpt[:,1] = h - kpt[:,1]
+
+    np.save(img_path[:-11] + '__prnet.npy'), kpt
+    # 3D vertices
+    vertices = prn.get_vertices(pos)
+
+    save_vertices = vertices.copy()
+    save_vertices[:,1] = h - 1 - save_vertices[:,1]
+
+    
+    # corresponding colors
+    colors = prn.get_colors(image, vertices)
+    
+    # print (colors.shape)
+    # print ('=========')
+    # cv2.imwrite('./mask.png', colors * 255)
+    write_obj_with_colors(img_path[:-11]  + '__original.obj', save_vertices, prn.triangles, colors) #save 3d face(can open with meshlab)
 
         
         # print (video_path)
@@ -563,5 +558,5 @@ bbb = config.b
 # os.environ['CUDA_VISIBLE_DEVICES'] = str(config.b)
 # get_3d_pkl_obama(os.path.join( root,  'pickle', 'train_lmark2img.pkl'),root,bbb)
 # get_3d_pkl_lrw(os.path.join( root,  'pickle', 'test2_lmark2img.pkl'),root,bbb)
-
-get_3d_single(img_path= '/home/cxu-serve/p1/common/demo/self2_crop.png')
+get_3d_single_video(img_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang__11174.png')
+# get_3d_single(img_path= '/home/cxu-serve/p1/common/demo/self2_crop.png')
