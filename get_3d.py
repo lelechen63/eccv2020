@@ -391,7 +391,7 @@ def get_3d_single_video(   img_path, bbb = 0): # you need the image path of the 
     kpt = prn.get_landmarks(pos)
     kpt[:,1] = h - kpt[:,1]
 
-    np.save(img_path[:-11] + '__prnet.npy'), kpt
+    np.save(img_path[:-11] + '__prnet.npy', kpt)
     # 3D vertices
     vertices = prn.get_vertices(pos)
 
