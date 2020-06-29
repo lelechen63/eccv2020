@@ -384,7 +384,7 @@ def get_3d_single_video(   img_path, bbb = 0): # you need the image path of the 
     
     image = image/255.
     if pos is None:
-        continue
+        print ('No pos')
     
 
     # landmark
