@@ -40,14 +40,10 @@ def read_videos( video_path):
 
 def landmark_extractor( video_path = None, path = None):
 	fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda:0')
-	root_path = '/home/cxu-serve/p1/common/Obama'
-
-	train_list = sorted(os.listdir(os.path.join(root_path, 'video')))
-
-
-
+	
 
 	if video_path != None:
+		print ('------++++++++++-')
 
 		tmp = video_path.split('/')
 		path = os.path.join( *tmp[:-1] )
@@ -80,6 +76,8 @@ def landmark_extractor( video_path = None, path = None):
 				break
 		lmark = np.asarray(lmark)
 		np.save(lmark_path, lmark)
+
+		print 
 		# except:
 		# 	print (cropped_video_path)
 	else:
@@ -454,6 +452,6 @@ def diff():
 # print (data - data_original)
 # landmark_extractor(path = '/home/cxu-serve/p1/common/demo/oppo_demo')
 landmark_extractor(video_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang.mp4')
-RT_compute(video_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang.mp4')
+# RT_compute(video_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang.mp4')
 # diff()
 # landmark_extractor()
