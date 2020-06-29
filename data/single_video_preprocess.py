@@ -259,7 +259,7 @@ def get_front_video(video_path): # video path should be the video path of croppe
 
     v_frames = read_videos(video_path)
     # tmp = video_path.split('/')
-    rt_path = video_path[:-9] + '_rt.npy'
+    rt_path = video_path[:-9] + '__rt.npy'
     rt = np.load(rt_path)
     lmark_length = rt.shape[0]
     find_rt = []
@@ -269,7 +269,7 @@ def get_front_video(video_path): # video path should be the video path of croppe
 
     min_index = np.argmin(find_rt)
     
-    img_path = video_path[:-8] + '_%05d_2.png'%min_index 
+    img_path = video_path[:-8] + '__%05d.png'%min_index 
 
     print (img_path)
     cv2.imwrite(img_path, v_frames[min_index])
@@ -451,3 +451,5 @@ def diff():
 get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/957_crop.mp4')
 # diff()
 # landmark_extractor()
+
+
