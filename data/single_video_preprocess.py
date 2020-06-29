@@ -254,32 +254,26 @@ def pca_lmark_grid():
 
 
 
-def get_front():
-    root = '/home/cxu-serve/p1/common/Obama'
-    _file = open(os.path.join(root, 'pickle','train_lmark2img.pkl'), "rb")
-    data = pkl.load(_file)
-    _file.close()
-    for index in tqdm(range(len(data))):
-        v_id = data[index]
-        video_path = os.path.join(root, 'video', v_id[0][:-11] + '_crop2.mp4'  )
-            # mis_video_path = os.path.join(self.root, 'pretrain', mis_vid[0] , mis_vid[1][:5] + '_crop.mp4'  )
-        v_frames = read_videos(video_path)
-        lmark_path = os.path.join(root,  'video', v_id[0][:-11] +'_rt2.npy'  )
-        rt = np.load(lmark_path)
-        lmark_length = rt.shape[0]
-        find_rt = []
-        for t in range(0, lmark_length):
-            find_rt.append(sum(np.absolute(rt[t,:3])))
-        find_rt = np.asarray(find_rt)
+def get_front_video(video_path): # video path should be the video path of cropped video.
+   		
 
-        min_index = np.argmin(find_rt)
-        
-        img_path =  os.path.join(root,  'video', v_id[0][:-11] + '_%05d_2.png'%min_index  )
-        cv2.imwrite(img_path, v_frames[min_index])
-        data[index].append(min_index)
-    with open(os.path.join( root, 'pickle','train_lmark2img.pkl'), 'wb') as handle:
-        pkl.dump(data, handle, protocol=pkl.HIGHEST_PROTOCOL)
+    v_frames = read_videos(video_path)
+    # tmp = video_path.split('/')
+    rt_path = video_path[:-9] + '_rt.npy'
+    rt = np.load(rt_path)
+    lmark_length = rt.shape[0]
+    find_rt = []
+    for t in range(0, lmark_length):
+        find_rt.append(sum(np.absolute(rt[t,:3])))
+    find_rt = np.asarray(find_rt)
 
+    min_index = np.argmin(find_rt)
+    
+    img_path = video_path[:-8] + '_%05d_2.png'%min_index 
+
+    print (img_path)
+    cv2.imwrite(img_path, v_frames[min_index])
+    
 
 def swith_identity_obama(obamaid = '00025_aligned'):
 
@@ -452,7 +446,8 @@ def diff():
 # np.save( 'gg.npy', data_original )
 # print (data - data_original)
 # landmark_extractor(path = '/home/cxu-serve/p1/common/demo/oppo_demo')
-landmark_extractor(video_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang.mp4')
+# landmark_extractor(video_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang.mp4')
 # RT_compute(video_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang.mp4')
+get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/957_crop.mp4')
 # diff()
 # landmark_extractor()
