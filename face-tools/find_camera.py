@@ -135,8 +135,8 @@ def demo_single_video(front_lmark_path = None ,  key_id = None):
     # cv2.imwrite( temp_path +  "/" + id + "_original.png", flipBoth) 
 
     for i in range(rots.shape[0]):
-        if i == 510:
-            break
+        # if i == 510:
+        #     break
         # get rendered frame
         vertices = (rots[i].T @ (vertices_origin_affine.T - trans[i])).T
         face_mesh = sr.Mesh(vertices, triangles, colors, texture_type="vertex")
