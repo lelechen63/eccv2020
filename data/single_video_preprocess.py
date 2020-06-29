@@ -299,7 +299,7 @@ def get_front_video(video_path): # video path should be the video path of croppe
 
     min_index = np.argmin(find_rt)
     
-    img_path = video_path[:-8] + '__%05d.png'%min_index 
+    img_path = video_path[:-9] + '__%05d.png'%min_index 
 
     print (img_path)
     cv2.imwrite(img_path, v_frames[min_index])
@@ -478,10 +478,10 @@ def diff():
 # landmark_extractor(path = '/home/cxu-serve/p1/common/demo/oppo_demo')
 # landmark_extractor(video_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang.mp4')
 # RT_compute(video_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang.mp4')
-# get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/957_crop.mp4')
-# get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/958_crop.mp4')
+get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/957_crop.mp4')
+get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/958_crop.mp4')
 
-# get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/959_crop.mp4')
+get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/959_crop.mp4')
 get_front_video(video_path =  '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang_crop.mp4')
 
 
