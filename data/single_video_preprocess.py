@@ -126,6 +126,11 @@ def landmark_extractor( video_path = None, path = None):
 
 def RT_compute(video_path = None, path  = None):  #video  path should be the original video path
 	consider_key = [1,2,3,4,5,11,12,13,14,15,27,28,29,30,31,32,33,34,35,39,42,36,45,17,21,22,26]  
+	source = np.zeros((len(consider_key),3))
+		ff = np.load('../basics/standard.npy')
+		for m in range(len(consider_key)):
+			source[m] = ff[consider_key[m]]  
+	 source = np.mat(source)
 	if video_path != None:
 		lmark_path = video_path[:-4] + '__original.npy'
 		rt_path = video_path[:-4] +'__rt.npy'
@@ -163,11 +168,7 @@ def RT_compute(video_path = None, path  = None):  #video  path should be the ori
 
 	    train_list = sorted(os.listdir(path))
 	    batch_length = int( len(train_list))
-	    source = np.zeros((len(consider_key),3))
-	    ff = np.load('../basics/standard.npy')
-	    for m in range(len(consider_key)):
-	        source[m] = ff[consider_key[m]]  
-	    source = np.mat(source)
+	   
 	    for i in tqdm(range(batch_length)):
 	        p_id = train_list[i]
 	        if p_id[-3:] !=  'mp4':
