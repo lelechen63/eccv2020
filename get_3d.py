@@ -558,5 +558,9 @@ bbb = config.b
 # os.environ['CUDA_VISIBLE_DEVICES'] = str(config.b)
 # get_3d_pkl_obama(os.path.join( root,  'pickle', 'train_lmark2img.pkl'),root,bbb)
 # get_3d_pkl_lrw(os.path.join( root,  'pickle', 'test2_lmark2img.pkl'),root,bbb)
-get_3d_single_video(img_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang__11174.png')
+get_3d_single_video(img_path = '/home/cxu-serve/p1/common/demo/oppo_demo/957__00063.png')
+get_3d_single_video(img_path = '/home/cxu-serve/p1/common/demo/oppo_demo/958__00326.png')
+
+get_3d_single_video(img_path = '/home/cxu-serve/p1/common/demo/oppo_demo/959__00168.png')
+
 # get_3d_single(img_path= '/home/cxu-serve/p1/common/demo/self2_crop.png')
