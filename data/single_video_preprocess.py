@@ -40,18 +40,19 @@ def read_videos( video_path):
 
 def landmark_extractor( video_path = None, path = None):
 	fa = face_alignment.FaceAlignment(face_alignment.LandmarksType._3D, device='cuda:0')
-	
+
 
 	if video_path != None:
 		print ('------++++++++++-')
 
 		tmp = video_path.split('/')
-		path = os.path.join( *tmp[:-1] )
+		path = os.path.join( '/',  *tmp[:-1] )
 		p_id = tmp[-1]
 		original_video_path =video_path
 		lmark_path = os.path.join(path,   p_id[:-4] + '__original.npy')            
 		print (original_video_path)
 		cropped_video_path = os.path.join(path,   p_id[:-4] + '_crop.mp4')
+
 		# try:
 			# try:
 			# 	_crop_video(original_video_path, config.batch_id,  1)
