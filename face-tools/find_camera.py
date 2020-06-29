@@ -110,7 +110,7 @@ def demo_single_video(front_lmark_path = None ,  key_id = None):
     pt = p_affine[:,3:] # 3x1
 
     # load the original 3D face mesh then transform it to align frontal face landmarks
-    vertices_org, triangles, colors = load_obj(front_lmark_path[:-3] +"obj") # get unfrontalized vertices position
+    vertices_org, triangles, colors = load_obj(front_lmark_path[:-9] +"original.obj") # get unfrontalized vertices position
     vertices_origin_affine = (pr @ (vertices_org.T) + pt).T # aligned vertices
 
     # set up the renderer
