@@ -160,7 +160,7 @@ def demo_single_video_switch(target_obj_path = None, target_front_lmark_path = N
     # extract the frontal facial landmarks for key frame
 
     original_lmk3d_all = np.load(original_front_lmark_path)
-    original_lmk3d_target = original_lmk3d_all[key_id]
+    original_lmk3d_target = original_lmk3d_all[original_key_id]
 
     # load the 3D facial landmarks on the PRNet 3D reconstructed face
     lmk3d_origin = pr_path
