@@ -152,7 +152,7 @@ def demo_single_video(front_lmark_path = None ,  key_id = None):
 # target obj is the identity that you want, target front is the target mouth movement that you want, 
 #original front and key load the original front face that paired with target indentity
 # prnet is the pr path of the target identity
-def demo_single_video_switch(target_obj_path = None, target_front_lmark_path = None, / 
+def demo_single_video_switch(target_obj_path = None, target_front_lmark_path = None, 
     target_rt_path = None,  original_front_lmark_path = None, original_key_id = None, pr_path = None, ani_save_path = None):
     itvl = 1000.0/25.0 # 25fps
     overlay = False
@@ -814,12 +814,12 @@ def gg():
 # demo('vincent2')
 
 # demo_single_video(front_lmark_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang__front.npy' , key_id =11174)
-demo_single_video_switch(target_obj_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang__original.obj', /
-                        target_front_lmark_path = '/home/cxu-serve/p1/common/demo/oppo_demo/957__front.npy', / 
-                        target_rt_path = '/home/cxu-serve/p1/common/demo/oppo_demo/957__rt.npy',  /
+demo_single_video_switch(target_obj_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang__original.obj', 
+                        target_front_lmark_path = '/home/cxu-serve/p1/common/demo/oppo_demo/957__front.npy',  
+                        target_rt_path = '/home/cxu-serve/p1/common/demo/oppo_demo/957__rt.npy',  
                         original_front_lmark_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang__front.npy', 
-                        original_key_id = 11174, /
-                        pr_path = "/home/cxu-serve/p1/common/demo/oppo_demo/ouyang__prnet.npy", /
+                        original_key_id = 11174, 
+                        pr_path = "/home/cxu-serve/p1/common/demo/oppo_demo/ouyang__prnet.npy", 
                         ani_save_path = '/home/cxu-serve/p1/common/demo/oppo_demo/ouyang__957.mp4')
 # demo_obama()
 # gg()
